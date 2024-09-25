@@ -9,5 +9,6 @@ fun <T: Any> mockTask(data: T? = null, taskException: Exception? = null): Task<T
         every { result } returns data
         every { exception } returns taskException
         every { isCanceled } returns false
+        every { isComplete } returns true
     }
 }

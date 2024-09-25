@@ -70,7 +70,6 @@ class AuthViewModel(
             updateAuthResult(CustomResult.InProgress)
             googleAuthRepository.onTapSignIn()
         } catch (e: Exception) {
-            println(e)
             _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.google_sign_in_error)))
             updateAuthResult(CustomResult.ResourceError(R.string.google_sign_in_error))
             crashlyticsManager.recordException(e)
@@ -104,9 +103,9 @@ class AuthViewModel(
                 }
                 updateAuthResult(CustomResult.Success())
             } catch (e: Exception) {
-                _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
                 updateAuthResult(CustomResult.ResourceError(R.string.auth_error))
                 crashlyticsManager.recordException(e, "Auth type: ${_uiState.value.authType}")
+                _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
             }
         }
     }

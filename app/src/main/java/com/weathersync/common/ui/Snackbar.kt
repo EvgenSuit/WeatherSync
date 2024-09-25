@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,9 +57,13 @@ fun CustomSnackbar(
             }
         },
         modifier = Modifier.padding(10.dp)
+            .testTag("Snackbar")
     ) {
-        message?.let { Text(text = it.take(150),
-            fontFamily = FontFamily.SansSerif) }
+        message?.let {
+            val text = it.take(180)
+            Text(text = text,
+            fontFamily = FontFamily.SansSerif,
+            modifier = Modifier.testTag("Snackbar text: $text")) }
     }
 }
 
@@ -72,7 +77,7 @@ fun CustomSnackbarPreview() {
     WeatherSyncTheme(darkTheme = false) {
         val snackbarHostState = remember { SnackbarHostState() }
         LaunchedEffect(Unit) {
-            snackbarHostState.showSnackbar("This is a preview message!")
+            snackbarHostState.showSnackbar("This is a preview message!".repeat(20))
         }
         Surface {
             CustomSnackbar(

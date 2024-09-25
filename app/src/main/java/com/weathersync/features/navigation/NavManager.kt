@@ -22,7 +22,6 @@ fun NavManager(
     navController: NavHostController = rememberNavController(),
     modifier: Modifier
 ) {
-    Firebase.auth.signOut()
     val isUserNull = Firebase.auth.currentUser == null
     NavHost(
         navController = navController,

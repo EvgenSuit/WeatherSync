@@ -8,6 +8,11 @@ import io.mockk.mockk
 
 val username = "username"
 val userId = "uid"
+
+val validEmail = "some@gmail.com"
+val validPassword = "Password2077$"
+val invalidEmails = listOf("", " ", ", ", "some", "some@", "some@gmail", "some@gmail.")
+val invalidPasswords = listOf("", " ", ", ", "password with whitespace", "shortPassword", "PasswordWithoutNumbers", "PasswordWithoutSymbols2033")
 fun mockAuth(
     exception: Exception? = null
 ): FirebaseAuth {

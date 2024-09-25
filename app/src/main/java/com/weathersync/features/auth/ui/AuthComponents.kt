@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -79,6 +80,10 @@ fun AuthTextField(
     val type = fieldState.type
     val state = fieldState.state
     val error = state.error?.asString(context) ?: ""
+    val placeholderText = when (type) {
+        AuthFieldType.Email -> stringResource(id = R.string.email)
+        AuthFieldType.Password -> stringResource(id = R.string.password)
+    }
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -88,16 +93,20 @@ fun AuthTextField(
             enabled = enabled,
             keyboardOptions = KeyboardOptions(imeAction = if (type == AuthFieldType.Email) ImeAction.Next else ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(true) }),
-            placeholder = { Text(text = type.toString(),
+            placeholder = { Text(text = placeholderText,
                 modifier = Modifier.alpha(0.6f)) },
             onValueChange = {
                 onInput(AuthIntent.AuthInput(fieldState.copy(state = fieldState.state.copy(value = it))))
             },
             modifier = Modifier
-                .fillMaxWidth())
-        if (error.isNotEmpty()) Text(text = error,
-            color = MaterialTheme.colorScheme.error,
-            fontSize = 12.sp)
+                .fillMaxWidth()
+                .testTag(placeholderText))
+        if (error.isNotEmpty()) {
+            Text(text = error,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+                modifier = Modifier.testTag("$placeholderText error"))
+        }
     }
 }
 

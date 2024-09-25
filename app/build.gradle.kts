@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.google.services)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.roborazzi.plugin)
 
 }
 val localProperties = Properties()
@@ -99,6 +100,10 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.mockk.agent)
     testImplementation(libs.mockk.android)
+    testImplementation(libs.ui.test.junit)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit.rule)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

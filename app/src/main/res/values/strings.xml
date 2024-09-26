@@ -25,4 +25,13 @@
 
     <string name="auth_error">Authentication error</string>
     <string name="google_sign_in_error">Google sign in error, make sure you are signed in to this account on this device</string>
+
+    <string name="location_permission_required">WeatherSync requires location permission for accurate weather information</string>
+    <string name="request_permission">Request permission</string>
+    <string name="go_to_settings">Go to settings</string>
+
+    <string name="current_weather">Current weather</string>
+    <string name="wind_speed">Wind speed: %1$s</string>
+
+    <string name="could_not_fetch_current_weather">Could not fetch current weather</string>
 </resources>

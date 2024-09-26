@@ -1,4 +1,4 @@
-package com.weathersync.features.auth.ui
+package com.weathersync.features.auth.presentation
 
 import android.app.Activity
 import android.content.IntentSender
@@ -13,6 +13,9 @@ import com.weathersync.features.auth.RegularAuthRepository
 import com.weathersync.features.auth.EmailValidator
 import com.weathersync.features.auth.GoogleAuthRepository
 import com.weathersync.features.auth.PasswordValidator
+import com.weathersync.features.auth.presentation.ui.AuthFieldType
+import com.weathersync.features.auth.presentation.ui.AuthTextFieldState
+import com.weathersync.features.auth.presentation.ui.AuthTextFieldsState
 import com.weathersync.utils.CoroutineScopeProvider
 import com.weathersync.utils.CrashlyticsManager
 import com.weathersync.utils.CustomResult
@@ -71,7 +74,7 @@ class AuthViewModel(
             googleAuthRepository.onTapSignIn()
         } catch (e: Exception) {
             _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.google_sign_in_error)))
-            updateAuthResult(CustomResult.ResourceError(R.string.google_sign_in_error))
+            updateAuthResult(CustomResult.Error)
             crashlyticsManager.recordException(e)
             null
         }
@@ -79,7 +82,7 @@ class AuthViewModel(
         scope.launch {
             try {
                 if (activityResult.resultCode != Activity.RESULT_OK && activityResult.data == null){
-                    updateAuthResult(CustomResult.ResourceError(R.string.auth_error))
+                    updateAuthResult(CustomResult.Error)
                     return@launch
                 }
                 googleAuthRepository.signInWithIntent(activityResult.data!!)
@@ -87,7 +90,7 @@ class AuthViewModel(
             } catch (e: Exception) {
                 if ((e is ApiException && e.statusCode != 16) || e !is ApiException) {
                     _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
-                    updateAuthResult(CustomResult.ResourceError(R.string.auth_error))
+                    updateAuthResult(CustomResult.Error)
                 } else updateAuthResult(CustomResult.None)
             }
         }
@@ -103,7 +106,7 @@ class AuthViewModel(
                 }
                 updateAuthResult(CustomResult.Success())
             } catch (e: Exception) {
-                updateAuthResult(CustomResult.ResourceError(R.string.auth_error))
+                updateAuthResult(CustomResult.Error)
                 crashlyticsManager.recordException(e, "Auth type: ${_uiState.value.authType}")
                 _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
             }

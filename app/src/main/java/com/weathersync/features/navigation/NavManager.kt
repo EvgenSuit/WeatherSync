@@ -8,8 +8,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.weathersync.features.auth.ui.AuthScreen
-import com.weathersync.features.home.ui.HomeScreen
+import com.weathersync.features.auth.presentation.ui.AuthScreen
+import com.weathersync.features.home.presentation.ui.HomeScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -29,7 +29,11 @@ fun NavManager(
         modifier = modifier
     ) {
         composable<Auth> {
-            AuthScreen(onNavigateToHome = { navController.navigate(Home) }
+            AuthScreen(onNavigateToHome = { navController.navigate(Home) {
+                popUpTo(Auth) {
+                    inclusive = true
+                }
+            } }
         ) }
         composable<Home> {
             HomeScreen()

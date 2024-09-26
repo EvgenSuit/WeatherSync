@@ -90,6 +90,22 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+
+    // location
+    implementation(libs.play.services.location)
+
+    // permissions
+    implementation(libs.accompanist.permissions)
+
+    // ktor
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.json)
+    implementation(libs.ktor.client.serialization)
+    implementation(libs.ktor.serialization.json)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
 
     // DI
     implementation(libs.koin)

@@ -8,12 +8,12 @@ sealed class CustomResult(val data: UIText = UIText.Empty) {
     data object InProgress: CustomResult()
     data class Success(@StringRes val message: Int? = null, val args: List<Any> = emptyList()):
         CustomResult(data = if (message != null) UIText.StringResource(message, args) else UIText.Empty)
-    data class DynamicError(val message: String): CustomResult(UIText.DynamicString(message))
-    data class ResourceError(@StringRes val message: Int, val args: List<Any> = emptyList()):
-        CustomResult(UIText.StringResource(message, args))
+    data object Error: CustomResult()
 
 }
 
 fun CustomResult.isInProgress() = this is CustomResult.InProgress
 fun CustomResult.isSuccess() = this is CustomResult.Success
-fun CustomResult.isError() = this is CustomResult.DynamicError || this is CustomResult.ResourceError
+fun CustomResult.isError() = this is CustomResult.Error //CustomResult.DynamicError || this is CustomResult.ResourceError
+
+fun Exception.toStringIfMessageIsNull() = message ?: this.toString()

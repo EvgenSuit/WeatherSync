@@ -7,14 +7,10 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.github.takahirom.roborazzi.RoborazziRule
-import com.github.takahirom.roborazzi.captureRoboImage
-import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.weathersync.common.BaseTest
 import com.weathersync.common.auth.validEmail
 import com.weathersync.common.auth.validPassword
@@ -35,7 +31,8 @@ import com.weathersync.common.auth.invalidPasswords
 import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.assertSnackbarTextEquals
-import com.weathersync.common.ui.printToLog
+import com.weathersync.features.auth.presentation.ui.AuthScreen
+import com.weathersync.features.auth.presentation.AuthViewModel
 import io.mockk.verify
 import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.Assert.assertEquals

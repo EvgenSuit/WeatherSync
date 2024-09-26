@@ -36,7 +36,7 @@ class SnackbarController(
 ) {
     fun showSnackbar(message: UIText) {
         coroutineScope.launch {
-            snackbarHostState.currentSnackbarData?.dismiss()
+            //snackbarHostState.currentSnackbarData?.dismiss()
             snackbarHostState.showSnackbar(message.asString(context))
         }
     }

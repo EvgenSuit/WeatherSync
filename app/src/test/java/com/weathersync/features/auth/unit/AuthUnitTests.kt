@@ -1,7 +1,6 @@
 package com.weathersync.features.auth.unit
 
 import android.content.Context
-import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.weathersync.common.BaseTest
@@ -13,11 +12,11 @@ import com.weathersync.common.auth.validPassword
 import com.weathersync.common.ui.TextFieldState
 import com.weathersync.features.auth.GoogleAuthRepository
 import com.weathersync.features.auth.RegularAuthRepository
-import com.weathersync.features.auth.ui.AuthFieldType
-import com.weathersync.features.auth.ui.AuthIntent
-import com.weathersync.features.auth.ui.AuthTextFieldState
-import com.weathersync.features.auth.ui.AuthType
-import com.weathersync.features.auth.ui.AuthViewModel
+import com.weathersync.features.auth.presentation.ui.AuthFieldType
+import com.weathersync.features.auth.presentation.AuthIntent
+import com.weathersync.features.auth.presentation.ui.AuthTextFieldState
+import com.weathersync.features.auth.presentation.AuthType
+import com.weathersync.features.auth.presentation.AuthViewModel
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,7 +24,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

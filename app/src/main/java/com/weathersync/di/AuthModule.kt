@@ -9,8 +9,7 @@ import com.google.firebase.ktx.Firebase
 import com.weathersync.BuildConfig
 import com.weathersync.features.auth.GoogleAuthRepository
 import com.weathersync.features.auth.RegularAuthRepository
-import com.weathersync.features.auth.ui.AuthViewModel
-import org.koin.android.ext.koin.androidApplication
+import com.weathersync.features.auth.presentation.AuthViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 

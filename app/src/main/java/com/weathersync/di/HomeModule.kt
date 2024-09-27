@@ -18,8 +18,7 @@ import java.util.Locale
 val homeModule = module {
     single { HomeViewModel(
         homeRepository = get(),
-        crashlyticsManager = get(),
-        scopeProvider = get()
+        crashlyticsManager = get()
     ) }
     single { HomeRepository(
         homeFirebaseClient = get(),

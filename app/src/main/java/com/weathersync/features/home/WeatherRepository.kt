@@ -11,6 +11,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.get
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -33,16 +34,18 @@ class WeatherRepository(
     suspend fun getCurrentWeather(): CurrentWeather {
         val coordinates = locationClient.getCoordinates()
         val requestUrl = "forecast?current_weather=true&latitude=${coordinates.lat}&longitude=${coordinates.lon}"
-        val response = httpClient.get(requestUrl).body<CurrentOpenMeteoWeather>()
-        val currentWeather = CurrentWeather(
-            locality = coordinates.locality,
-            tempUnit = response.currentWeatherUnits.temperature,
-            windSpeedUnit = response.currentWeatherUnits.windSpeed,
-            temp = response.currentWeather.temperature,
-            windSpeed = response.currentWeather.windSpeed,
-            weatherCode = response.currentWeather.weatherCode
-        )
-        return currentWeather
+        val response = httpClient.get(requestUrl)
+        if (response.status.isSuccess()) {
+            val responseBody = response.body<CurrentOpenMeteoWeather>()
+            return CurrentWeather(
+                locality = coordinates.locality,
+                tempUnit = responseBody.currentWeatherUnits.temperature,
+                windSpeedUnit = responseBody.currentWeatherUnits.windSpeed,
+                temp = responseBody.currentWeather.temperature,
+                windSpeed = responseBody.currentWeather.windSpeed,
+                weatherCode = responseBody.currentWeather.weatherCode
+            )
+        } else throw Exception(response.status.description)
     }
     suspend fun getForecast(forecastDays: Int,
                             currentWeather: Boolean,

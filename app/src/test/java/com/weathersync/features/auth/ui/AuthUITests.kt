@@ -11,31 +11,32 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.weathersync.R
 import com.weathersync.common.BaseTest
+import com.weathersync.common.auth.invalidEmails
+import com.weathersync.common.auth.invalidPasswords
+import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.auth.validEmail
 import com.weathersync.common.auth.validPassword
+import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
+import com.weathersync.common.ui.assertSnackbarTextEquals
 import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.features.auth.GoogleAuthRepository
 import com.weathersync.features.auth.RegularAuthRepository
+import com.weathersync.features.auth.presentation.AuthViewModel
+import com.weathersync.features.auth.presentation.ui.AuthScreen
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import com.weathersync.R
-import com.weathersync.common.auth.invalidEmails
-import com.weathersync.common.auth.invalidPasswords
-import com.weathersync.common.auth.mockAuth
-import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
-import com.weathersync.common.ui.assertSnackbarTextEquals
-import com.weathersync.features.auth.presentation.ui.AuthScreen
-import com.weathersync.features.auth.presentation.AuthViewModel
-import io.mockk.verify
-import kotlinx.coroutines.test.advanceUntilIdle
-import org.junit.Assert.assertEquals
 import org.robolectric.annotation.GraphicsMode
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -60,8 +61,7 @@ class AuthUITests: BaseTest() {
         viewModel = AuthViewModel(
             regularAuthRepository = regularAuthRepository,
             googleAuthRepository = googleAuthRepository,
-            crashlyticsManager = crashlyticsManager,
-            coroutineScopeProvider = coroutineScopeProvider
+            crashlyticsManager = crashlyticsManager
         )
     }
     @Before
@@ -69,43 +69,43 @@ class AuthUITests: BaseTest() {
         setup()
     }
     @Test
-    fun performManualSignIn_inputIsValid_success() = testScope.runTest {
+    fun performManualSignIn_inputIsValid_success() = runTest {
         setContentWithSnackbar(composeRule, snackbarScope,
             uiContent = { AuthScreen(viewModel = viewModel, onNavigateToHome = {}) }) {
-            performAuth(true)
+            performAuth(true, this@runTest)
             assertSnackbarIsNotDisplayed(snackbarScope)
         }
     }
     @Test
-    fun performManualSignUp_inputIsValid_success() = testScope.runTest {
+    fun performManualSignUp_inputIsValid_success() = runTest {
         setContentWithSnackbar(composeRule, snackbarScope,
             uiContent = { AuthScreen(viewModel = viewModel, onNavigateToHome = {}) }) {
-            performAuth(false)
+            performAuth(false, this@runTest)
             assertSnackbarIsNotDisplayed(snackbarScope)
         }
     }
     @Test
-    fun performManualSignIn_inputIsValid_error() = testScope.runTest {
+    fun performManualSignIn_inputIsValid_error() = runTest {
         setup(exception = exception)
         setContentWithSnackbar(composeRule, snackbarScope,
             uiContent = { AuthScreen(viewModel = viewModel, onNavigateToHome = {}) }) {
-            performAuth(true)
+            performAuth(true, this@runTest)
             assertSnackbarTextEquals(R.string.auth_error, snackbarScope)
             assertEquals(exception.message, crashlyticsExceptionSlot.captured.message)
         }
     }
     @Test
-    fun performManualSignUp_inputIsValid_error() = testScope.runTest {
+    fun performManualSignUp_inputIsValid_error() = runTest {
         setup(exception = exception)
         setContentWithSnackbar(composeRule, snackbarScope,
             uiContent = { AuthScreen(viewModel = viewModel, onNavigateToHome = {}) }) {
-            performAuth(false)
+            performAuth(false, this@runTest)
             assertSnackbarTextEquals(R.string.auth_error, snackbarScope)
             assertEquals(exception.message, crashlyticsExceptionSlot.captured.message)
         }
     }
     @Test
-    fun performInvalidInput_errorsAreNotEmpty() = testScope.runTest {
+    fun performInvalidInput_errorsAreNotEmpty() = runTest {
         setContentWithSnackbar(composeRule, snackbarScope,
             uiContent = { AuthScreen(viewModel = viewModel, onNavigateToHome = {}) }) {
             invalidEmails.forEach { email ->
@@ -124,7 +124,7 @@ class AuthUITests: BaseTest() {
     }
 
 
-    private fun ComposeContentTestRule.performAuth(signIn: Boolean) {
+    private fun ComposeContentTestRule.performAuth(signIn: Boolean, testScope: TestScope) {
         if (!signIn) onNodeWithText(getString(R.string.go_to_sign_up), useUnmergedTree = true)
             .performScrollTo().assertIsDisplayed().performClick()
         val emailField = onNodeWithTag(getString(R.string.email))

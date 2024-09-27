@@ -37,7 +37,7 @@ class LocationClient(
     }
     private fun getLocality(location: Location): String {
         val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-        val address = addresses?.get(0)
-        return "${address?.locality}, ${address?.countryName}"
+        val address = addresses?.get(0)!!
+        return "${address.locality}, ${address.countryName}"
     }
 }

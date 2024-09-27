@@ -9,14 +9,13 @@ import com.google.android.gms.common.api.ApiException
 import com.weathersync.R
 import com.weathersync.common.ui.UIEvent
 import com.weathersync.common.ui.UIText
-import com.weathersync.features.auth.RegularAuthRepository
 import com.weathersync.features.auth.EmailValidator
 import com.weathersync.features.auth.GoogleAuthRepository
 import com.weathersync.features.auth.PasswordValidator
+import com.weathersync.features.auth.RegularAuthRepository
 import com.weathersync.features.auth.presentation.ui.AuthFieldType
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldState
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldsState
-import com.weathersync.utils.CoroutineScopeProvider
 import com.weathersync.utils.CrashlyticsManager
 import com.weathersync.utils.CustomResult
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,9 +29,7 @@ class AuthViewModel(
     private val regularAuthRepository: RegularAuthRepository,
     private val googleAuthRepository: GoogleAuthRepository,
     private val crashlyticsManager: CrashlyticsManager,
-    coroutineScopeProvider: CoroutineScopeProvider
 ): ViewModel() {
-    private val scope = coroutineScopeProvider(viewModelScope)
     private val emailValidator = EmailValidator()
     private val passwordValidator = PasswordValidator()
 
@@ -79,7 +76,7 @@ class AuthViewModel(
             null
         }
     private fun signInWithGoogle(activityResult: ActivityResult) {
-        scope.launch {
+        viewModelScope.launch {
             try {
                 if (activityResult.resultCode != Activity.RESULT_OK && activityResult.data == null){
                     updateAuthResult(CustomResult.Error)
@@ -97,7 +94,7 @@ class AuthViewModel(
     }
     private fun performManualAuth() {
         updateAuthResult(CustomResult.InProgress)
-        scope.launch {
+        viewModelScope.launch {
             try {
                 val email = _uiState.value.fieldsState.email.state.value
                 val password = _uiState.value.fieldsState.password.state.value

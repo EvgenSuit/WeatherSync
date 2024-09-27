@@ -20,6 +20,7 @@ import com.weathersync.features.auth.presentation.AuthViewModel
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -31,6 +32,7 @@ import org.junit.runner.RunWith
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class AuthUnitTests: BaseTest() {
+
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private lateinit var viewModel: AuthViewModel
 
@@ -43,8 +45,7 @@ class AuthUnitTests: BaseTest() {
         viewModel = AuthViewModel(
             regularAuthRepository = regularAuthRepository,
             googleAuthRepository = googleAuthRepository,
-            crashlyticsManager = crashlyticsManager,
-            coroutineScopeProvider = coroutineScopeProvider
+            crashlyticsManager = crashlyticsManager
         )
     }
     @Before
@@ -53,23 +54,23 @@ class AuthUnitTests: BaseTest() {
     }
 
     @Test
-    fun performManualSignIn_inputIsValid_success() = testScope.runTest {
+    fun performManualSignIn_inputIsValid_success() = runTest {
         performManualAuth(AuthType.SignIn)
         assertFalse(crashlyticsExceptionSlot.isCaptured)
     }
     @Test
-    fun performManualSignUp_inputIsValid_success() = testScope.runTest {
+    fun performManualSignUp_inputIsValid_success() = runTest {
         performManualAuth(AuthType.SignUp)
         assertFalse(crashlyticsExceptionSlot.isCaptured)
     }
     @Test
-    fun performManualSignIn_inputIsValid_error() = testScope.runTest {
+    fun performManualSignIn_inputIsValid_error() = runTest {
         setup(exception = exception)
         performManualAuth(AuthType.SignIn)
         assertEquals(exception.message, crashlyticsExceptionSlot.captured.message)
     }
     @Test
-    fun performManualSignUp_inputIsValid_error() = testScope.runTest {
+    fun performManualSignUp_inputIsValid_error() = runTest {
         setup(exception = exception)
         performManualAuth(AuthType.SignUp)
         assertEquals(exception.message, crashlyticsExceptionSlot.captured.message)
@@ -87,7 +88,7 @@ class AuthUnitTests: BaseTest() {
             assert(viewModel.uiState.value.fieldsState.password.state.error!!.asString(context).isNotEmpty())
         }
     }
-    private fun performManualAuth(type: AuthType) {
+    private fun TestScope.performManualAuth(type: AuthType) {
         viewModel.handleIntent(AuthIntent.ChangeAuthType(type))
         val emailIntent = AuthIntent.AuthInput(AuthTextFieldState(AuthFieldType.Email, TextFieldState(validEmail)))
         val passwordIntent = AuthIntent.AuthInput(AuthTextFieldState(AuthFieldType.Password, TextFieldState(validPassword)))
@@ -97,7 +98,7 @@ class AuthUnitTests: BaseTest() {
         assertEquals("", viewModel.uiState.value.fieldsState.email.state.error!!.asString(context))
         assertEquals("", viewModel.uiState.value.fieldsState.password.state.error!!.asString(context))
         viewModel.handleIntent(AuthIntent.ManualAuth)
-        testScope.advanceUntilIdle()
+        advanceUntilIdle()
         verify { auth.apply { if (type == AuthType.SignUp) createUserWithEmailAndPassword(validEmail, validPassword)
         else signInWithEmailAndPassword(validEmail, validPassword) } }
     }

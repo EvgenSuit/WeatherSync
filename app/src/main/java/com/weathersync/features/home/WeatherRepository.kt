@@ -39,6 +39,7 @@ class WeatherRepository(
 
         if (response.status.isSuccess()) {
             val responseBody = response.body<CurrentOpenMeteoWeather>()
+            println(responseBody.currentWeather.time)
             return CurrentWeather(
                 locality = coordinates.locality,
                 tempUnit = responseBody.currentWeatherUnits.temperature,

@@ -40,7 +40,7 @@ fun HomeScreen(
     val snackbarController = LocalSnackbarController.current
     val uiState by viewModel.uiState.collectAsState()
     LaunchedEffect(true) {
-        viewModel.uiEvent.collectLatest { event ->
+        viewModel.uiEvent.collect { event ->
             when (event) {
                 is UIEvent.ShowSnackbar -> snackbarController.showSnackbar(event.message)
             }
@@ -79,7 +79,6 @@ fun HomeScreenContent(
                     verticalArrangement = Arrangement.spacedBy(5.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        //.width(dimensionResource(id = R.dimen.max_width))
                         .fillMaxSize()
                         .padding(4.dp)
                 ) {

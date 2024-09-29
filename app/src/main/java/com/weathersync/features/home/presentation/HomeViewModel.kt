@@ -52,18 +52,16 @@ class HomeViewModel(
             }
         }
     }
-    private fun generateSuggestions(currentWeather: CurrentWeather) {
+    private suspend fun generateSuggestions(currentWeather: CurrentWeather) {
         updateSuggestionsGenerationResult(CustomResult.InProgress)
-        viewModelScope.launch {
-            try {
-                val recommendations = homeRepository.generateSuggestions(currentWeather)
-                _uiState.update { it.copy(suggestions = recommendations) }
-                updateSuggestionsGenerationResult(CustomResult.Success)
-            } catch (e: Exception) {
-                _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_generate_suggestions)))
-                crashlyticsManager.recordException(e)
-                updateSuggestionsGenerationResult(CustomResult.Error)
-            }
+        try {
+            val recommendations = homeRepository.generateSuggestions(currentWeather)
+            _uiState.update { it.copy(suggestions = recommendations) }
+            updateSuggestionsGenerationResult(CustomResult.Success)
+        } catch (e: Exception) {
+            _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_generate_suggestions)))
+            crashlyticsManager.recordException(e)
+            updateSuggestionsGenerationResult(CustomResult.Error)
         }
     }
     private fun updateCurrentWeatherRefreshResult(result: CustomResult) =

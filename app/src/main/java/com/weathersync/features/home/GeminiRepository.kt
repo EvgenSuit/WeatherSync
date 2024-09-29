@@ -3,6 +3,7 @@ package com.weathersync.features.home
 import com.google.ai.client.generativeai.GenerativeModel
 import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.CurrentWeather
+import com.weathersync.utils.AtLeastOneTagMissing
 import java.util.Locale
 
 val recommendedActivitiesTag = "[RECOMMENDED_ACTIVITIES]"
@@ -12,14 +13,17 @@ class GeminiRepository(
     private val generativeModel: GenerativeModel
 ) {
     suspend fun generateSuggestions(currentWeather: CurrentWeather): Suggestions {
-        val prompt = constructPrompt(currentWeather)
+        val prompt = constructSuggestionsPrompt(currentWeather)
         val plainText = generativeModel.generateContent(prompt).text ?: throw Exception("Empty response from Gemini")
         val extractedContent = extractContentWithTags(plainText,
             listOf(recommendedActivitiesTag, unrecommendedActivitiesTag, whatToBringTag))
+        if (extractedContent.values.any { it.isEmpty() })
+            throw AtLeastOneTagMissing("There's at least 1 tag missing in response from Gemini:" +
+                    " Extracted content: $extractedContent. Prompt: $prompt. Plain response: $plainText")
         return Suggestions(
-            recommendedActivities = extractedContent[recommendedActivitiesTag]!!.split("\n"),
-            unrecommendedActivities = extractedContent[unrecommendedActivitiesTag]!!.split("\n"),
-            whatToBring = extractedContent[whatToBringTag]!!.split("\n")
+            recommendedActivities = extractedContent[recommendedActivitiesTag]!!.trim().split("\n"),
+            unrecommendedActivities = extractedContent[unrecommendedActivitiesTag]!!.trim().split("\n"),
+            whatToBring = extractedContent[whatToBringTag]!!.trim().split("\n")
         )
     }
     private fun extractContentWithTags(
@@ -35,7 +39,7 @@ class GeminiRepository(
         }
         return extractedContent
     }
-    private fun constructPrompt(currentWeather: CurrentWeather) =
+    private fun constructSuggestionsPrompt(currentWeather: CurrentWeather) =
         """Generate short suggestions on weather data:
             Temperature: ${currentWeather.temp} ${currentWeather.tempUnit},
             Wind speed: ${currentWeather.windSpeed} ${currentWeather.windSpeedUnit},

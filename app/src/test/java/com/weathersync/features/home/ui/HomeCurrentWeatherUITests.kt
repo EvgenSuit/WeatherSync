@@ -14,6 +14,7 @@ import com.weathersync.common.home.city
 import com.weathersync.common.home.country
 import com.weathersync.common.home.mockedWeather
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
+import com.weathersync.common.ui.assertSnackbarTextEquals
 import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.common.utils.MainDispatcherRule
@@ -74,6 +75,7 @@ class HomeCurrentWeatherUITests {
                 tempUnit = mockedWeather.currentWeatherUnits.temperature,
                 windSpeedUnit = mockedWeather.currentWeatherUnits.windSpeed,
                 temp = mockedWeather.currentWeather.temperature,
+                time = mockedWeather.currentWeather.time,
                 windSpeed = mockedWeather.currentWeather.windSpeed,
                 weatherCode = mockedWeather.currentWeather.weatherCode
             )
@@ -138,5 +140,6 @@ class HomeCurrentWeatherUITests {
         homeRule.advanceKtor(testScope)
         assertEquals(message, homeRule.crashlyticsExceptionSlot.captured.message)
         assertEquals(null, homeRule.viewModel.uiState.value.currentWeather)
+        assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = homeRule.snackbarScope)
     }
 }

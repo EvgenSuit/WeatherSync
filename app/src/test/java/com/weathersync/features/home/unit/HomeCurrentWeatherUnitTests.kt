@@ -33,6 +33,7 @@ class HomeCurrentWeatherUnitTests {
             tempUnit = mockedWeather.currentWeatherUnits.temperature,
             windSpeedUnit = mockedWeather.currentWeatherUnits.windSpeed,
             temp = mockedWeather.currentWeather.temperature,
+            time = mockedWeather.currentWeather.time,
             windSpeed = mockedWeather.currentWeather.windSpeed,
             weatherCode = mockedWeather.currentWeather.weatherCode
         ), homeRule.viewModel.uiState.value.currentWeather)

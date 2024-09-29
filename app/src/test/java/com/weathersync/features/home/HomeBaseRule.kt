@@ -34,7 +34,8 @@ class HomeBaseRule: TestWatcher() {
         )
         val homeRepository = HomeRepository(
             homeFirebaseClient = mockk(),
-            weatherRepository = weatherRepository
+            weatherRepository = weatherRepository,
+            geminiRepository = mockk()
         )
         viewModel = HomeViewModel(
             homeRepository = homeRepository,

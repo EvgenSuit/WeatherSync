@@ -3,11 +3,10 @@ package com.weathersync.utils
 import androidx.annotation.StringRes
 import com.weathersync.common.ui.UIText
 
-sealed class CustomResult(val data: UIText = UIText.Empty) {
+sealed class CustomResult {
     data object None: CustomResult()
     data object InProgress: CustomResult()
-    data class Success(@StringRes val message: Int? = null, val args: List<Any> = emptyList()):
-        CustomResult(data = if (message != null) UIText.StringResource(message, args) else UIText.Empty)
+    data object Success: CustomResult()
     data object Error: CustomResult()
 
 }

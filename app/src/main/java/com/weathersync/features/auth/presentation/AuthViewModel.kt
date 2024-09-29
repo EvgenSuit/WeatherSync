@@ -83,7 +83,7 @@ class AuthViewModel(
                     return@launch
                 }
                 googleAuthRepository.signInWithIntent(activityResult.data!!)
-                updateAuthResult(CustomResult.Success())
+                updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {
                 if ((e is ApiException && e.statusCode != 16) || e !is ApiException) {
                     _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
@@ -101,7 +101,7 @@ class AuthViewModel(
                 regularAuthRepository.apply {
                     if (_uiState.value.authType == AuthType.SignIn) signIn(email, password) else signUp(email, password)
                 }
-                updateAuthResult(CustomResult.Success())
+                updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {
                 updateAuthResult(CustomResult.Error)
                 crashlyticsManager.recordException(e, "Auth type: ${_uiState.value.authType}")

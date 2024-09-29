@@ -34,4 +34,7 @@
     <string name="wind_speed">Wind speed: %1$s</string>
 
     <string name="could_not_fetch_current_weather">Could not fetch current weather</string>
+    <string name="could_not_generate_suggestions">Could not generate suggestions</string>
+    <string name="suggestions">Suggestions</string>
+    <string name="what_to_wear_bring">What to wear/bring today</string>
 </resources>

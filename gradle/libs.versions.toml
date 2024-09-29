@@ -52,6 +52,8 @@ ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negoti
 play-services-location = { module = "com.google.android.gms:play-services-location", version = "21.3.0" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version = "0.36.0" }
 
+generative-ai = { module = "com.google.ai.client.generativeai:generativeai", version = "0.7.0" }
+
 koin = { module = "io.insert-koin:koin-androidx-compose", version = "4.0.0" }
 
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version = "1.9.0" }

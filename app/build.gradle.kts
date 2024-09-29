@@ -30,6 +30,7 @@ android {
             useSupportLibrary = true
         }
         buildConfigField("String", "WEB_CLIENT_ID", "\"${localProperties.getProperty("WEB_CLIENT_ID")}\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY")}\"")
     }
     buildFeatures.buildConfig = true
     testOptions {
@@ -111,6 +112,9 @@ dependencies {
     // DI
     implementation(libs.koin)
     implementation(libs.androidx.junit.ktx)
+
+    // Gemini
+    implementation(libs.generative.ai)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

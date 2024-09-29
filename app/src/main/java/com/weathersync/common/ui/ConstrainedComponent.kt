@@ -13,11 +13,13 @@ import com.weathersync.R
 fun ConstrainedComponent(
     content: @Composable () -> Unit
 ) {
+    val maxAllowedWidth = dimensionResource(id = R.dimen.max_width)
     BoxWithConstraints {
         Box(
-            modifier = Modifier.let {
-                if (maxWidth > dimensionResource(id = R.dimen.max_width))
-            it.fillMaxWidth() else it.width(maxWidth)
+            modifier = if (maxWidth > dimensionResource(id = R.dimen.max_width)) {
+                Modifier.width(maxAllowedWidth)
+            } else {
+                Modifier.fillMaxWidth()
             }
         ) {
             content()

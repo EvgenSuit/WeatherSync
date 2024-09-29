@@ -1,6 +1,5 @@
 package com.weathersync.features.home
 
-import com.weathersync.features.home.data.Coordinates
 import com.weathersync.features.home.data.CurrentOpenMeteoWeather
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.data.Forecast
@@ -14,6 +13,7 @@ import io.ktor.client.request.get
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import java.time.ZoneId
 
 class WeatherRepository(
     engine: HttpClientEngine,
@@ -33,8 +33,10 @@ class WeatherRepository(
     }
     suspend fun getCurrentWeather(): CurrentWeather {
         val coordinates = locationClient.getCoordinates()
-        val requestUrl = "forecast?current_weather=true&latitude=${coordinates.lat}&longitude=${coordinates.lon}"
+        val timezone = ZoneId.systemDefault()
+        val requestUrl = "forecast?current_weather=true&latitude=${coordinates.lat}&longitude=${coordinates.lon}&timezone=$timezone"
         val response = httpClient.get(requestUrl)
+
         if (response.status.isSuccess()) {
             val responseBody = response.body<CurrentOpenMeteoWeather>()
             return CurrentWeather(
@@ -43,13 +45,13 @@ class WeatherRepository(
                 windSpeedUnit = responseBody.currentWeatherUnits.windSpeed,
                 temp = responseBody.currentWeather.temperature,
                 windSpeed = responseBody.currentWeather.windSpeed,
+                time = responseBody.currentWeather.time,
                 weatherCode = responseBody.currentWeather.weatherCode
             )
         } else throw Exception(response.status.description)
     }
-    suspend fun getForecast(forecastDays: Int,
-                            currentWeather: Boolean,
-                            coordinates: Coordinates): Forecast {
+    suspend fun getForecast(forecastDays: Int): Forecast {
+        val coordinates = locationClient.getCoordinates()
         val requestUrl = "forecast?forecast_days=$forecastDays&latitude=${coordinates.lat}&longitude=${coordinates.lon}&hourly=temperature_2m,relativehumidity_2m,windspeed_10m,pressure_msl"
         return httpClient.get(requestUrl).body()
     }

@@ -7,6 +7,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.weathersync.features.home.data.Coordinates
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.TimeZone
 import kotlin.coroutines.resumeWithException
 
 class LocationClient(

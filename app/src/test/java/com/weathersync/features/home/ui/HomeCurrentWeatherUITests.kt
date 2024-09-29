@@ -69,16 +69,20 @@ class HomeCurrentWeatherUITests {
             waitForIdle()
             onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
             homeRule.advanceKtor(this@runTest)
-            assertEquals(
-                CurrentWeather(
+            val currentWeather = CurrentWeather(
                 locality = "$city, $country",
                 tempUnit = mockedWeather.currentWeatherUnits.temperature,
                 windSpeedUnit = mockedWeather.currentWeatherUnits.windSpeed,
                 temp = mockedWeather.currentWeather.temperature,
                 windSpeed = mockedWeather.currentWeather.windSpeed,
                 weatherCode = mockedWeather.currentWeather.weatherCode
-            ), homeRule.viewModel.uiState.value.currentWeather)
+            )
+            assertEquals(currentWeather, homeRule.viewModel.uiState.value.currentWeather)
             assertSnackbarIsNotDisplayed(snackbarScope = homeRule.snackbarScope)
+
+            onNodeWithText("${currentWeather.temp} ${currentWeather.tempUnit}").assertIsDisplayed()
+            onNodeWithText(currentWeather.locality).assertIsDisplayed()
+            onNodeWithText(getString(R.string.wind_speed, "${currentWeather.windSpeed} ${currentWeather.windSpeedUnit}")).assertIsDisplayed()
         }
     }
     @Test

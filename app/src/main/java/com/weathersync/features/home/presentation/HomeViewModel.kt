@@ -6,6 +6,7 @@ import com.weathersync.R
 import com.weathersync.common.ui.UIEvent
 import com.weathersync.common.ui.UIText
 import com.weathersync.features.home.HomeRepository
+import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.utils.CrashlyticsManager
 import com.weathersync.utils.CustomResult
@@ -20,7 +21,6 @@ class HomeViewModel(
     private val homeRepository: HomeRepository,
     private val crashlyticsManager: CrashlyticsManager,
 ): ViewModel() {
-    private val scope = viewModelScope
     private val _uiState = MutableStateFlow(HomeUIState())
     val uiState = _uiState.asStateFlow()
 
@@ -39,11 +39,12 @@ class HomeViewModel(
         else { res -> updateCurrentWeatherFetchResult(res) }
 
         updateMethod(CustomResult.InProgress)
-        scope.launch {
+        viewModelScope.launch {
             try {
                 val weather = homeRepository.getCurrentWeather()
                 _uiState.update { it.copy(currentWeather = weather) }
-                updateMethod(CustomResult.Success())
+                updateMethod(CustomResult.Success)
+                generateSuggestions(weather)
             } catch (e: Exception) {
                 _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_fetch_current_weather)))
                 crashlyticsManager.recordException(e, "Is refreshing: $refresh")
@@ -51,14 +52,32 @@ class HomeViewModel(
             }
         }
     }
+    private fun generateSuggestions(currentWeather: CurrentWeather) {
+        updateSuggestionsGenerationResult(CustomResult.InProgress)
+        viewModelScope.launch {
+            try {
+                val recommendations = homeRepository.generateSuggestions(currentWeather)
+                _uiState.update { it.copy(suggestions = recommendations) }
+                updateSuggestionsGenerationResult(CustomResult.Success)
+            } catch (e: Exception) {
+                _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_generate_suggestions)))
+                crashlyticsManager.recordException(e)
+                updateSuggestionsGenerationResult(CustomResult.Error)
+            }
+        }
+    }
     private fun updateCurrentWeatherRefreshResult(result: CustomResult) =
         _uiState.update { it.copy(currentWeatherRefreshResult = result) }
     private fun updateCurrentWeatherFetchResult(result: CustomResult) =
         _uiState.update { it.copy(currentWeatherFetchResult = result) }
+    private fun updateSuggestionsGenerationResult(result: CustomResult) =
+        _uiState.update { it.copy(suggestionsGenerationResult = result) }
 
 }
 data class HomeUIState(
     val currentWeather: CurrentWeather? = null,
     val currentWeatherRefreshResult: CustomResult = CustomResult.None,
-    val currentWeatherFetchResult: CustomResult = CustomResult.None
+    val currentWeatherFetchResult: CustomResult = CustomResult.None,
+    val suggestions: Suggestions = Suggestions(),
+    val suggestionsGenerationResult: CustomResult = CustomResult.None
 )

@@ -6,6 +6,7 @@ import com.weathersync.common.mockGeminiRepository
 import com.weathersync.common.utils.mockCrashlyticsManager
 import com.weathersync.features.home.presentation.HomeIntent
 import com.weathersync.features.home.presentation.HomeViewModel
+import com.weathersync.utils.WeatherRepository
 import io.ktor.http.HttpStatusCode
 import io.mockk.mockk
 import io.mockk.slot

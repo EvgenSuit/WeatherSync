@@ -13,6 +13,7 @@ sealed class CustomResult {
 
 fun CustomResult.isInProgress() = this is CustomResult.InProgress
 fun CustomResult.isSuccess() = this is CustomResult.Success
-fun CustomResult.isError() = this is CustomResult.Error //CustomResult.DynamicError || this is CustomResult.ResourceError
+fun CustomResult.isError() = this is CustomResult.Error
+fun CustomResult.isNone() = this is CustomResult.None
 
 fun Exception.toStringIfMessageIsNull() = message ?: this.toString()

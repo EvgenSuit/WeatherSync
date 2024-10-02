@@ -12,7 +12,7 @@ import com.weathersync.features.home.GeminiRepository
 import com.weathersync.features.home.HomeFirebaseClient
 import com.weathersync.features.home.HomeRepository
 import com.weathersync.features.home.LocationClient
-import com.weathersync.features.home.WeatherRepository
+import com.weathersync.utils.WeatherRepository
 import com.weathersync.features.home.presentation.HomeViewModel
 import io.ktor.client.engine.cio.CIO
 import org.koin.android.ext.koin.androidContext

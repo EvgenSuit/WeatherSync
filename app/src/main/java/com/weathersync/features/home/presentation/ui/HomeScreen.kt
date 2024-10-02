@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -29,8 +27,8 @@ import com.weathersync.features.home.presentation.ui.components.RecommendedActiv
 import com.weathersync.features.home.presentation.ui.components.WhatToWearComposable
 import com.weathersync.ui.theme.WeatherSyncTheme
 import com.weathersync.utils.isInProgress
+import com.weathersync.utils.isNone
 import com.weathersync.utils.isSuccess
-import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -47,7 +45,7 @@ fun HomeScreen(
         }
     }
     LocationRequester(onPermissionGranted = {
-        viewModel.handleIntent(HomeIntent.GetCurrentWeather)
+        if (uiState.currentWeatherFetchResult.isNone()) viewModel.handleIntent(HomeIntent.GetCurrentWeather)
     })
     HomeScreenContent(
         uiState = uiState,
@@ -66,35 +64,27 @@ fun HomeScreenContent(
         onRefresh = { onIntent(HomeIntent.RefreshCurrentWeather) },
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .fillMaxSize()
-            .padding(10.dp)) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()) // without verticalScroll pull to refresh will not work
-        ) {
-            ConstrainedComponent {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(5.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
-                ) {
-                    CurrentWeatherComposable(
-                        weather = uiState.currentWeather,
-                        isFetchInProgress = listOf(uiState.currentWeatherFetchResult, uiState.currentWeatherRefreshResult).any { it.isInProgress() })
-                    RecommendedActivitiesComposable(
-                        recommendedActivities = suggestions.recommendedActivities,
-                        unrecommendedActivities = suggestions.unrecommendedActivities,
-                        isGenerationSuccessful = uiState.suggestionsGenerationResult.isSuccess()
-                    )
-                    WhatToWearComposable(
-                        recommendations = suggestions.whatToBring,
-                        isGenerationSuccessful = uiState.suggestionsGenerationResult.isSuccess()
-                    )
-                }
+            .fillMaxSize()) {
+        ConstrainedComponent {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                CurrentWeatherComposable(
+                    weather = uiState.currentWeather,
+                    isFetchInProgress = listOf(uiState.currentWeatherFetchResult, uiState.currentWeatherRefreshResult).any { it.isInProgress() })
+                RecommendedActivitiesComposable(
+                    recommendedActivities = suggestions.recommendedActivities,
+                    unrecommendedActivities = suggestions.unrecommendedActivities,
+                    isGenerationSuccessful = uiState.suggestionsGenerationResult.isSuccess()
+                )
+                WhatToWearComposable(
+                    recommendations = suggestions.whatToBring,
+                    isGenerationSuccessful = uiState.suggestionsGenerationResult.isSuccess()
+                )
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.weathersync
 
 import android.app.Application
+import com.weathersync.di.activityPlanningModule
 import com.weathersync.di.authModule
 import com.weathersync.di.homeModule
 import com.weathersync.di.utilsModule
@@ -18,7 +19,8 @@ class WeatherSyncApplication: Application() {
             modules(
                 authModule,
                 utilsModule,
-                homeModule
+                homeModule,
+                activityPlanningModule
             )
         }
     }

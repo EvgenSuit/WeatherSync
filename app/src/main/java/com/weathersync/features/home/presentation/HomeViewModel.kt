@@ -10,6 +10,7 @@ import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.utils.CrashlyticsManager
 import com.weathersync.utils.CustomResult
+import com.weathersync.utils.isInProgress
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -37,7 +38,9 @@ class HomeViewModel(
     private fun getCurrentWeather(refresh: Boolean) {
         val updateMethod: (CustomResult) -> Unit = if (refresh) { res -> updateCurrentWeatherRefreshResult(res) }
         else { res -> updateCurrentWeatherFetchResult(res) }
-
+        val currentResult = if (refresh) uiState.value.currentWeatherRefreshResult
+        else uiState.value.currentWeatherFetchResult
+        if (currentResult.isInProgress()) return
         updateMethod(CustomResult.InProgress)
         viewModelScope.launch {
             try {

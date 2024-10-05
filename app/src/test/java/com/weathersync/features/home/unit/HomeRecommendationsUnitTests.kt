@@ -1,6 +1,5 @@
 package com.weathersync.features.home.unit
 
-import com.weathersync.common.testSuggestions
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.presentation.HomeIntent
@@ -9,10 +8,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeRecommendationsUnitTests {
     @get: Rule(order = 0)
@@ -46,8 +45,8 @@ class HomeRecommendationsUnitTests {
         advanceUntilIdle()
         assertTrue(!homeBaseRule.crashlyticsExceptionSlot.isCaptured)
         val suggestions = homeBaseRule.viewModel.uiState.value.suggestions
-        assertEquals(testSuggestions.recommendedActivities, suggestions.recommendedActivities)
-        assertEquals(testSuggestions.unrecommendedActivities, suggestions.unrecommendedActivities)
-        assertEquals(testSuggestions.whatToBring, suggestions.whatToBring)
+        assertEquals(homeBaseRule.testSuggestions.recommendedActivities, suggestions.recommendedActivities)
+        assertEquals(homeBaseRule.testSuggestions.unrecommendedActivities, suggestions.unrecommendedActivities)
+        assertEquals(homeBaseRule.testSuggestions.whatToBring, suggestions.whatToBring)
     }
 }

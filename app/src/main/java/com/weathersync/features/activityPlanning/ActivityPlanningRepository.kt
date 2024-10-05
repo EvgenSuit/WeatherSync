@@ -11,12 +11,12 @@ class ActivityPlanningRepository(
     private val weatherRepository: WeatherRepository,
     private val activityPlanningGeminiRepository: ActivityPlanningGeminiRepository
 ) {
-    suspend fun generateTimes(activity: String): String {
+    suspend fun generateRecommendations(activity: String): String {
         val openMeteoForecast = weatherRepository.getForecast(forecastDates = calculateForecastDays())
         val convertedForecast = openMeteoForecast.toForecast()
-        val times = activityPlanningGeminiRepository.generateTimes(
+        val times = activityPlanningGeminiRepository.generateRecommendations(
             activity = activity,
-            forecast =  convertedForecast)
+            forecast = convertedForecast)
         return times
     }
     private fun calculateForecastDays(): ForecastDates {

@@ -26,6 +26,7 @@ class WeatherRepository(
     ) {
     private val timezone = ZoneId.systemDefault()
     private val httpClient = HttpClient(engine) {
+        expectSuccess = true
         install(Logging)
         install(ContentNegotiation) {
             json(Json {
@@ -42,20 +43,16 @@ class WeatherRepository(
         val coordinates = locationClient.getCoordinates()
         val requestUrl =
             "forecast?current_weather=true&latitude=${coordinates.lat}&longitude=${coordinates.lon}&timezone=$timezone"
-        val response = httpClient.get(requestUrl)
-
-        if (response.status.isSuccess()) {
-            val responseBody = response.body<CurrentOpenMeteoWeather>()
-            return CurrentWeather(
-                locality = coordinates.locality,
-                tempUnit = responseBody.currentWeatherUnits.temperature,
-                windSpeedUnit = responseBody.currentWeatherUnits.windSpeed,
-                temp = responseBody.currentWeather.temperature,
-                windSpeed = responseBody.currentWeather.windSpeed,
-                time = responseBody.currentWeather.time,
-                weatherCode = responseBody.currentWeather.weatherCode
-            )
-        } else throw Exception(response.status.description)
+        val responseBody = httpClient.get(requestUrl).body<CurrentOpenMeteoWeather>()
+        return CurrentWeather(
+            locality = coordinates.locality,
+            tempUnit = responseBody.currentWeatherUnits.temperature,
+            windSpeedUnit = responseBody.currentWeatherUnits.windSpeed,
+            temp = responseBody.currentWeather.temperature,
+            windSpeed = responseBody.currentWeather.windSpeed,
+            time = responseBody.currentWeather.time,
+            weatherCode = responseBody.currentWeather.weatherCode
+        )
     }
 
     // make this request to see what the forecast looks like in plain json:
@@ -63,15 +60,16 @@ class WeatherRepository(
     suspend fun getForecast(forecastDates: ForecastDates): OpenMeteoForecast {
         val coordinates = locationClient.getCoordinates()
         val requestUrl =
-            "forecast?latitude=${coordinates.lat}&longitude=${coordinates.lon}" +
-                    "&start_hour=${forecastDates.startDate}&end_hour=${forecastDates.endDate}" +
+            "forecast?start_hour=${forecastDates.startDate}&end_hour=${forecastDates.endDate}" +
+                    "&latitude=${coordinates.lat}&longitude=${coordinates.lon}" +
                     "&timezone=$timezone&hourly=temperature_2m,relative_humidity_2m,apparent_temperature," +
                     "wind_speed_10m,precipitation_probability,weather_code,visibility,pressure_msl"
         val forecast = httpClient.get(requestUrl).body<OpenMeteoForecast>()
         return forecast.copy(
             hourly = forecast.hourly.copy(
                 time = forecast.hourly.time.map(::convertToCorrectDateFormat)
-            )
+            ),
+            locality = coordinates.locality
         )
     }
     private fun convertToCorrectDateFormat(time: String): String {

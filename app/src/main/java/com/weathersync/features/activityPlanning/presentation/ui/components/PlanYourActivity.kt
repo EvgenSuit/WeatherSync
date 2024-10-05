@@ -86,7 +86,7 @@ fun PlanYourActivityComposable(
             }
             CustomButton(enabled = inputError is UIText.Empty,
                 text = stringResource(id = R.string.find_optimal_times),
-                onClick = { onIntent(ActivityPlanningIntent.GenerateTimes) })
+                onClick = { onIntent(ActivityPlanningIntent.GenerateRecommendations) })
             if (output.isNotBlank()) {
                 Spacer(modifier = Modifier.height(horizontalDividerPadding))
                 Box(

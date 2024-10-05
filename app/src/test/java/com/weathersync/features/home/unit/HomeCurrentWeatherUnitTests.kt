@@ -1,12 +1,12 @@
 package com.weathersync.features.home.unit
 
-import com.weathersync.common.home.city
-import com.weathersync.common.home.country
 import com.weathersync.common.home.mockedWeather
 import com.weathersync.common.utils.MainDispatcherRule
+import com.weathersync.common.utils.locationInfo
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.presentation.HomeIntent
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -29,7 +29,7 @@ class HomeCurrentWeatherUnitTests {
         homeRule.advanceKtor(this)
         assertFalse(homeRule.crashlyticsExceptionSlot.isCaptured)
         assertEquals(CurrentWeather(
-            locality = "$city, $country",
+            locality = "${locationInfo.city}, ${locationInfo.country}",
             tempUnit = mockedWeather.currentWeatherUnits.temperature,
             windSpeedUnit = mockedWeather.currentWeatherUnits.windSpeed,
             temp = mockedWeather.currentWeather.temperature,
@@ -57,7 +57,11 @@ class HomeCurrentWeatherUnitTests {
     private fun TestScope.performErrorWeatherFetch(message: String?) {
         homeRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
         homeRule.advanceKtor(this)
-        assertEquals(message, homeRule.crashlyticsExceptionSlot.captured.message)
+        val exception = homeRule.crashlyticsExceptionSlot.captured
+        exception.apply { if (this is ClientRequestException) assertEquals(message, this.response.status.description)
+        else assertEquals(message, this.message)
+        }
+
         assertEquals(null, homeRule.viewModel.uiState.value.currentWeather)
     }
 }

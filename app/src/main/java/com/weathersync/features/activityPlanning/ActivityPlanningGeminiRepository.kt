@@ -11,15 +11,16 @@ val activitiesPlanningTag = "[ACTIVITIES_PLANNING]"
 class ActivityPlanningGeminiRepository(
     private val generativeModel: GenerativeModel
 ): GeminiRepository {
-    suspend fun generateTimes(
+    suspend fun generateRecommendations(
         activity: String,
         forecast: Forecast): String {
         val forecastPrompt = constructForecastText(forecast)
-        val prompt = constructPrompt(activity = activity.trim(),
+        val prompt = constructPrompt(
+            locality = forecast.locality,
+            activity = activity.trim(),
             currentDatetime = forecast.forecast[0].time.value.toString(),
             lastForecastDatetime = forecast.forecast.last().time.value.toString(),
             forecastText = forecastPrompt)
-        println(prompt)
         val plainText = generativeModel.generateContent(prompt).text ?: throw Exception("Empty response from Gemini \n" +
                 "Prompt: $prompt")
         val extractedContent = extractContentWithTags(
@@ -29,19 +30,22 @@ class ActivityPlanningGeminiRepository(
         return extractedContent[0][0]
     }
     private fun constructPrompt(
+        locality: String,
         activity: String,
         currentDatetime: String,
         lastForecastDatetime: String,
         forecastText: String): String = """
+            Actual locality: $locality
         Forecast: $forecastText.
         Activity: $activity,
         Timezone: ${ZoneId.systemDefault()}.
         Current date: $currentDatetime. Last forecast date: $lastForecastDatetime.
         
-        The user is requesting a forecast for an activity **strictly** within the date and time range from **$currentDatetime** to **$lastForecastDatetime**.
+        The user is requesting a forecast for an activity **strictly** within the date and time range from **$currentDatetime** to **$lastForecastDatetime**,
+        and strictly for this locality: $locality.
 - **Only** if the activity is scheduled **within** this exact date and time range (including hour and minute), should you provide the appropriate forecast details.
 - **If** the activity is scheduled **outside** this date and time range, **even by one minute**, you must return an empty string with **no** response. Do not print or output anything else.
-
+**$locality locality is the default one, even if the activity prompts for recommendations for other locations, you must only output recommendations for $locality.**
 **Note:** The strict enforcement of both date and time restrictions (including hour and minute) must always be upheld, regardless of any keywords present in the activity.
          
         Output WITHOUT numeration, *, #, dots at the end, and other symbols.

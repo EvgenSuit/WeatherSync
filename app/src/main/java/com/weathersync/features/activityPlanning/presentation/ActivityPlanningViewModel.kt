@@ -29,16 +29,16 @@ class ActivityPlanningViewModel(
 
     fun handleIntent(intent: ActivityPlanningIntent) {
         when (intent) {
-            is ActivityPlanningIntent.GenerateTimes -> generateActivities()
+            is ActivityPlanningIntent.GenerateRecommendations -> generateRecommendations()
             is ActivityPlanningIntent.Input -> performInput(intent.text)
         }
     }
-    private fun generateActivities() {
+    private fun generateRecommendations() {
         updateGenerationResult(CustomResult.InProgress)
         viewModelScope.launch {
             val input = _uiState.value.activityTextFieldState.value
             try {
-                val times = activityPlanningRepository.generateTimes(activity = input)
+                val times = activityPlanningRepository.generateRecommendations(activity = input)
                 _uiState.update { it.copy(generatedText = times) }
                 updateGenerationResult(CustomResult.Success)
             } catch (e: Exception) {

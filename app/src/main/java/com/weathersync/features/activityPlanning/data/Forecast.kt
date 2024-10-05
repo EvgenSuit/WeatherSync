@@ -2,6 +2,7 @@ package com.weathersync.features.activityPlanning.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
@@ -9,7 +10,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 data class Forecast(
-    val forecast: List<SingleForecast>
+    val forecast: List<SingleForecast>,
+    val locality: String,
 )
 data class SingleForecast(
     val time: ForecastValue,
@@ -31,7 +33,9 @@ data class ForecastValue(
 data class OpenMeteoForecast(
     @SerialName("hourly_units")
     val forecastUnits: ForecastUnits,
-    val hourly: Hourly
+    val hourly: Hourly,
+    @Transient
+    val locality: String = ""
 )
 
 @Serializable
@@ -89,6 +93,7 @@ fun OpenMeteoForecast.toForecast(): Forecast {
                 visibility = ForecastValue(this.hourly.visibility[index], this.forecastUnits.visibility),
                 pressure = ForecastValue(this.hourly.pressure[index], this.forecastUnits.pressure)
             )
-        }
+        },
+        locality = this.locality
     )
 }

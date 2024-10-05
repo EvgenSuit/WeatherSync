@@ -10,17 +10,17 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.weathersync.R
-import com.weathersync.common.home.city
-import com.weathersync.common.home.country
 import com.weathersync.common.home.mockedWeather
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.assertSnackbarTextEquals
 import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.common.utils.MainDispatcherRule
+import com.weathersync.common.utils.locationInfo
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.presentation.ui.HomeScreen
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
@@ -34,7 +34,6 @@ import org.koin.core.context.stopKoin
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows
 import org.robolectric.annotation.GraphicsMode
-import java.lang.Exception
 
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(AndroidJUnit4::class)
@@ -71,7 +70,7 @@ class HomeCurrentWeatherUITests {
             onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
             homeRule.advanceKtor(this@runTest)
             val currentWeather = CurrentWeather(
-                locality = "$city, $country",
+                locality = "${locationInfo.city}, ${locationInfo.country}",
                 tempUnit = mockedWeather.currentWeatherUnits.temperature,
                 windSpeedUnit = mockedWeather.currentWeatherUnits.windSpeed,
                 temp = mockedWeather.currentWeather.temperature,
@@ -138,7 +137,12 @@ class HomeCurrentWeatherUITests {
         waitForIdle()
         onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
         homeRule.advanceKtor(testScope)
-        assertEquals(message, homeRule.crashlyticsExceptionSlot.captured.message)
+        message?.let { m ->
+            val exception = homeRule.crashlyticsExceptionSlot.captured
+            exception.apply { if (this is ClientRequestException) assertEquals(m, this.response.status.description)
+            else assertEquals(m, this.message)
+            }
+        }
         assertEquals(null, homeRule.viewModel.uiState.value.currentWeather)
         assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = homeRule.snackbarScope)
     }

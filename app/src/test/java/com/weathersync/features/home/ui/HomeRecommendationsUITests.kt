@@ -8,24 +8,21 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.weathersync.R
+import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.assertSnackbarTextEquals
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.features.home.HomeBaseRule
-import com.weathersync.features.home.presentation.HomeIntent
+import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.presentation.ui.HomeScreen
+import com.weathersync.utils.AtLeastOneTagMissing
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import com.weathersync.R
-import com.weathersync.common.testSuggestions
-import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
-import com.weathersync.features.home.data.Suggestions
-import com.weathersync.utils.AtLeastOneTagMissing
 import org.junit.runner.RunWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -90,9 +87,9 @@ class HomeRecommendationsUITests {
             assertTrue(!homeBaseRule.crashlyticsExceptionSlot.isCaptured)
 
             val suggestions = homeBaseRule.viewModel.uiState.value.suggestions
-            assertEquals(testSuggestions.recommendedActivities, suggestions.recommendedActivities)
-            assertEquals(testSuggestions.unrecommendedActivities, suggestions.unrecommendedActivities)
-            assertEquals(testSuggestions.whatToBring, suggestions.whatToBring)
+            assertEquals(homeBaseRule.testSuggestions.recommendedActivities, suggestions.recommendedActivities)
+            assertEquals(homeBaseRule.testSuggestions.unrecommendedActivities, suggestions.unrecommendedActivities)
+            assertEquals(homeBaseRule.testSuggestions.whatToBring, suggestions.whatToBring)
 
             checkUISuggestions(suggestions, displayed = true)
             assertSnackbarIsNotDisplayed(homeBaseRule.snackbarScope)

@@ -16,7 +16,7 @@ interface GeminiRepository {
         }
         if (extractedContent.values.any { it.isEmpty() })
             throw AtLeastOneTagMissing("There's at least 1 tag missing in response from Gemini: \n" +
-                    " Extracted content: $extractedContent. \n Prompt: ${prompt.take(3000)}. \n Plain response: $content")
+                    " Extracted content: $extractedContent. \n Prompt: ${prompt.take(200)}..... \n Plain response: $content")
         return extractedContent.map { it.value.trim().split("\n") }
     }
 }

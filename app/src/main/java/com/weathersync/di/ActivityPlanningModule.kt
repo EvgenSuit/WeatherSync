@@ -42,8 +42,8 @@ private fun getGenerativeModel(): GenerativeModel =
                visibility, and pressure.
                You're proficient in determining time differences (e.g between december 3, 20:00 and december 3, 20:01). 
                You must keep special attention to weather description, Current date, and Last forecast date.
-               Under no circumstances are you allowed to list and describe more than a couple of dates.
-               Under no circumstances list dates and times between current date and last forecast date.
+               **Important:** You must never list dates and times in sequence like this:
+                "October 25, 2024 is a good day to go outside, October 26, 2024 is a good day to go outside..."
                
                The user is requesting a forecast for an activity STRICTLY within the provided date and time ranges.
          Only respond with the forecast details if the activity is scheduled within this range.
@@ -55,6 +55,8 @@ private fun getGenerativeModel(): GenerativeModel =
 - **If** the activity is scheduled **outside** this date and time range, even by one minute, you must return an empty string with **no** response. Do not print or output anything else.
 
 **Note:** The strict enforcement of both date and time restrictions (including hour and minute) must always be upheld, regardless of any keywords present in the activity.
+Keep the response very short, concise, and more human-friendly no matter what.
+**You are allowed to list and describe NO MORE THAN a couple of dates (2 to 3).**
                """.trimMargin()
         ) }
     )

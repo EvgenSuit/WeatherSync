@@ -43,7 +43,7 @@ class HomeBaseRule: TestWatcher() {
             )
         )
         val homeRepository = HomeRepository(
-            homeFirebaseClient = mockk(),
+            limitManager = mockk(),
             weatherRepository = weatherRepository,
             geminiRepository = mockGeminiRepository(
                 generatedContent = generatedSuggestions,

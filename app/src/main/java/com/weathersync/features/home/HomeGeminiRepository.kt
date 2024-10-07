@@ -3,7 +3,7 @@ package com.weathersync.features.home
 import com.google.ai.client.generativeai.GenerativeModel
 import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.CurrentWeather
-import com.weathersync.utils.AtLeastOneTagMissing
+import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.utils.GeminiRepository
 import java.util.Locale
 
@@ -11,9 +11,14 @@ val recommendedActivitiesTag = "[RECOMMENDED_ACTIVITIES]"
 val unrecommendedActivitiesTag = "[UNRECOMMENDED_ACTIVITIES]"
 val whatToBringTag = "[WHAT_TO_BRING]"
 class GeminiRepository(
-    private val generativeModel: GenerativeModel
+    private val generativeModel: GenerativeModel,
+    private val currentWeatherDAO: CurrentWeatherDAO,
+    private val weatherUpdater: WeatherUpdater
 ): GeminiRepository {
-    suspend fun generateSuggestions(currentWeather: CurrentWeather): Suggestions {
+    suspend fun generateSuggestions(
+        isLimitReached: Boolean,
+        currentWeather: CurrentWeather): Suggestions? {
+        if (isLimitReached) return currentWeatherDAO.getSuggestions()
         val prompt = constructSuggestionsPrompt(currentWeather)
         val plainText = generativeModel.generateContent(prompt).text ?: throw Exception("Empty response from Gemini \n" +
                 "Prompt: $prompt")
@@ -21,11 +26,13 @@ class GeminiRepository(
             prompt = prompt,
             content = plainText,
             tags = listOf(recommendedActivitiesTag, unrecommendedActivitiesTag, whatToBringTag))
-        return Suggestions(
+        val suggestions = Suggestions(
             recommendedActivities = extractedContent[0],
             unrecommendedActivities = extractedContent[1],
             whatToBring = extractedContent[2]
         )
+        currentWeatherDAO.insertSuggestions(suggestions)
+        return suggestions
     }
     private fun constructSuggestionsPrompt(currentWeather: CurrentWeather) =
         """Generate short suggestions based on weather data:

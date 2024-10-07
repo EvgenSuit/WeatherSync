@@ -12,6 +12,8 @@ mockk = "1.13.12"
 junitKtx = "1.2.1"
 roborazzi = "1.25.0"
 ktor = "2.3.12"
+room = "2.6.1"
+ksp = "1.9.10-1.0.13"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -56,6 +58,11 @@ generative-ai = { module = "com.google.ai.client.generativeai:generativeai", ver
 
 koin = { module = "io.insert-koin:koin-androidx-compose", version = "4.0.0" }
 
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
+
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version = "1.9.0" }
 robolectric = { module = "org.robolectric:robolectric", version = "4.13" }
 mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
@@ -73,3 +80,4 @@ crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.2" }
 google-services = { id = "com.google.gms.google-services", version = "4.4.2" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 roborazzi-plugin = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+ksp-plugin = { id = "com.google.devtools.ksp", version.ref = "ksp" }

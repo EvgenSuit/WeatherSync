@@ -1,11 +1,14 @@
 package com.weathersync.features.home.presentation.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,8 +16,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.weathersync.R
 import com.weathersync.common.ui.ConstrainedComponent
 import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.common.ui.UIEvent
@@ -26,6 +31,7 @@ import com.weathersync.features.home.presentation.ui.components.CurrentWeatherCo
 import com.weathersync.features.home.presentation.ui.components.RecommendedActivitiesComposable
 import com.weathersync.features.home.presentation.ui.components.WhatToWearComposable
 import com.weathersync.ui.theme.WeatherSyncTheme
+import com.weathersync.utils.Limit
 import com.weathersync.utils.isInProgress
 import com.weathersync.utils.isNone
 import com.weathersync.utils.isSuccess
@@ -58,6 +64,7 @@ fun HomeScreenContent(
     uiState: HomeUIState,
     onIntent: (HomeIntent) -> Unit
 ) {
+    val nextUpdateTime = uiState.limit.nextUpdateDateTime
     val suggestions = uiState.suggestions
     PullToRefreshBox(
         isRefreshing = uiState.currentWeatherRefreshResult.isInProgress(),
@@ -73,6 +80,11 @@ fun HomeScreenContent(
                     .fillMaxSize()
                     .padding(4.dp)
             ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    nextUpdateTime?.let { Text(text = stringResource(id = R.string.next_update_time, it)) }
+                }
                 CurrentWeatherComposable(
                     weather = uiState.currentWeather,
                     isFetchInProgress = listOf(uiState.currentWeatherFetchResult, uiState.currentWeatherRefreshResult).any { it.isInProgress() })
@@ -96,7 +108,9 @@ fun HomeScreenPreview() {
     WeatherSyncTheme {
         Surface {
             HomeScreenContent(
-                uiState = HomeUIState(),
+                uiState = HomeUIState(
+                    limit = Limit(isReached = true, nextUpdateDateTime = "12:00")
+                ),
                 onIntent = {}
             )
         }

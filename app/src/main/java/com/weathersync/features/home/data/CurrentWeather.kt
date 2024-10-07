@@ -1,9 +1,16 @@
 package com.weathersync.features.home.data
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
+@Entity
 data class CurrentWeather(
+    @PrimaryKey val uid: Int = 0,
     val locality: String,
     val tempUnit: String,
     val windSpeedUnit: String,
@@ -51,3 +58,12 @@ data class CurrWeather(
     @SerialName("weathercode")
     val weatherCode: Int
 )
+
+fun CurrentWeather.isEligibleForUpdate(): Boolean {
+    val formatter = DateTimeFormatter.ISO_DATE_TIME
+    val currDate = LocalDateTime.now()
+    val formattedInputTime = LocalDateTime.parse(time, formatter)
+    val duration = Duration.between(formattedInputTime, currDate)
+    val isOneHourDifference = duration.toHours() == 1L
+    return isOneHourDifference
+}

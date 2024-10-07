@@ -4,6 +4,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.ksp.plugin)
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.google.services)
     alias(libs.plugins.kotlin.serialization)
@@ -108,6 +109,13 @@ dependencies {
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.mock)
     implementation(libs.ktor.client.content.negotiation)
+
+    // room
+    implementation(libs.room.runtime)
+    annotationProcessor(libs.room.compiler)
+    ksp(libs.room.compiler)
+    implementation(libs.room.ktx)
+    testImplementation(libs.room.testing)
 
     // DI
     implementation(libs.koin)

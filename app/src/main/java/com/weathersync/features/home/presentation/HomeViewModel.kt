@@ -10,6 +10,7 @@ import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.utils.CrashlyticsManager
 import com.weathersync.utils.CustomResult
+import com.weathersync.utils.Limit
 import com.weathersync.utils.isInProgress
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,10 +45,13 @@ class HomeViewModel(
         updateMethod(CustomResult.InProgress)
         viewModelScope.launch {
             try {
-                val weather = homeRepository.getCurrentWeather()
+                val limit = homeRepository.calculateLimit()
+                _uiState.update { it.copy(limit = limit) }
+
+                val weather = homeRepository.getCurrentWeather(isLimitReached = limit.isReached)
                 _uiState.update { it.copy(currentWeather = weather) }
                 updateMethod(CustomResult.Success)
-                generateSuggestions(weather)
+                if (weather != null) generateSuggestions(isLimitReached = limit.isReached, currentWeather = weather)
             } catch (e: Exception) {
                 _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_fetch_current_weather)))
                 crashlyticsManager.recordException(e, "Is refreshing: $refresh")
@@ -55,11 +59,13 @@ class HomeViewModel(
             }
         }
     }
-    private suspend fun generateSuggestions(currentWeather: CurrentWeather) {
+    private suspend fun generateSuggestions(
+        isLimitReached: Boolean,
+        currentWeather: CurrentWeather) {
         updateSuggestionsGenerationResult(CustomResult.InProgress)
         try {
-            val recommendations = homeRepository.generateSuggestions(currentWeather)
-            _uiState.update { it.copy(suggestions = recommendations) }
+            val recommendations = homeRepository.generateSuggestions(isLimitReached = isLimitReached, currentWeather = currentWeather)
+            _uiState.update { it.copy(suggestions = recommendations ?: Suggestions()) }
             updateSuggestionsGenerationResult(CustomResult.Success)
         } catch (e: Exception) {
             _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_generate_suggestions)))
@@ -67,6 +73,7 @@ class HomeViewModel(
             updateSuggestionsGenerationResult(CustomResult.Error)
         }
     }
+
     private fun updateCurrentWeatherRefreshResult(result: CustomResult) =
         _uiState.update { it.copy(currentWeatherRefreshResult = result) }
     private fun updateCurrentWeatherFetchResult(result: CustomResult) =
@@ -77,8 +84,9 @@ class HomeViewModel(
 }
 data class HomeUIState(
     val currentWeather: CurrentWeather? = null,
+    val suggestions: Suggestions = Suggestions(),
+    val limit: Limit = Limit(isReached = true),
     val currentWeatherRefreshResult: CustomResult = CustomResult.None,
     val currentWeatherFetchResult: CustomResult = CustomResult.None,
-    val suggestions: Suggestions = Suggestions(),
     val suggestionsGenerationResult: CustomResult = CustomResult.None
 )

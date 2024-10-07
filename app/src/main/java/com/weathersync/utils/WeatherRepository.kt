@@ -2,9 +2,11 @@ package com.weathersync.utils
 
 import com.weathersync.features.activityPlanning.data.OpenMeteoForecast
 import com.weathersync.features.activityPlanning.data.ForecastDates
+import com.weathersync.features.home.WeatherUpdater
 import com.weathersync.features.home.LocationClient
 import com.weathersync.features.home.data.CurrentOpenMeteoWeather
 import com.weathersync.features.home.data.CurrentWeather
+import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
@@ -12,7 +14,6 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.get
-import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
@@ -22,7 +23,9 @@ import java.util.Locale
 
 class WeatherRepository(
     engine: HttpClientEngine,
-    private val locationClient: LocationClient
+    private val locationClient: LocationClient,
+    private val currentWeatherDAO: CurrentWeatherDAO,
+    private val weatherUpdater: WeatherUpdater
     ) {
     private val timezone = ZoneId.systemDefault()
     private val httpClient = HttpClient(engine) {
@@ -39,12 +42,13 @@ class WeatherRepository(
         }
     }
 
-    suspend fun getCurrentWeather(): CurrentWeather {
+    suspend fun getCurrentWeather(isLimitReached: Boolean): CurrentWeather? {
+        if (isLimitReached) return currentWeatherDAO.getWeather()
         val coordinates = locationClient.getCoordinates()
         val requestUrl =
             "forecast?current_weather=true&latitude=${coordinates.lat}&longitude=${coordinates.lon}&timezone=$timezone"
         val responseBody = httpClient.get(requestUrl).body<CurrentOpenMeteoWeather>()
-        return CurrentWeather(
+        val currentWeather = CurrentWeather(
             locality = coordinates.locality,
             tempUnit = responseBody.currentWeatherUnits.temperature,
             windSpeedUnit = responseBody.currentWeatherUnits.windSpeed,
@@ -53,6 +57,8 @@ class WeatherRepository(
             time = responseBody.currentWeather.time,
             weatherCode = responseBody.currentWeather.weatherCode
         )
+        currentWeatherDAO.insertWeather(currentWeather)
+        return currentWeather
     }
 
     // make this request to see what the forecast looks like in plain json:

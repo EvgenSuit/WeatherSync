@@ -4,7 +4,6 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -23,56 +22,62 @@ sealed class GenerationType {
 }
 data class Limit(
     val isReached: Boolean,
-    val nextUpdateDateTime: String? = null
+    val formattedNextUpdateTime: String? = null
+)
+
+/**
+ * @param count specifies the max amount of times an operation can be performed within a certain time period (durationInHours)
+ * @param durationInHours specifies the time period (from current time) within which the limit should be calculated
+ */
+
+data class LimitManagerConfig(
+    val count: Int,
+    val durationInHours: Int
 )
 
 class LimitManager(
+    private val limitManagerConfig: LimitManagerConfig,
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val currentWeatherDAO: CurrentWeatherDAO,
     private val weatherUpdater: WeatherUpdater
 ) {
+    private val limitsDoc = firestore.collection(auth.currentUser!!.uid).document("limits")
+    private val currentWeatherLimitsRef = limitsDoc.collection("currentWeatherLimits")
+    //private val activityRecommendationsLimitsRef = limitsDoc.collection("activityRecommendationsLimits")
     suspend fun calculateLimit(generationType: GenerationType): Limit {
-        val limitsDoc = firestore.collection(auth.currentUser!!.uid).document("limits")
         val currentTime = getServerTimestamp()
         return when (generationType) {
-            is GenerationType.CurrentWeather -> manageCurrentWeatherLimits(currentTime, limitsDoc)
-            is GenerationType.ActivityRecommendations -> manageActivityRecommendationsLimits(currentTime, limitsDoc)
+            is GenerationType.CurrentWeather -> manageCurrentWeatherFetchLimit(currentTime)
+            is GenerationType.ActivityRecommendations -> manageActivityRecommendationsLimit(currentTime)
         }
     }
-    private suspend fun manageCurrentWeatherLimits(
-        currentTime: Timestamp,
-        limitsDoc: DocumentReference): Limit {
-        val ref = limitsDoc.collection("currentWeatherLimits")
-        val sixHoursBefore = Timestamp(Date(currentTime.toDate().time - (TimeUnit.HOURS.toMillis(6))))
-        val docsBefore = ref.whereLessThan("timestamp", sixHoursBefore)
-        docsBefore.deleteDocs()
+    private suspend fun manageCurrentWeatherFetchLimit(currentTime: Timestamp): Limit {
+        val duration = TimeUnit.HOURS.toMillis(limitManagerConfig.durationInHours.toLong())
+        val sixHoursBefore = Timestamp(Date(currentTime.toDate().time - duration))
+        val docsBefore = currentWeatherLimitsRef.whereLessThan("timestamp", sixHoursBefore)
+        deleteDocs(docsBefore)
 
-        // counts number of timestamps over the last 6 hours
-        val countAfter = ref.whereGreaterThanOrEqualTo("timestamp", sixHoursBefore).count().get(AggregateSource.SERVER)
-            .await().count
-        if (countAfter >= 6L) {
-            // use firstOrNull since currentWeatherLimits might be empty by the time lastTimestamp is returned
-            val lastTimestamp = ref.orderBy("timestamp", Query.Direction.DESCENDING).limit(1).get()
+        // counts the number of timestamps over the last "durationInHours" hours
+        val countAfter = currentWeatherLimitsRef.whereGreaterThanOrEqualTo("timestamp", sixHoursBefore).count().get(AggregateSource.SERVER)
+            .await().count.toInt()
+        if (countAfter >= limitManagerConfig.count) {
+            // use firstOrNull since currentWeatherLimits collection might be empty by the time lastTimestamp is returned
+            val lastTimestamp = currentWeatherLimitsRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(1).get()
                 .await().documents.firstOrNull()?.getTimestamp("timestamp") ?: return Limit(isReached = false)
-            // add 6 hours to last timestamp
-            val nextUpdateDateTime = Date(lastTimestamp.toDate().time + TimeUnit.HOURS.toMillis(6))
-            return Limit(isReached = true, nextUpdateDateTime = nextUpdateDateTime.formatNextUpdateDateTime(currentTime))
+            // add "durationInHours" hours to the last timestamp
+            val nextUpdateDateTime = Date(lastTimestamp.toDate().time + duration)
+            return Limit(isReached = true, formattedNextUpdateTime = nextUpdateDateTime.formatNextUpdateDateTime(currentTime))
         } else {
+            // if account limit is not yet reached, but the local instance of current weather is fresh, consider the limit reached
             val savedWeather = currentWeatherDAO.getWeather()
             val isLocalWeatherFresh = savedWeather?.time?.let { time ->
-                weatherUpdater.isLocalWeatherFresh(false, time)
+                weatherUpdater.isLocalWeatherFresh(time)
             } ?: false
-            println("Is fresh: $isLocalWeatherFresh; is limit reached: false," +
-                    "time: ${savedWeather?.time}")
-            if (!isLocalWeatherFresh) ref.addTimestamp()
             return Limit(isReached = isLocalWeatherFresh)
         }
     }
-    private suspend fun manageActivityRecommendationsLimits(
-        currentTime: Timestamp,
-        limitsDoc: DocumentReference
-    ): Limit {
+    private suspend fun manageActivityRecommendationsLimit(currentTime: Timestamp): Limit {
         return Limit(isReached = false)
     }
 
@@ -90,22 +95,30 @@ class LimitManager(
         return SimpleDateFormat(pattern, Locale.getDefault()).format(this)
     }
 
-    private suspend fun Query.deleteDocs() {
+    private suspend fun deleteDocs(query: Query) {
         val batch = firestore.batch()
-        this.get().await().documents.forEach { doc ->
+        query.get().await().documents.forEach { doc ->
             batch.delete(doc.reference)
         }
-        batch.commit()
+        batch.commit().await()
     }
-    private fun CollectionReference.addTimestamp() {
-        this.add(mapOf("timestamp" to FieldValue.serverTimestamp()))
+
+    suspend fun recordTimestamp(generationType: GenerationType) {
+        when (generationType) {
+            is GenerationType.CurrentWeather -> currentWeatherLimitsRef.addTimestamp()
+            is GenerationType.ActivityRecommendations -> {}//activityRecommendationsLimitsRef.addTimestamp()
+        }
+    }
+
+    private suspend fun CollectionReference.addTimestamp() {
+        this.add(mapOf("timestamp" to FieldValue.serverTimestamp())).await()
     }
 
     private suspend fun getServerTimestamp(): Timestamp {
         val timestampRef = firestore.collection("serverTimestamp").document()
         timestampRef.set(mapOf("timestamp" to FieldValue.serverTimestamp())).await()
         val timestamp = timestampRef.get().await().getTimestamp("timestamp")
-        timestampRef.delete()
+        timestampRef.delete().await()
         return timestamp!!
     }
 }

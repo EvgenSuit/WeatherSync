@@ -22,7 +22,7 @@ import org.junit.Test
 import com.weathersync.R
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.assertSnackbarTextEquals
-import com.weathersync.utils.AtLeastOneTagMissing
+import com.weathersync.utils.AtLeastOneGenerationTagMissing
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import org.junit.Assert.assertTrue
@@ -100,7 +100,7 @@ class ActivityPlanningUITests {
                 ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
             performActivityPlanning()
             activityPlanningBaseRule.assertUrlIsCorrect()
-            assertTrue(activityPlanningBaseRule.exceptionSlot.captured is AtLeastOneTagMissing)
+            assertTrue(activityPlanningBaseRule.exceptionSlot.captured is AtLeastOneGenerationTagMissing)
             assertSnackbarTextEquals(R.string.could_not_plan_activities, snackbarScope)
         }
     }

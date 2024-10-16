@@ -30,7 +30,7 @@ fun ActivityPlanningScreen(
 ) {
     val snackbarController = LocalSnackbarController.current
     val uiState by viewModel.uiState.collectAsState()
-    LaunchedEffect(true) {
+    LaunchedEffect(viewModel) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
                 is UIEvent.ShowSnackbar -> { snackbarController.showSnackbar(event.message) }

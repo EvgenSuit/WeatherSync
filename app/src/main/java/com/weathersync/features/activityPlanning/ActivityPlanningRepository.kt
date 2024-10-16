@@ -2,17 +2,17 @@ package com.weathersync.features.activityPlanning
 
 import com.weathersync.features.activityPlanning.data.ForecastDates
 import com.weathersync.features.activityPlanning.data.toForecast
-import com.weathersync.utils.WeatherRepository
+import com.weathersync.features.home.CurrentWeatherRepository
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
 class ActivityPlanningRepository(
-    private val weatherRepository: WeatherRepository,
+    private val forecastRepository: ForecastRepository,
     private val activityPlanningGeminiRepository: ActivityPlanningGeminiRepository
 ) {
     suspend fun generateRecommendations(activity: String): String {
-        val openMeteoForecast = weatherRepository.getForecast(forecastDates = calculateForecastDays())
+        val openMeteoForecast = forecastRepository.getForecast(forecastDates = calculateForecastDays())
         val convertedForecast = openMeteoForecast.toForecast()
         val times = activityPlanningGeminiRepository.generateRecommendations(
             activity = activity,

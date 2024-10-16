@@ -3,7 +3,7 @@ package com.weathersync.features.activityPlanning.unit
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.features.activityPlanning.ActivityPlanningBaseRule
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningIntent
-import com.weathersync.utils.AtLeastOneTagMissing
+import com.weathersync.utils.AtLeastOneGenerationTagMissing
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.TestScope
@@ -57,7 +57,7 @@ class ActivityPlanningUnitTests {
         activityPlanningBaseRule.setup(generatedSuggestions = "Content without tags")
         performActivityPlanning(this)
         activityPlanningBaseRule.assertUrlIsCorrect()
-        assertTrue(activityPlanningBaseRule.exceptionSlot.captured is AtLeastOneTagMissing)
+        assertTrue(activityPlanningBaseRule.exceptionSlot.captured is AtLeastOneGenerationTagMissing)
     }
     private fun performActivityPlanning(testScope: TestScope, message: String? = null) {
         activityPlanningBaseRule.viewModel.handleIntent(ActivityPlanningIntent.GenerateRecommendations)

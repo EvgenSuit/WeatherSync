@@ -29,7 +29,6 @@ class HomeViewModel(
     private val _uiEvent = MutableSharedFlow<UIEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
 
-
     fun handleIntent(homeIntent: HomeIntent) {
         when (homeIntent) {
             is HomeIntent.GetCurrentWeather -> getCurrentWeather(false)
@@ -50,6 +49,7 @@ class HomeViewModel(
 
                 val weather = homeRepository.getCurrentWeather(isLimitReached = limit.isReached)
                 _uiState.update { it.copy(currentWeather = weather) }
+
                 updateMethod(CustomResult.Success)
                 if (weather != null) generateSuggestions(isLimitReached = limit.isReached, currentWeather = weather)
             } catch (e: Exception) {
@@ -65,6 +65,8 @@ class HomeViewModel(
         updateSuggestionsGenerationResult(CustomResult.InProgress)
         try {
             val recommendations = homeRepository.generateSuggestions(isLimitReached = isLimitReached, currentWeather = currentWeather)
+            // add timestamp only if current weather fetch and suggestions generation are successful
+            if (!isLimitReached) homeRepository.recordTimestamp()
             _uiState.update { it.copy(suggestions = recommendations ?: Suggestions()) }
             updateSuggestionsGenerationResult(CustomResult.Success)
         } catch (e: Exception) {
@@ -84,7 +86,7 @@ class HomeViewModel(
 }
 data class HomeUIState(
     val currentWeather: CurrentWeather? = null,
-    val suggestions: Suggestions = Suggestions(),
+    val suggestions: Suggestions? = null,
     val limit: Limit = Limit(isReached = true),
     val currentWeatherRefreshResult: CustomResult = CustomResult.None,
     val currentWeatherFetchResult: CustomResult = CustomResult.None,

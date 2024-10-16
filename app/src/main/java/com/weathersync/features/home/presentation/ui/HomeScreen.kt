@@ -36,6 +36,8 @@ import com.weathersync.utils.isInProgress
 import com.weathersync.utils.isNone
 import com.weathersync.utils.isSuccess
 import org.koin.androidx.compose.koinViewModel
+import java.time.Instant
+import java.util.Date
 
 @Composable
 fun HomeScreen(
@@ -43,7 +45,7 @@ fun HomeScreen(
 ) {
     val snackbarController = LocalSnackbarController.current
     val uiState by viewModel.uiState.collectAsState()
-    LaunchedEffect(true) {
+    LaunchedEffect(viewModel) {
         viewModel.uiEvent.collect { event ->
             when (event) {
                 is UIEvent.ShowSnackbar -> snackbarController.showSnackbar(event.message)
@@ -64,7 +66,7 @@ fun HomeScreenContent(
     uiState: HomeUIState,
     onIntent: (HomeIntent) -> Unit
 ) {
-    val nextUpdateTime = uiState.limit.nextUpdateDateTime
+    val nextUpdateTime = uiState.limit.formattedNextUpdateTime
     val suggestions = uiState.suggestions
     PullToRefreshBox(
         isRefreshing = uiState.currentWeatherRefreshResult.isInProgress(),
@@ -89,12 +91,12 @@ fun HomeScreenContent(
                     weather = uiState.currentWeather,
                     isFetchInProgress = listOf(uiState.currentWeatherFetchResult, uiState.currentWeatherRefreshResult).any { it.isInProgress() })
                 RecommendedActivitiesComposable(
-                    recommendedActivities = suggestions.recommendedActivities,
-                    unrecommendedActivities = suggestions.unrecommendedActivities,
+                    recommendedActivities = suggestions?.recommendedActivities,
+                    unrecommendedActivities = suggestions?.unrecommendedActivities,
                     isGenerationSuccessful = uiState.suggestionsGenerationResult.isSuccess()
                 )
                 WhatToWearComposable(
-                    recommendations = suggestions.whatToBring,
+                    recommendations = suggestions?.whatToBring,
                     isGenerationSuccessful = uiState.suggestionsGenerationResult.isSuccess()
                 )
             }
@@ -109,7 +111,7 @@ fun HomeScreenPreview() {
         Surface {
             HomeScreenContent(
                 uiState = HomeUIState(
-                    limit = Limit(isReached = true, nextUpdateDateTime = "12:00")
+                    limit = Limit(isReached = true, formattedNextUpdateTime = Date.from(Instant.now().plusSeconds(24*60*60)).toString())
                 ),
                 onIntent = {}
             )

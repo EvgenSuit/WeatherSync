@@ -32,12 +32,12 @@ import com.weathersync.utils.isSuccess
 
 @Composable
 fun RecommendedActivitiesComposable(
-    recommendedActivities: List<String>,
-    unrecommendedActivities: List<String>,
+    recommendedActivities: List<String>?,
+    unrecommendedActivities: List<String>?,
     isGenerationSuccessful: Boolean
 ) {
     CommonHomeComponent(titleRes = R.string.suggestions) {
-        if (isGenerationSuccessful && recommendedActivities.isNotEmpty() && unrecommendedActivities.isNotEmpty()) {
+        if (isGenerationSuccessful && !recommendedActivities.isNullOrEmpty() && !unrecommendedActivities.isNullOrEmpty()) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
@@ -58,10 +58,10 @@ fun RecommendedActivitiesComposable(
 }
 
 @Composable
-fun WhatToWearComposable(recommendations: List<String>,
+fun WhatToWearComposable(recommendations: List<String>?,
                           isGenerationSuccessful: Boolean) {
     CommonHomeComponent(titleRes = R.string.what_to_wear_bring) {
-        if (isGenerationSuccessful && recommendations.isNotEmpty()) {
+        if (isGenerationSuccessful && !recommendations.isNullOrEmpty()) {
             recommendations.forEach { recommendation ->
                 Text(text = "\u2022 $recommendation",
                     style = MaterialTheme.typography.labelMedium

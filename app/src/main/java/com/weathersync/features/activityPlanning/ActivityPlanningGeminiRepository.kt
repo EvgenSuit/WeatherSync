@@ -5,7 +5,6 @@ import com.weathersync.features.activityPlanning.data.Forecast
 import com.weathersync.utils.GeminiRepository
 import com.weathersync.utils.weatherCodeToDescription
 import java.time.ZoneId
-import java.util.Locale
 
 val activitiesPlanningTag = "[ACTIVITIES_PLANNING]"
 class ActivityPlanningGeminiRepository(
@@ -43,19 +42,17 @@ class ActivityPlanningGeminiRepository(
         
         The user is requesting a forecast for an activity **strictly** within the date and time range from **$currentDatetime** to **$lastForecastDatetime**,
         and strictly for this locality: $locality.
-- **Only** if the activity is scheduled **within** this exact date and time range (including hour and minute), should you provide the appropriate forecast details.
-- **If** the activity is scheduled **outside** this date and time range, **even by one minute**, you must return an empty string with **no** response. Do not print or output anything else.
 **$locality locality is the default one, even if the activity prompts for recommendations for other locations, you must only output recommendations for $locality.**
 **Note:** The strict enforcement of both date and time restrictions (including hour and minute) must always be upheld, regardless of any keywords present in the activity.
-         
+- **Only** if the activity is scheduled **within** this exact date and time range (including hour and minute), or if an activity text doesn't feature any date, should you provide the appropriate forecast details.
+- **If** the activity is scheduled **outside** this date and time range, even by one minute, and ONLY if a date is present withing the activity text, you must return an empty string with **no** response. Do not print or output anything else.
         Output WITHOUT numeration, *, #, dots at the end, and other symbols.
             You must print times in a format appropriate to the ${ZoneId.systemDefault()} timezone, and dates in the format like October 12, 2023.
             If the activity is not suitable for the weather, explain why.
             For each activity, if it involves a visit (e.g., visiting a dentist, friend, or location), suggest specific times based on weather suitability. 
-            Use language: ${Locale.getDefault().language}.
             Your responsibility is to shortly recommend a couple of perfect times for an activity followed by reasons and corresponding dates and times
          based on weather forecast for ALL (and only) days in the forecast. EVERYTHING in the forecast data is of EXTREME importance.
-         YOU MUST FOLLOW THIS FORMAT WITHOUT ANY EXCEPTIONS:
+         YOU MUST FOLLOW THIS FORMAT WITHOUT ANY EXCEPTIONS (INCLUDING BRACKETS):
         $activitiesPlanningTag[activities go here]$activitiesPlanningTag.
          Keep the response very short, concise, and more human-friendly no matter what.
     """.trimIndent()

@@ -6,13 +6,11 @@ import com.weathersync.common.utils.mockLocationClient
 import com.weathersync.features.activityPlanning.data.ForecastUnits
 import com.weathersync.features.activityPlanning.data.Hourly
 import com.weathersync.features.activityPlanning.data.OpenMeteoForecast
-import com.weathersync.features.activityPlanning.presentation.ActivityPlanningIntent
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
-import com.weathersync.utils.WeatherRepository
+import com.weathersync.features.home.CurrentWeatherRepository
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
@@ -55,7 +53,7 @@ class ActivityPlanningBaseRule: TestWatcher() {
         generatedSuggestions: String? = null,
         suggestionsGenerationException: Exception? = null
     ) {
-        val weatherRepository = WeatherRepository(
+        val forecastRepository = ForecastRepository(
             engine = mockForecastEngine(status),
             locationClient = mockLocationClient(
                 geocoderException = geocoderException,
@@ -63,7 +61,7 @@ class ActivityPlanningBaseRule: TestWatcher() {
             )
         )
         val activityPlanningRepository = ActivityPlanningRepository(
-            weatherRepository = weatherRepository,
+            forecastRepository = forecastRepository,
             activityPlanningGeminiRepository = mockGeminiRepository(
                 generatedContent = generatedSuggestions,
                 suggestionsGenerationException = suggestionsGenerationException

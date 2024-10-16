@@ -1,6 +1,7 @@
 package com.weathersync.features.home.data.db
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -18,4 +19,9 @@ interface CurrentWeatherDAO {
     suspend fun getWeather(): CurrentWeather?
     @Query("SELECT * FROM Suggestions")
     suspend fun getSuggestions(): Suggestions?
+
+    @Query("DELETE FROM CURRENTWEATHER")
+    suspend fun deleteWeather()
+    @Query("DELETE FROM SUGGESTIONS")
+    suspend fun deleteSuggestions()
 }

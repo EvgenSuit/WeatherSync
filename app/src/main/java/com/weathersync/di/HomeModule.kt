@@ -5,18 +5,14 @@ import androidx.room.Room
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.generationConfig
 import com.google.android.gms.location.LocationServices
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 import com.weathersync.BuildConfig
 import com.weathersync.features.home.GeminiRepository
-import com.weathersync.utils.LimitManager
 import com.weathersync.features.home.HomeRepository
-import com.weathersync.features.home.WeatherUpdater
 import com.weathersync.features.home.LocationClient
+import com.weathersync.features.home.WeatherUpdater
 import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
-import com.weathersync.utils.WeatherRepository
 import com.weathersync.features.home.presentation.HomeViewModel
+import com.weathersync.features.home.CurrentWeatherRepository
 import io.ktor.client.engine.cio.CIO
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -30,17 +26,13 @@ val homeModule = module {
     ) }
     single { HomeRepository(
         limitManager = get(),
-        weatherRepository = get(),
+        currentWeatherRepository = get(),
         geminiRepository = get()
     ) }
-    single { LimitManager(auth = Firebase.auth, firestore = Firebase.firestore,
-        currentWeatherDAO = get(),
-        weatherUpdater = get()) }
-    single { WeatherRepository(
+    single { CurrentWeatherRepository(
         engine = CIO.create(),
         locationClient = get(),
-        currentWeatherDAO = get(),
-        weatherUpdater = get()
+        currentWeatherDAO = get()
     ) }
     single { LocationClient(
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(androidContext()),
@@ -48,8 +40,7 @@ val homeModule = module {
     ) }
     single { GeminiRepository(
         generativeModel = getGenerativeModel(),
-        currentWeatherDAO = get(),
-        weatherUpdater = get()
+        currentWeatherDAO = get()
     ) }
     single { Room.databaseBuilder(
         androidContext(),
@@ -57,7 +48,7 @@ val homeModule = module {
         "current_weather_database"
     ).fallbackToDestructiveMigration().build()
         .currentWeatherDao() }
-    single { WeatherUpdater(clock = Clock.systemDefaultZone()) }
+    single { WeatherUpdater(clock = Clock.systemDefaultZone(), minutes = 60) }
 }
 
 private fun getGenerativeModel(): GenerativeModel =

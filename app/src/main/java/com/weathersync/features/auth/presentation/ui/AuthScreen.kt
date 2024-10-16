@@ -44,7 +44,7 @@ fun AuthScreen(viewModel: AuthViewModel = koinViewModel(),
             if (result.isSuccess()) onNavigateToHome()
         }
     }
-    LaunchedEffect(true) {
+    LaunchedEffect(viewModel) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
                 is UIEvent.ShowSnackbar -> snackbarController.showSnackbar(event.message)

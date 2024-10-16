@@ -1,26 +1,29 @@
 package com.weathersync.features.home.ui
 
-import android.Manifest
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.firebase.Timestamp
 import com.weathersync.R
-import com.weathersync.common.home.mockedWeather
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.assertSnackbarTextEquals
 import com.weathersync.common.ui.getString
+import com.weathersync.common.ui.printToLog
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.common.utils.MainDispatcherRule
-import com.weathersync.common.utils.locationInfo
+import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.data.CurrentWeather
+import com.weathersync.features.home.mockedWeather
 import com.weathersync.features.home.presentation.ui.HomeScreen
-import io.ktor.client.plugins.ClientRequestException
+import com.weathersync.features.home.toCurrentWeather
+import com.weathersync.utils.LimitManagerConfig
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
@@ -31,18 +34,17 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.stopKoin
-import org.robolectric.RuntimeEnvironment
-import org.robolectric.Shadows
 import org.robolectric.annotation.GraphicsMode
+import java.text.SimpleDateFormat
+import java.util.Date
 
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(AndroidJUnit4::class)
-@OptIn(ExperimentalCoroutinesApi::class)
 class HomeCurrentWeatherUITests {
     @get: Rule(order = 0)
     val dispatcherRule = MainDispatcherRule()
     @get: Rule(order = 1)
-    val homeRule = HomeBaseRule()
+    val homeBaseRule = HomeBaseRule()
     @get: Rule
     val composeRule = createComposeRule()
 
@@ -51,99 +53,149 @@ class HomeCurrentWeatherUITests {
         stopKoin()
     }
 
-    private fun manageLocationPermission(grant: Boolean) {
-        val permission = Manifest.permission.ACCESS_COARSE_LOCATION
-        val shadowApp = Shadows.shadowOf(RuntimeEnvironment.getApplication())
-        shadowApp.apply { if (grant) grantPermissions(permission) else denyPermissions(permission) }
-    }
-
     @Test
-    fun fetchCurrentWeather_permissionGranted_success() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeRule.snackbarScope, uiContent = {
-            HomeScreen(viewModel = homeRule.viewModel)
+    fun fetchCurrentWeather_success() = runTest {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+            HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
-            manageLocationPermission(grant = true)
+            homeBaseRule.manageLocationPermission(grant = true)
             onNodeWithText(getString(R.string.request_permission)).assertIsDisplayed().performClick()
 
             waitForIdle()
             onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
-            homeRule.advanceKtor(this@runTest)
-            val currentWeather = CurrentWeather(
-                locality = "${locationInfo.city}, ${locationInfo.country}",
-                tempUnit = mockedWeather.currentWeatherUnits.temperature,
-                windSpeedUnit = mockedWeather.currentWeatherUnits.windSpeed,
-                temp = mockedWeather.currentWeather.temperature,
-                time = mockedWeather.currentWeather.time,
-                windSpeed = mockedWeather.currentWeather.windSpeed,
-                weatherCode = mockedWeather.currentWeather.weatherCode
-            )
-            assertEquals(currentWeather, homeRule.viewModel.uiState.value.currentWeather)
-            assertSnackbarIsNotDisplayed(snackbarScope = homeRule.snackbarScope)
+            homeBaseRule.advance(this@runTest)
+            val currentWeather = mockedWeather.toCurrentWeather()
+            assertEquals(currentWeather, homeBaseRule.viewModel.uiState.value.currentWeather)
+            assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
 
-            onNodeWithText("${currentWeather.temp} ${currentWeather.tempUnit}").assertIsDisplayed()
-            onNodeWithText(currentWeather.locality).assertIsDisplayed()
-            onNodeWithText(getString(R.string.wind_speed, "${currentWeather.windSpeed} ${currentWeather.windSpeedUnit}")).assertIsDisplayed()
+            assertCorrectCurrentWeatherUI(currentWeather)
         }
     }
     @Test
     fun fetchCurrentWeather_permissionDenied_requestPermissionShown() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeRule.snackbarScope, uiContent = {
-            HomeScreen(viewModel = homeRule.viewModel)
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+            HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
-            manageLocationPermission(grant = false)
-            onNodeWithText(getString(R.string.request_permission)).assertIsDisplayed().performClick()
-
             waitForIdle()
             onNodeWithText(getString(R.string.request_permission)).assertIsDisplayed()
-            homeRule.advanceKtor(this@runTest)
-            assertEquals(null, homeRule.viewModel.uiState.value.currentWeather)
+            homeBaseRule.advance(this@runTest)
+            assertEquals(null, homeBaseRule.viewModel.uiState.value.currentWeather)
+            onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
         }
     }
     @Test
-    fun fetchCurrentWeather_permissionGranted_geocoderError_error() = runTest {
-        homeRule.setup(geocoderException = homeRule.exception)
-        manageLocationPermission(grant = true)
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeRule.snackbarScope, uiContent = {
-            HomeScreen(viewModel = homeRule.viewModel)
+    fun getCurrentWeather_limitReached_localWeatherIsNull() = runTest {
+        homeBaseRule.manageLocationPermission(true)
+        val timestamps = createDescendingTimestamps(
+            limitManagerConfig = homeBaseRule.limitManagerConfig,
+            currTimeMillis = homeBaseRule.testClock.millis()
+        )
+        homeBaseRule.setupLimitManager(timestamps = timestamps, limitManagerConfig = homeBaseRule.limitManagerConfig)
+        homeBaseRule.setupHomeRepository()
+        homeBaseRule.setupViewModel()
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+            HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
-            performErrorWeatherFetch(message = homeRule.exception.message, testScope = this@runTest)
+            onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
+            waitForIdle()
+            onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
+            homeBaseRule.advance(this@runTest)
+            onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
+            assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
+
+            assertDisplayedLimitIsCorrect(timestamps = timestamps)
         }
     }
     @Test
-    fun fetchCurrentWeather_permissionGranted_errorResponseStatus_error() = runTest {
-        homeRule.setup(status = HttpStatusCode.Forbidden)
-        manageLocationPermission(grant = true)
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeRule.snackbarScope, uiContent = {
-            HomeScreen(viewModel = homeRule.viewModel)
+    fun getCurrentWeather_limitReached_localWeatherIsNotNull() = runTest {
+        homeBaseRule.currentWeatherLocalDB.currentWeatherDao().insertWeather(mockedWeather.toCurrentWeather())
+        homeBaseRule.manageLocationPermission(true)
+        val timestamps = createDescendingTimestamps(
+            limitManagerConfig = homeBaseRule.limitManagerConfig,
+            currTimeMillis = homeBaseRule.testClock.millis()
+        )
+        homeBaseRule.setupLimitManager(timestamps = timestamps, limitManagerConfig = homeBaseRule.limitManagerConfig)
+        homeBaseRule.setupHomeRepository()
+        homeBaseRule.setupViewModel()
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+            HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
-            performErrorWeatherFetch(message = HttpStatusCode.Forbidden.description, testScope = this@runTest)
+            onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
+            waitForIdle()
+            onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
+            homeBaseRule.advance(this@runTest)
+            assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
+            assertCorrectCurrentWeatherUI(mockedWeather.toCurrentWeather())
+
+            assertDisplayedLimitIsCorrect(timestamps = timestamps)
         }
     }
     @Test
-    fun fetchCurrentWeather_permissionGranted_lastLocationException_error() = runTest {
-        homeRule.setup(lastLocationException = homeRule.exception)
-        manageLocationPermission(grant = true)
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeRule.snackbarScope, uiContent = {
-            HomeScreen(viewModel = homeRule.viewModel)
+    fun fetchCurrentWeather_geocoderError() = runTest {
+        homeBaseRule.manageLocationPermission(grant = true)
+        homeBaseRule.setupWeatherRepository(geocoderException = homeBaseRule.exception)
+        homeBaseRule.setupHomeRepository()
+        homeBaseRule.setupViewModel()
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+            HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
-            performErrorWeatherFetch(message = homeRule.exception.message, testScope = this@runTest)
+            performWeatherAndSuggestionsFetch(testScope = this@runTest)
+            assertEquals(null, homeBaseRule.viewModel.uiState.value.currentWeather)
+            assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = homeBaseRule.snackbarScope)
+            onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
         }
     }
-    private fun ComposeContentTestRule.performErrorWeatherFetch(message: String?,
-                                                                testScope: TestScope) {
+    @Test
+    fun fetchCurrentWeather_errorResponseStatus_error() = runTest {
+        homeBaseRule.manageLocationPermission(grant = true)
+        homeBaseRule.setupWeatherRepository(status = HttpStatusCode.Forbidden)
+        homeBaseRule.setupHomeRepository()
+        homeBaseRule.setupViewModel()
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+            HomeScreen(viewModel = homeBaseRule.viewModel)
+        }) {
+            performWeatherAndSuggestionsFetch(testScope = this@runTest)
+            assertEquals(null, homeBaseRule.viewModel.uiState.value.currentWeather)
+            assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = homeBaseRule.snackbarScope)
+            onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
+        }
+    }
+    @Test
+    fun fetchCurrentWeather_lastLocationException_error() = runTest {
+        homeBaseRule.manageLocationPermission(grant = true)
+        homeBaseRule.setupWeatherRepository(lastLocationException = homeBaseRule.exception)
+        homeBaseRule.setupHomeRepository()
+        homeBaseRule.setupViewModel()
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+            HomeScreen(viewModel = homeBaseRule.viewModel)
+        }) {
+            performWeatherAndSuggestionsFetch(testScope = this@runTest)
+            assertEquals(null, homeBaseRule.viewModel.uiState.value.currentWeather)
+            assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = homeBaseRule.snackbarScope)
+            onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
+        }
+    }
+    private fun ComposeContentTestRule.performWeatherAndSuggestionsFetch(testScope: TestScope) {
         onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
         waitForIdle()
         onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
-        homeRule.advanceKtor(testScope)
-        message?.let { m ->
-            val exception = homeRule.crashlyticsExceptionSlot.captured
-            exception.apply { if (this is ClientRequestException) assertEquals(m, this.response.status.description)
-            else assertEquals(m, this.message)
-            }
-        }
-        assertEquals(null, homeRule.viewModel.uiState.value.currentWeather)
-        assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = homeRule.snackbarScope)
+        homeBaseRule.advance(testScope)
+    }
+    private fun ComposeContentTestRule.assertCorrectCurrentWeatherUI(currentWeather: CurrentWeather) {
+        onNodeWithText("${currentWeather.temp} ${currentWeather.tempUnit}").assertIsDisplayed()
+        onNodeWithText(currentWeather.locality).assertIsDisplayed()
+        onNodeWithText(getString(R.string.wind_speed, "${currentWeather.windSpeed} ${currentWeather.windSpeedUnit}")).assertIsDisplayed()
+    }
+    private fun ComposeContentTestRule.assertDisplayedLimitIsCorrect(
+        timestamps: List<Timestamp>
+    ) {
+        val nextUpdateDate = homeBaseRule.testHelper.calculateNextUpdateDate(
+            receivedNextUpdateDateTime = homeBaseRule.viewModel.uiState.value.limit.formattedNextUpdateTime,
+            limitManagerConfig = homeBaseRule.limitManagerConfig,
+            timestamps = timestamps)
+        onNodeWithText(getString(R.string.next_update_time, SimpleDateFormat("HH:mm, dd MMM").format(nextUpdateDate.expectedNextUpdateDate)),
+            useUnmergedTree = true).assertIsDisplayed()
     }
 }

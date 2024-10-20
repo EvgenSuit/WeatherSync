@@ -9,11 +9,10 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.roborazzi.plugin)
-
 }
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
-localProperties.load(FileInputStream(localPropertiesFile))
+if (localPropertiesFile.exists()) localProperties.load(FileInputStream(localPropertiesFile))
 
 android {
     namespace = "com.weathersync"
@@ -139,5 +138,5 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.androidx.ui.test.manifest)
 }

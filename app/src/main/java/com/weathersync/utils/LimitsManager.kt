@@ -29,7 +29,6 @@ data class Limit(
  * @param count specifies the max amount of times an operation can be performed within a certain time period (durationInHours)
  * @param durationInHours specifies the time period (from current time) within which the limit should be calculated
  */
-
 data class LimitManagerConfig(
     val count: Int,
     val durationInHours: Int

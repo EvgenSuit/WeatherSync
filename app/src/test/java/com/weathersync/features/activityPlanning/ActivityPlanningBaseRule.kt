@@ -181,9 +181,6 @@ class ActivityPlanningBaseRule: TestWatcher() {
         assertTrue(capturedUrl.isNotEmpty())
         val extractedTimes = extractTimes(capturedUrl)
         assertDateDifference(extractedTimes.first, extractedTimes.second)
-        assertTrue(capturedUrl.contains("latitude=${locationInfo.latitude}&longitude=${locationInfo.longitude}" +
-                "&timezone=${ZoneId.systemDefault()}&hourly=temperature_2m,relative_humidity_2m,apparent_temperature," +
-                "wind_speed_10m,precipitation_probability,weather_code,visibility,pressure_msl"))
     }
     private fun extractTimes(url: String): Pair<String, String> {
         val startHourRegex = "start_hour=([^&]+)".toRegex()

@@ -16,18 +16,13 @@ class CurrentWeatherRepository(
     ): WeatherRepository {
     private val httpClient = getHttpClient(engine)
 
-    init {
-        runBlocking {
-            currentWeatherDAO.deleteWeather()
-            currentWeatherDAO.deleteSuggestions()
-        }
-    }
-
     suspend fun getCurrentWeather(isLimitReached: Boolean): CurrentWeather? {
         if (isLimitReached) return currentWeatherDAO.getWeather()
         val coordinates = locationClient.getCoordinates()
+        val requestUnits = timezoneToUnits()
         val requestUrl =
-            "forecast?current_weather=true&latitude=${coordinates.lat}&longitude=${coordinates.lon}&timezone=$timezone"
+            "forecast?current_weather=true&latitude=${coordinates.lat}&longitude=${coordinates.lon}&timezone=$timezone" +
+                    "&temperature_unit=${requestUnits.temp.symbol}&wind_speed_unit=${requestUnits.windSpeed.symbol}"
         val responseBody = httpClient.get(requestUrl).body<CurrentOpenMeteoWeather>()
         val currentWeather = CurrentWeather(
             locality = coordinates.locality,

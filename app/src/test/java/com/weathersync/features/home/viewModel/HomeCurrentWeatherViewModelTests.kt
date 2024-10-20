@@ -59,6 +59,7 @@ class HomeCurrentWeatherViewModelTests {
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
         homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
+        homeBaseRule.advance(this)
         val localWeather = homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getWeather()
         assertTrue(listOf(
             homeBaseRule.viewModel.uiState.value.currentWeather,

@@ -11,6 +11,9 @@ composeBom = "2024.09.02"
 mockk = "1.13.12"
 junitKtx = "1.2.1"
 roborazzi = "1.25.0"
+ktor = "2.3.12"
+room = "2.6.1"
+ksp = "1.9.10-1.0.13"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,8 +40,28 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version = "33.3.0"
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
+firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
+ktor-client-json = { module = "io.ktor:ktor-client-json", version.ref = "ktor" }
+ktor-client-serialization = { module = "io.ktor:ktor-client-serialization", version.ref = "ktor" }
+ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+
+play-services-location = { module = "com.google.android.gms:play-services-location", version = "21.3.0" }
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version = "0.36.0" }
+
+generative-ai = { module = "com.google.ai.client.generativeai:generativeai", version = "0.7.0" }
 
 koin = { module = "io.insert-koin:koin-androidx-compose", version = "4.0.0" }
+
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version = "1.9.0" }
 robolectric = { module = "org.robolectric:robolectric", version = "4.13" }
@@ -57,3 +80,4 @@ crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.2" }
 google-services = { id = "com.google.gms.google-services", version = "4.4.2" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 roborazzi-plugin = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+ksp-plugin = { id = "com.google.devtools.ksp", version.ref = "ksp" }

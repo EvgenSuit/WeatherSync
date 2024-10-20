@@ -1,4 +1,4 @@
-package com.weathersync.features.auth.ui
+package com.weathersync.features.auth.presentation.ui
 
 import com.weathersync.common.ui.TextFieldState
 

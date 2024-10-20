@@ -1,4 +1,4 @@
-package com.weathersync.features.auth.ui
+package com.weathersync.features.auth.presentation
 
 import android.app.Activity
 import android.content.IntentSender
@@ -9,11 +9,13 @@ import com.google.android.gms.common.api.ApiException
 import com.weathersync.R
 import com.weathersync.common.ui.UIEvent
 import com.weathersync.common.ui.UIText
-import com.weathersync.features.auth.RegularAuthRepository
 import com.weathersync.features.auth.EmailValidator
 import com.weathersync.features.auth.GoogleAuthRepository
 import com.weathersync.features.auth.PasswordValidator
-import com.weathersync.utils.CoroutineScopeProvider
+import com.weathersync.features.auth.RegularAuthRepository
+import com.weathersync.features.auth.presentation.ui.AuthFieldType
+import com.weathersync.features.auth.presentation.ui.AuthTextFieldState
+import com.weathersync.features.auth.presentation.ui.AuthTextFieldsState
 import com.weathersync.utils.CrashlyticsManager
 import com.weathersync.utils.CustomResult
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -27,9 +29,7 @@ class AuthViewModel(
     private val regularAuthRepository: RegularAuthRepository,
     private val googleAuthRepository: GoogleAuthRepository,
     private val crashlyticsManager: CrashlyticsManager,
-    coroutineScopeProvider: CoroutineScopeProvider
 ): ViewModel() {
-    private val scope = coroutineScopeProvider(viewModelScope)
     private val emailValidator = EmailValidator()
     private val passwordValidator = PasswordValidator()
 
@@ -71,39 +71,39 @@ class AuthViewModel(
             googleAuthRepository.onTapSignIn()
         } catch (e: Exception) {
             _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.google_sign_in_error)))
-            updateAuthResult(CustomResult.ResourceError(R.string.google_sign_in_error))
+            updateAuthResult(CustomResult.Error)
             crashlyticsManager.recordException(e)
             null
         }
     private fun signInWithGoogle(activityResult: ActivityResult) {
-        scope.launch {
+        viewModelScope.launch {
             try {
                 if (activityResult.resultCode != Activity.RESULT_OK && activityResult.data == null){
-                    updateAuthResult(CustomResult.ResourceError(R.string.auth_error))
+                    updateAuthResult(CustomResult.Error)
                     return@launch
                 }
                 googleAuthRepository.signInWithIntent(activityResult.data!!)
-                updateAuthResult(CustomResult.Success())
+                updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {
                 if ((e is ApiException && e.statusCode != 16) || e !is ApiException) {
                     _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
-                    updateAuthResult(CustomResult.ResourceError(R.string.auth_error))
+                    updateAuthResult(CustomResult.Error)
                 } else updateAuthResult(CustomResult.None)
             }
         }
     }
     private fun performManualAuth() {
         updateAuthResult(CustomResult.InProgress)
-        scope.launch {
+        viewModelScope.launch {
             try {
                 val email = _uiState.value.fieldsState.email.state.value
                 val password = _uiState.value.fieldsState.password.state.value
                 regularAuthRepository.apply {
                     if (_uiState.value.authType == AuthType.SignIn) signIn(email, password) else signUp(email, password)
                 }
-                updateAuthResult(CustomResult.Success())
+                updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {
-                updateAuthResult(CustomResult.ResourceError(R.string.auth_error))
+                updateAuthResult(CustomResult.Error)
                 crashlyticsManager.recordException(e, "Auth type: ${_uiState.value.authType}")
                 _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
             }

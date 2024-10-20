@@ -7,15 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -27,9 +19,7 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.lifecycleScope
-import com.weathersync.common.ui.CustomSnackbar
 import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.common.ui.SnackbarController
 import com.weathersync.features.navigation.NavManager
@@ -49,23 +39,8 @@ class MainActivity : ComponentActivity() {
                     coroutineScope = lifecycleScope))
             }
             WeatherSyncTheme {
-                Scaffold(
-                    snackbarHost = {
-                        SnackbarHost(hostState = snackbarHostState) {
-                            CustomSnackbar(snackbarHostState = snackbarHostState, onDismiss = { snackbarHostState.currentSnackbarData?.dismiss() })
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    CompositionLocalProvider(LocalSnackbarController provides snackbarController) {
-                        NavManager(
-                            modifier = Modifier
-                                .padding(innerPadding)
-                                .fillMaxSize()
-                                .consumeWindowInsets(innerPadding)
-                                .windowInsetsPadding(WindowInsets.ime)
-                                .clearFocusOnNonButtonClick(LocalFocusManager.current)
-                        )
-                    }
+                CompositionLocalProvider(LocalSnackbarController provides snackbarController) {
+                    NavManager()
                 }
             }
         }
@@ -76,7 +51,7 @@ class MainActivity : ComponentActivity() {
 fun Modifier.clearFocusOnNonButtonClick(focusManager: FocusManager) =
     this.pointerInput(Unit) {
         // Clear focus when a click event is triggered (text fields and buttons are not included)
-        // focused will still be cleared when a text field is disabled
+        // focus will still be cleared when a text field is disabled
         awaitEachGesture {
             val downEvent = awaitFirstDown(pass = PointerEventPass.Initial)
             val upEvent = waitForUpOrCancellation(pass = PointerEventPass.Initial)

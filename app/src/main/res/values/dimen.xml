@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="max_width">500dp</dimen>
+    <dimen name="max_width">650dp</dimen>
     <dimen name="button_angle">15dp</dimen>
+    <dimen name="horizontal_divider_padding">12dp</dimen>
 </resources>

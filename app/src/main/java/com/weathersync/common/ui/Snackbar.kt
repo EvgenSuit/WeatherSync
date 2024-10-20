@@ -34,9 +34,11 @@ class SnackbarController(
     private val snackbarHostState: SnackbarHostState,
     private val coroutineScope: CoroutineScope
 ) {
+    // for testing purposes
+    val hostState = snackbarHostState
     fun showSnackbar(message: UIText) {
         coroutineScope.launch {
-            snackbarHostState.currentSnackbarData?.dismiss()
+            //snackbarHostState.currentSnackbarData?.dismiss()
             snackbarHostState.showSnackbar(message.asString(context))
         }
     }
@@ -60,10 +62,9 @@ fun CustomSnackbar(
             .testTag("Snackbar")
     ) {
         message?.let {
-            val text = it.take(180)
-            Text(text = text,
+            Text(text = it,
             fontFamily = FontFamily.SansSerif,
-            modifier = Modifier.testTag("Snackbar text: $text")) }
+            modifier = Modifier.testTag("Snackbar text: $it")) }
     }
 }
 
@@ -77,7 +78,7 @@ fun CustomSnackbarPreview() {
     WeatherSyncTheme(darkTheme = false) {
         val snackbarHostState = remember { SnackbarHostState() }
         LaunchedEffect(Unit) {
-            snackbarHostState.showSnackbar("This is a preview message!".repeat(20))
+            snackbarHostState.showSnackbar("This is a preview message!")
         }
         Surface {
             CustomSnackbar(

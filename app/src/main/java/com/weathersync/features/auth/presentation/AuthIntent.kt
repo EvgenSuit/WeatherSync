@@ -1,6 +1,7 @@
-package com.weathersync.features.auth.ui
+package com.weathersync.features.auth.presentation
 
 import androidx.activity.result.ActivityResult
+import com.weathersync.features.auth.presentation.ui.AuthTextFieldState
 
 sealed class AuthIntent {
     data class ChangeAuthType(val type: AuthType): AuthIntent()

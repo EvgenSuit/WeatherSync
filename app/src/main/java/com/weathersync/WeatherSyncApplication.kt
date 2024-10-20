@@ -1,7 +1,9 @@
 package com.weathersync
 
 import android.app.Application
+import com.weathersync.di.activityPlanningModule
 import com.weathersync.di.authModule
+import com.weathersync.di.homeModule
 import com.weathersync.di.utilsModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -14,8 +16,12 @@ class WeatherSyncApplication: Application() {
         startKoin {
             androidLogger(Level.DEBUG)
             androidContext(this@WeatherSyncApplication)
-            modules(authModule,
-                utilsModule)
+            modules(
+                authModule,
+                utilsModule,
+                homeModule,
+                activityPlanningModule
+            )
         }
     }
 }

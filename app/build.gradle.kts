@@ -4,15 +4,15 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.ksp.plugin)
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.google.services)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.roborazzi.plugin)
-
 }
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
-localProperties.load(FileInputStream(localPropertiesFile))
+if (localPropertiesFile.exists()) localProperties.load(FileInputStream(localPropertiesFile))
 
 android {
     namespace = "com.weathersync"
@@ -30,6 +30,7 @@ android {
             useSupportLibrary = true
         }
         buildConfigField("String", "WEB_CLIENT_ID", "\"${localProperties.getProperty("WEB_CLIENT_ID")}\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY")}\"")
     }
     buildFeatures.buildConfig = true
     testOptions {
@@ -90,10 +91,37 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+
+    // location
+    implementation(libs.play.services.location)
+
+    // permissions
+    implementation(libs.accompanist.permissions)
+
+    // ktor
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.json)
+    implementation(libs.ktor.client.serialization)
+    implementation(libs.ktor.serialization.json)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.mock)
+    implementation(libs.ktor.client.content.negotiation)
+
+    // room
+    implementation(libs.room.runtime)
+    annotationProcessor(libs.room.compiler)
+    ksp(libs.room.compiler)
+    implementation(libs.room.ktx)
+    testImplementation(libs.room.testing)
 
     // DI
     implementation(libs.koin)
     implementation(libs.androidx.junit.ktx)
+
+    // Gemini
+    implementation(libs.generative.ai)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
@@ -110,5 +138,5 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.androidx.ui.test.manifest)
 }

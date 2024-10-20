@@ -25,4 +25,27 @@
 
     <string name="auth_error">Authentication error</string>
     <string name="google_sign_in_error">Google sign in error, make sure you are signed in to this account on this device</string>
+
+    <string name="location_permission_required">WeatherSync requires location permission for accurate weather information</string>
+    <string name="request_permission">Request permission</string>
+    <string name="go_to_settings">Go to settings</string>
+
+    <string name="next_update_time">Next update available at %1$s</string>
+    <string name="next_generation_available_at">Next generation available at %1$s</string>
+    <string name="current_weather">Current weather</string>
+    <string name="wind_speed">Wind speed: %1$s</string>
+
+    <string name="could_not_fetch_current_weather">Could not fetch current weather</string>
+    <string name="could_not_generate_suggestions">Could not generate suggestions</string>
+    <string name="suggestions">Suggestions</string>
+    <string name="what_to_wear_bring">What to wear/bring today</string>
+
+
+    <string name="plan_your_activities">Plan your activities</string>
+    <string name="activity_text_field_placeholder">What is the best time to go for a walk?</string>
+    <string name="input_cannot_be_empty">Input cannot be empty</string>
+    <string name="find_optimal_times">Find optimal times</string>
+    <string name="planning_activities">Planning your activities…</string>
+    <string name="based_on_forecast">Recommendations are based on a %1$s-day hourly forecast for your locality only</string>
+    <string name="could_not_plan_activities">Could not plan provided activities</string>
 </resources>

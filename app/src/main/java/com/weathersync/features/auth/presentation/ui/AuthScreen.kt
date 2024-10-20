@@ -1,4 +1,4 @@
-package com.weathersync.features.auth.ui
+package com.weathersync.features.auth.presentation.ui
 
 import android.content.IntentSender
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +15,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -24,6 +23,10 @@ import com.weathersync.common.ui.CustomButton
 import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.common.ui.UIEvent
 import com.weathersync.common.ui.UIText
+import com.weathersync.features.auth.presentation.AuthIntent
+import com.weathersync.features.auth.presentation.AuthType
+import com.weathersync.features.auth.presentation.AuthUIState
+import com.weathersync.features.auth.presentation.AuthViewModel
 import com.weathersync.ui.theme.WeatherSyncTheme
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.isInProgress
@@ -41,7 +44,7 @@ fun AuthScreen(viewModel: AuthViewModel = koinViewModel(),
             if (result.isSuccess()) onNavigateToHome()
         }
     }
-    LaunchedEffect(true) {
+    LaunchedEffect(viewModel) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
                 is UIEvent.ShowSnackbar -> snackbarController.showSnackbar(event.message)

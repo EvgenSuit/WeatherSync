@@ -1,4 +1,4 @@
-package com.weathersync.features.auth.ui
+package com.weathersync.features.auth.presentation.ui
 
 import android.content.IntentSender
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -37,6 +37,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weathersync.R
+import com.weathersync.features.auth.presentation.AuthIntent
+import com.weathersync.features.auth.presentation.AuthType
 import com.weathersync.ui.theme.arapeyRegular
 import kotlinx.coroutines.launch
 

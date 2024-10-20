@@ -9,6 +9,7 @@ import com.weathersync.common.ui.UIText
 import com.weathersync.features.activityPlanning.ActivityPlanningRepository
 import com.weathersync.utils.CrashlyticsManager
 import com.weathersync.utils.CustomResult
+import com.weathersync.utils.Limit
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -38,8 +39,14 @@ class ActivityPlanningViewModel(
         viewModelScope.launch {
             val input = _uiState.value.activityTextFieldState.value
             try {
-                val times = activityPlanningRepository.generateRecommendations(activity = input)
-                _uiState.update { it.copy(generatedText = times) }
+                val limit = activityPlanningRepository.calculateLimit()
+                _uiState.update { it.copy(limit = limit) }
+
+                if (!limit.isReached) {
+                    val suggestions = activityPlanningRepository.generateRecommendations(activity = input)
+                    activityPlanningRepository.recordTimestamp()
+                    _uiState.update { it.copy(generatedText = suggestions) }
+                }
                 updateGenerationResult(CustomResult.Success)
             } catch (e: Exception) {
                 _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_plan_activities)))
@@ -60,6 +67,7 @@ class ActivityPlanningViewModel(
 }
 data class ActivityPlanningUIState(
     val activityTextFieldState: TextFieldState = TextFieldState(),
-    val generatedText: String = "",
+    val limit: Limit = Limit(isReached = true),
+    val generatedText: String? = null,
     val generationResult: CustomResult = CustomResult.None
 )

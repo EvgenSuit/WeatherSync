@@ -112,12 +112,12 @@ class HomeBaseRule: TestWatcher() {
             serverTimestampDeleteException = serverTimestampDeleteException
         )
         weatherUpdater = spyk(WeatherUpdater(testClock, minutes = 60))
-        limitManager = mockLimitManager(
+        limitManager = spyk(mockLimitManager(
             limitManagerConfig = limitManagerConfig,
             limitManagerFirestore = limitManagerFirestore,
             currentWeatherDAO = currentWeatherLocalDB.currentWeatherDao(),
             weatherUpdater = weatherUpdater
-        )
+        ))
     }
 
 

@@ -1,13 +1,24 @@
 package com.weathersync.features.activityPlanning
 
+import com.google.ai.client.generativeai.GenerativeModel
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FirebaseFirestore
+import com.weathersync.common.TestClock
+import com.weathersync.common.TestException
+import com.weathersync.common.TestHelper
+import com.weathersync.common.mockGenerativeModel
 import com.weathersync.common.utils.locationInfo
 import com.weathersync.common.utils.mockCrashlyticsManager
+import com.weathersync.common.utils.mockLimitManager
+import com.weathersync.common.utils.mockLimitManagerFirestore
 import com.weathersync.common.utils.mockLocationClient
 import com.weathersync.features.activityPlanning.data.ForecastUnits
 import com.weathersync.features.activityPlanning.data.Hourly
 import com.weathersync.features.activityPlanning.data.OpenMeteoForecast
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
-import com.weathersync.features.home.CurrentWeatherRepository
+import com.weathersync.features.home.data.db.CurrentWeatherDAO
+import com.weathersync.utils.LimitManager
+import com.weathersync.utils.LimitManagerConfig
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -15,10 +26,9 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
-import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.spyk
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.serialization.encodeToString
@@ -34,46 +44,79 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 class ActivityPlanningBaseRule: TestWatcher() {
+    val limitManagerConfig = LimitManagerConfig(2, 24)
+    val testHelper = TestHelper()
+    val testClock = TestClock()
+
     val exceptionSlot = slot<Exception>()
-    val exception = Exception("exception")
+    val exception = TestException("exception")
+
     lateinit var viewModel: ActivityPlanningViewModel
+    lateinit var limitManager: LimitManager
+    val currentWeatherDAO: CurrentWeatherDAO = mockk()
+    lateinit var limitManagerFirestore: FirebaseFirestore
+    lateinit var generativeModel: GenerativeModel
+    lateinit var geminiRepository: ActivityPlanningGeminiRepository
+    lateinit var activityPlanningRepository: ActivityPlanningRepository
+    lateinit var forecastRepository: ForecastRepository
+
     fun advance(testScope: TestScope) = repeat(9999999) { testScope.advanceUntilIdle() }
     private var capturedUrl = ""
 
-    override fun starting(description: Description?) {
-        stopKoin()
-        setup()
-        super.starting(description)
+    fun setupViewModel() {
+        viewModel = ActivityPlanningViewModel(
+            activityPlanningRepository = activityPlanningRepository,
+            crashlyticsManager = mockCrashlyticsManager(exceptionSlot = exceptionSlot)
+        )
     }
-
-    fun setup(
-        status: HttpStatusCode = HttpStatusCode.OK,
-        geocoderException: Exception? = null,
-        lastLocationException: Exception? = null,
+    fun setupActivityPlanningRepository(
         generatedSuggestions: String? = null,
         suggestionsGenerationException: Exception? = null
     ) {
-        val forecastRepository = ForecastRepository(
+        geminiRepository = spyk(mockGeminiRepository(
+            generatedContent = generatedSuggestions,
+            suggestionsGenerationException = suggestionsGenerationException
+        ))
+        activityPlanningRepository = ActivityPlanningRepository(
+            limitManager = limitManager,
+            forecastRepository = forecastRepository,
+            activityPlanningGeminiRepository = geminiRepository
+        )
+    }
+    fun setupForecastRepository(
+        status: HttpStatusCode = HttpStatusCode.OK,
+        geocoderException: Exception? = null,
+        lastLocationException: Exception? = null
+    ) {
+        forecastRepository = ForecastRepository(
             engine = mockForecastEngine(status),
             locationClient = mockLocationClient(
                 geocoderException = geocoderException,
                 lastLocationException = lastLocationException
             )
         )
-        val activityPlanningRepository = ActivityPlanningRepository(
-            forecastRepository = forecastRepository,
-            activityPlanningGeminiRepository = mockGeminiRepository(
-                generatedContent = generatedSuggestions,
-                suggestionsGenerationException = suggestionsGenerationException
-            )
+    }
+    fun setupLimitManager(
+        timestamps: List<Timestamp> = listOf(),
+        limitManagerConfig: LimitManagerConfig,
+        serverTimestampGetException: Exception? = null,
+        serverTimestampDeleteException: Exception? = null) {
+        limitManagerFirestore = mockLimitManagerFirestore(
+            testClock = testClock,
+            limitManagerConfig = limitManagerConfig,
+            timestamps = timestamps,
+            serverTimestampGetException = serverTimestampGetException,
+            serverTimestampDeleteException = serverTimestampDeleteException
         )
-        viewModel = ActivityPlanningViewModel(
-            activityPlanningRepository = activityPlanningRepository,
-            crashlyticsManager = mockCrashlyticsManager(exceptionSlot = exceptionSlot)
-        )
+        limitManager = spyk(mockLimitManager(
+            limitManagerConfig = limitManagerConfig,
+            limitManagerFirestore = limitManagerFirestore,
+            currentWeatherDAO = currentWeatherDAO,
+            weatherUpdater = mockk()
+        ))
     }
 
-    fun mockForecastEngine(
+    private fun mockForecastEngine(
         status: HttpStatusCode
     ): HttpClientEngine = MockEngine { request ->
         capturedUrl = request.url.toString()
@@ -114,16 +157,19 @@ class ActivityPlanningBaseRule: TestWatcher() {
     private fun mockGeminiRepository(
         generatedContent: String? = null,
         suggestionsGenerationException: Exception? = null
-    ) = ActivityPlanningGeminiRepository(
-            generativeModel = mockk {
-                coEvery { generateContent(any<String>()) } answers {
-                    if (suggestionsGenerationException != null) throw suggestionsGenerationException
-                    else mockk {
-                        every { text } returns (generatedContent ?: generatedSuggestions)
-                    }
-                }
-            }
+    ): ActivityPlanningGeminiRepository {
+        generativeModel = mockGenerativeModel(generatedContent, generationException = suggestionsGenerationException)
+        return ActivityPlanningGeminiRepository(
+            generativeModel = generativeModel
         )
+    }
+    override fun starting(description: Description?) {
+        stopKoin()
+        setupForecastRepository()
+        setupLimitManager(limitManagerConfig = limitManagerConfig)
+        setupActivityPlanningRepository(generatedSuggestions = generatedSuggestions)
+        setupViewModel()
+    }
     val activityPlanningSuggestions = "The best time to do that is October 3, 12:45, 2024"
     private val generatedSuggestions = """
         $activitiesPlanningTag

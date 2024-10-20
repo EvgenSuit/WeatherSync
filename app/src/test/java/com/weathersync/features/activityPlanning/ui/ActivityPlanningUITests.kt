@@ -3,12 +3,14 @@ package com.weathersync.features.activityPlanning.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.firebase.Timestamp
 import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.common.utils.MainDispatcherRule
@@ -20,8 +22,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import com.weathersync.R
+import com.weathersync.common.ui.assertDisplayedLimitIsCorrect
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.assertSnackbarTextEquals
+import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.utils.AtLeastOneGenerationTagMissing
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
@@ -47,16 +51,45 @@ class ActivityPlanningUITests {
             performActivityPlanning()
             activityPlanningBaseRule.assertUrlIsCorrect()
 
-            // post advancement check
-            assertEquals(activityPlanningBaseRule.activityPlanningSuggestions, activityPlanningBaseRule.viewModel.uiState.value.generatedText)
+            // post advancement checks
             onNodeWithText(activityPlanningBaseRule.activityPlanningSuggestions).assertIsDisplayed()
             assertSnackbarIsNotDisplayed(snackbarScope)
+            onNodeWithTag("Next generation time").assertIsNotDisplayed()
+        }
+    }
+    @Test
+    fun generateRecommendations_limitReached() = runTest {
+        val timestamps = createDescendingTimestamps(
+            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
+            currTimeMillis = activityPlanningBaseRule.testClock.millis()
+        )
+        activityPlanningBaseRule.apply {
+            setupLimitManager(
+                timestamps = timestamps, limitManagerConfig = activityPlanningBaseRule.limitManagerConfig
+            )
+            setupActivityPlanningRepository()
+            setupViewModel()
+        }
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+            uiContent = {
+                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel)
+            }) {
+            performActivityPlanning()
+
+            // post advancement checks
+            onNodeWithText(activityPlanningBaseRule.activityPlanningSuggestions).assertIsNotDisplayed()
+            assertSnackbarIsNotDisplayed(snackbarScope)
+            checkDisplayedLimit(timestamps)
         }
     }
     @Test
     fun generateRecommendations_errorHttpResponse_error() = runTest {
         val status = HttpStatusCode.Forbidden
-        activityPlanningBaseRule.setup(status = status)
+        activityPlanningBaseRule.apply {
+            setupForecastRepository(status = status)
+            setupActivityPlanningRepository()
+            setupViewModel()
+        }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel)
@@ -67,7 +100,11 @@ class ActivityPlanningUITests {
     }
     @Test
     fun generateRecommendations_geocoderException_error() = runTest {
-        activityPlanningBaseRule.setup(geocoderException = activityPlanningBaseRule.exception)
+        activityPlanningBaseRule.apply {
+            setupForecastRepository(geocoderException = activityPlanningBaseRule.exception)
+            setupActivityPlanningRepository()
+            setupViewModel()
+        }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
@@ -76,7 +113,11 @@ class ActivityPlanningUITests {
     }
     @Test
     fun generateRecommendations_lastLocationException_error() = runTest {
-        activityPlanningBaseRule.setup(lastLocationException = activityPlanningBaseRule.exception)
+        activityPlanningBaseRule.apply {
+            setupForecastRepository(lastLocationException = activityPlanningBaseRule.exception)
+            setupActivityPlanningRepository()
+            setupViewModel()
+        }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
@@ -84,8 +125,11 @@ class ActivityPlanningUITests {
         }
     }
     @Test
-    fun generateRecommendations_suggestionsGenerationException_error() = runTest {
-        activityPlanningBaseRule.setup(suggestionsGenerationException = activityPlanningBaseRule.exception)
+    fun generateRecommendations_suggestionsGenerationException() = runTest {
+        activityPlanningBaseRule.apply {
+            setupActivityPlanningRepository(suggestionsGenerationException = activityPlanningBaseRule.exception)
+            setupViewModel()
+        }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
@@ -93,8 +137,11 @@ class ActivityPlanningUITests {
         }
     }
     @Test
-    fun generateRecommendations_atLeastOneTagMissing_error() = runTest {
-        activityPlanningBaseRule.setup(generatedSuggestions = "Content without tags")
+    fun generateRecommendations_atLeastOneTagMissing() = runTest {
+        activityPlanningBaseRule.apply {
+            setupActivityPlanningRepository(generatedSuggestions = "Content without tags")
+            setupViewModel()
+        }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
@@ -129,5 +176,16 @@ class ActivityPlanningUITests {
                 assertSnackbarTextEquals(R.string.could_not_plan_activities, snackbarScope)
             }
         }
+    }
+    private fun ComposeContentTestRule.checkDisplayedLimit(
+        timestamps: List<Timestamp>
+    ) {
+        val nextUpdateDate = activityPlanningBaseRule.testHelper.calculateNextUpdateDate(
+            receivedNextUpdateDateTime = activityPlanningBaseRule.viewModel.uiState.value.limit.formattedNextUpdateTime,
+            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
+            timestamps = timestamps)
+        assertDisplayedLimitIsCorrect(
+            resId = R.string.next_generation_available_at,
+            expectedNextUpdateDate = nextUpdateDate.expectedNextUpdateDate)
     }
 }

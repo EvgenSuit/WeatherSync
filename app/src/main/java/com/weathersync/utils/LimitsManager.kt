@@ -35,50 +35,58 @@ data class LimitManagerConfig(
     val durationInHours: Int
 )
 
+enum class FirestoreLimitCollection(val collectionName: String) {
+    CURRENT_WEATHER_LIMITS("currentWeatherLimits"),
+    ACTIVITY_RECOMMENDATIONS_LIMITS("activityRecommendationsLimits")
+}
+
 class LimitManager(
     private val limitManagerConfig: LimitManagerConfig,
-    private val auth: FirebaseAuth,
+    auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val currentWeatherDAO: CurrentWeatherDAO,
     private val weatherUpdater: WeatherUpdater
 ) {
     private val limitsDoc = firestore.collection(auth.currentUser!!.uid).document("limits")
-    private val currentWeatherLimitsRef = limitsDoc.collection("currentWeatherLimits")
-    //private val activityRecommendationsLimitsRef = limitsDoc.collection("activityRecommendationsLimits")
+    private val currentWeatherLimitsRef = limitsDoc.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
+    private val activityRecommendationsLimitsRef = limitsDoc.collection(FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName)
+
     suspend fun calculateLimit(generationType: GenerationType): Limit {
         val currentTime = getServerTimestamp()
         return when (generationType) {
-            is GenerationType.CurrentWeather -> manageCurrentWeatherFetchLimit(currentTime)
-            is GenerationType.ActivityRecommendations -> manageActivityRecommendationsLimit(currentTime)
+            is GenerationType.CurrentWeather ->
+                currentWeatherLimitsRef.manageLimits(currentTime, generationType)
+            is GenerationType.ActivityRecommendations ->
+                activityRecommendationsLimitsRef.manageLimits(currentTime, generationType)
         }
     }
-    private suspend fun manageCurrentWeatherFetchLimit(currentTime: Timestamp): Limit {
+    private suspend fun CollectionReference.manageLimits(
+        currentTime: Timestamp,
+        generationType: GenerationType
+    ): Limit {
         val duration = TimeUnit.HOURS.toMillis(limitManagerConfig.durationInHours.toLong())
         val sixHoursBefore = Timestamp(Date(currentTime.toDate().time - duration))
-        val docsBefore = currentWeatherLimitsRef.whereLessThan("timestamp", sixHoursBefore)
+        val docsBefore = this.whereLessThan("timestamp", sixHoursBefore)
         deleteDocs(docsBefore)
 
         // counts the number of timestamps over the last "durationInHours" hours
-        val countAfter = currentWeatherLimitsRef.whereGreaterThanOrEqualTo("timestamp", sixHoursBefore).count().get(AggregateSource.SERVER)
+        val countAfter = this.whereGreaterThanOrEqualTo("timestamp", sixHoursBefore).count().get(AggregateSource.SERVER)
             .await().count.toInt()
         if (countAfter >= limitManagerConfig.count) {
             // use firstOrNull since currentWeatherLimits collection might be empty by the time lastTimestamp is returned
-            val lastTimestamp = currentWeatherLimitsRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(1).get()
+            val lastTimestamp = this.orderBy("timestamp", Query.Direction.DESCENDING).limit(1).get()
                 .await().documents.firstOrNull()?.getTimestamp("timestamp") ?: return Limit(isReached = false)
             // add "durationInHours" hours to the last timestamp
             val nextUpdateDateTime = Date(lastTimestamp.toDate().time + duration)
             return Limit(isReached = true, formattedNextUpdateTime = nextUpdateDateTime.formatNextUpdateDateTime(currentTime))
-        } else {
+        } else if (generationType == GenerationType.CurrentWeather) {
             // if account limit is not yet reached, but the local instance of current weather is fresh, consider the limit reached
             val savedWeather = currentWeatherDAO.getWeather()
             val isLocalWeatherFresh = savedWeather?.time?.let { time ->
                 weatherUpdater.isLocalWeatherFresh(time)
             } ?: false
             return Limit(isReached = isLocalWeatherFresh)
-        }
-    }
-    private suspend fun manageActivityRecommendationsLimit(currentTime: Timestamp): Limit {
-        return Limit(isReached = false)
+        } else return Limit(isReached = false)
     }
 
     private fun Date.formatNextUpdateDateTime(currentTime: Timestamp): String {
@@ -106,7 +114,7 @@ class LimitManager(
     suspend fun recordTimestamp(generationType: GenerationType) {
         when (generationType) {
             is GenerationType.CurrentWeather -> currentWeatherLimitsRef.addTimestamp()
-            is GenerationType.ActivityRecommendations -> {}//activityRecommendationsLimitsRef.addTimestamp()
+            is GenerationType.ActivityRecommendations -> activityRecommendationsLimitsRef.addTimestamp()
         }
     }
 

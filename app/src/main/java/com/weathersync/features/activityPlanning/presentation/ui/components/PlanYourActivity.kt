@@ -38,7 +38,7 @@ import com.weathersync.ui.theme.WeatherSyncTheme
 fun PlanYourActivityComposable(
     textFieldState: TextFieldState,
     isInProgress: Boolean,
-    output: String,
+    output: String?,
     onIntent: (ActivityPlanningIntent) -> Unit
 ) {
     val horizontalDividerPadding = dimensionResource(id = R.dimen.horizontal_divider_padding)
@@ -87,7 +87,7 @@ fun PlanYourActivityComposable(
             CustomButton(enabled = inputError is UIText.Empty,
                 text = stringResource(id = R.string.find_optimal_times),
                 onClick = { onIntent(ActivityPlanningIntent.GenerateRecommendations) })
-            if (output.isNotBlank()) {
+            if (!output.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(horizontalDividerPadding))
                 Box(
                     contentAlignment = Alignment.Center,

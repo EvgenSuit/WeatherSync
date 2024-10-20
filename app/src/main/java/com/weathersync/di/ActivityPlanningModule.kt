@@ -20,6 +20,7 @@ val activityPlanningModule = module {
         )
     }
     single { ActivityPlanningRepository(
+        limitManager = get(),
         forecastRepository = get(),
         activityPlanningGeminiRepository = get()
     ) }

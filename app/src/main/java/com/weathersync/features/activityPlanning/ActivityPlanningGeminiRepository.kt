@@ -2,6 +2,7 @@ package com.weathersync.features.activityPlanning
 
 import com.google.ai.client.generativeai.GenerativeModel
 import com.weathersync.features.activityPlanning.data.Forecast
+import com.weathersync.utils.EmptyGeminiResponse
 import com.weathersync.utils.GeminiRepository
 import com.weathersync.utils.weatherCodeToDescription
 import java.time.ZoneId
@@ -20,7 +21,7 @@ class ActivityPlanningGeminiRepository(
             currentDatetime = forecast.forecast[0].time.value.toString(),
             lastForecastDatetime = forecast.forecast.last().time.value.toString(),
             forecastText = forecastPrompt)
-        val plainText = generativeModel.generateContent(prompt).text ?: throw Exception("Empty response from Gemini \n" +
+        val plainText = generativeModel.generateContent(prompt).text ?: throw EmptyGeminiResponse("Empty response from Gemini \n" +
                 "Prompt: $prompt")
         val extractedContent = extractContentWithTags(
             prompt = prompt,

@@ -2,6 +2,7 @@ package com.weathersync.features.home.repository
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.weathersync.common.TestException
+import com.weathersync.common.utils.BaseGenerationTest
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.mockedWeather
@@ -17,19 +18,19 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class HomeRepositorySuggestionsUnitTests {
+class HomeRepositorySuggestionsUnitTests: BaseGenerationTest {
     @get: Rule
     val homeBaseRule = HomeBaseRule()
 
     @Test(expected = TestException::class)
-    fun generateSuggestions_generationException() = runTest {
+    override fun generateSuggestions_generationException() = runTest {
         homeBaseRule.setupHomeRepository(suggestionsGenerationException = homeBaseRule.exception)
         generateSuggestions()
         coVerify { homeBaseRule.generativeModel.generateContent(any<String>()) }
         assertEquals(null, homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getSuggestions())
     }
     @Test(expected = EmptyGeminiResponse::class)
-    fun generateSuggestions_limitNotReached_emptyGeminiResponse() = runTest {
+    override fun generateSuggestions_limitNotReached_emptyGeminiResponse() = runTest {
         homeBaseRule.setupHomeRepository(generatedSuggestions = null)
         assertEquals(null, homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getSuggestions())
         generateSuggestions()
@@ -37,7 +38,7 @@ class HomeRepositorySuggestionsUnitTests {
         assertEquals(null, homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getSuggestions())
     }
     @Test(expected = AtLeastOneGenerationTagMissing::class)
-    fun generateSuggestions_limitNotReached_atLeastOneTagMissing() = runTest {
+    override fun generateSuggestions_limitNotReached_atLeastOneTagMissing() = runTest {
         val content = "Content with no tags"
         homeBaseRule.setupHomeRepository(generatedSuggestions = content)
         generateSuggestions()
@@ -45,7 +46,7 @@ class HomeRepositorySuggestionsUnitTests {
         assertEquals(null, homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getSuggestions())
     }
     @Test
-    fun generateSuggestions_limitNotReached() = runTest {
+    override fun generateSuggestions_limitNotReached() = runTest {
         val generatedSuggestions = generateSuggestions()
         val localSuggestions = homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getSuggestions()
         coVerify { homeBaseRule.generativeModel.generateContent(any<String>()) }
@@ -74,7 +75,6 @@ class HomeRepositorySuggestionsUnitTests {
                 insertWeather(mockedWeather.toCurrentWeather())
                 insertSuggestions(homeBaseRule.testSuggestions.toSuggestions())
         }
-
         homeBaseRule.setupHomeRepository(generatedSuggestions = homeBaseRule.generatedSuggestions)
         val suggestions = generateSuggestions(isLimitReached = true)
         val localSuggestions = dao.getSuggestions()

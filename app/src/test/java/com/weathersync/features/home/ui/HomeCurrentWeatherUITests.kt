@@ -6,15 +6,14 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.firebase.Timestamp
 import com.weathersync.R
+import com.weathersync.common.ui.assertDisplayedLimitIsCorrect
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.assertSnackbarTextEquals
 import com.weathersync.common.ui.getString
-import com.weathersync.common.ui.printToLog
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.common.utils.createDescendingTimestamps
@@ -23,9 +22,7 @@ import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.mockedWeather
 import com.weathersync.features.home.presentation.ui.HomeScreen
 import com.weathersync.features.home.toCurrentWeather
-import com.weathersync.utils.LimitManagerConfig
 import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -36,7 +33,6 @@ import org.junit.runner.RunWith
 import org.koin.core.context.stopKoin
 import org.robolectric.annotation.GraphicsMode
 import java.text.SimpleDateFormat
-import java.util.Date
 
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(AndroidJUnit4::class)
@@ -105,7 +101,7 @@ class HomeCurrentWeatherUITests {
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
             assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
 
-            assertDisplayedLimitIsCorrect(timestamps = timestamps)
+            checkDisplayedLimit(timestamps = timestamps)
         }
     }
     @Test
@@ -129,7 +125,7 @@ class HomeCurrentWeatherUITests {
             assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
             assertCorrectCurrentWeatherUI(mockedWeather.toCurrentWeather())
 
-            assertDisplayedLimitIsCorrect(timestamps = timestamps)
+            checkDisplayedLimit(timestamps = timestamps)
         }
     }
     @Test
@@ -188,14 +184,15 @@ class HomeCurrentWeatherUITests {
         onNodeWithText(currentWeather.locality).assertIsDisplayed()
         onNodeWithText(getString(R.string.wind_speed, "${currentWeather.windSpeed} ${currentWeather.windSpeedUnit}")).assertIsDisplayed()
     }
-    private fun ComposeContentTestRule.assertDisplayedLimitIsCorrect(
+    private fun ComposeContentTestRule.checkDisplayedLimit(
         timestamps: List<Timestamp>
     ) {
         val nextUpdateDate = homeBaseRule.testHelper.calculateNextUpdateDate(
             receivedNextUpdateDateTime = homeBaseRule.viewModel.uiState.value.limit.formattedNextUpdateTime,
             limitManagerConfig = homeBaseRule.limitManagerConfig,
             timestamps = timestamps)
-        onNodeWithText(getString(R.string.next_update_time, SimpleDateFormat("HH:mm, dd MMM").format(nextUpdateDate.expectedNextUpdateDate)),
-            useUnmergedTree = true).assertIsDisplayed()
+        assertDisplayedLimitIsCorrect(
+            resId = R.string.next_update_time,
+            expectedNextUpdateDate = nextUpdateDate.expectedNextUpdateDate)
     }
 }

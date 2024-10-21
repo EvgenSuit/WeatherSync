@@ -48,4 +48,7 @@
     <string name="planning_activities">Planning your activities…</string>
     <string name="based_on_forecast">Recommendations are based on a %1$s-day hourly forecast for your locality only</string>
     <string name="could_not_plan_activities">Could not plan provided activities</string>
+
+
+    <string name="could_not_switch_theme">Could not switch theme</string>
 </resources>

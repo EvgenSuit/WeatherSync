@@ -30,7 +30,8 @@ val activityPlanningModule = module {
     single {
         ForecastRepository(
             engine = CIO.create(),
-            locationClient = get()
+            locationClient = get(),
+            weatherUnitsManager = get()
         )
     }
 }

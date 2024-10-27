@@ -39,7 +39,6 @@ import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.koin.core.context.stopKoin
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -93,7 +92,8 @@ class ActivityPlanningBaseRule: TestWatcher() {
             locationClient = mockLocationClient(
                 geocoderException = geocoderException,
                 lastLocationException = lastLocationException
-            )
+            ),
+            weatherUnitsManager = mockk()
         )
     }
     fun setupLimitManager(

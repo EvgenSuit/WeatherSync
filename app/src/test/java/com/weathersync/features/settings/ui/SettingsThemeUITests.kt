@@ -10,13 +10,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
-import com.weathersync.common.ui.printToLog
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.features.settings.SettingsBaseRule
-import com.weathersync.features.settings.presentation.ui.SettingsIntent
+import com.weathersync.features.settings.ThemeTest
 import com.weathersync.features.settings.presentation.ui.SettingsScreen
-import io.mockk.coVerify
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -27,7 +25,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class SettingsUIThemeTests {
+class SettingsThemeUITests: ThemeTest {
     @get: Rule
     val composeRule = createComposeRule()
 
@@ -38,7 +36,7 @@ class SettingsUIThemeTests {
     private val snackbarScope = TestScope()
 
     @Test
-    fun collectDefaultTheme_isCorrect() = runTest {
+    override fun collectDefaultTheme_isCorrect() = runTest {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 SettingsScreen(viewModel = settingsBaseRule.viewModel)
@@ -46,8 +44,8 @@ class SettingsUIThemeTests {
             onNodeWithTag("ThemeSwitcher").apply {
                 launch {
                     assertIsNotEnabled()
-                    settingsBaseRule.viewModel.uiState.test {
-                        skipItems(1)
+                    settingsBaseRule.viewModel.themeState.test {
+                        skipItems(1) // skip null
                         awaitItem()
                         onNodeWithContentDescription("DarkMode", useUnmergedTree = true).assertIsSelected()
                         onNodeWithContentDescription("LightMode", useUnmergedTree = true).assertIsNotSelected()
@@ -59,7 +57,7 @@ class SettingsUIThemeTests {
     }
 
     @Test
-    fun setTheme_isCorrect() = runTest {
+    override fun setTheme_isCorrect() = runTest {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 SettingsScreen(viewModel = settingsBaseRule.viewModel)
@@ -67,16 +65,16 @@ class SettingsUIThemeTests {
             onNodeWithTag("ThemeSwitcher").apply {
                 launch {
                     assertIsNotEnabled()
-                    settingsBaseRule.viewModel.uiState.test {
+                    settingsBaseRule.viewModel.themeState.test {
                         skipItems(1)
-                        assertEquals(true, awaitItem().isThemeDark)
+                        assertEquals(true, awaitItem())
                         assertIsEnabled()
 
                         // order of "dark" values doesn't matter here
                         for (dark in listOf(false, true)) {
                             // set theme to light on the first run
                             performClick()
-                            settingsBaseRule.advance(this@runTest)
+                            advanceUntilIdle()
                             awaitItem()
                             onNodeWithContentDescription("DarkMode", useUnmergedTree = true).apply {
                                 if (!dark) assertIsNotSelected()

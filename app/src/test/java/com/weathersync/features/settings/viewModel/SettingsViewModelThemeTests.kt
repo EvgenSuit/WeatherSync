@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.features.settings.SettingsBaseRule
+import com.weathersync.features.settings.ThemeTest
 import com.weathersync.features.settings.presentation.ui.SettingsIntent
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
@@ -17,7 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class SettingsViewModelThemeTests {
+class SettingsViewModelThemeTests: ThemeTest {
     @get: Rule(order = 0)
     val dispatcherRule = MainDispatcherRule()
 
@@ -25,27 +26,26 @@ class SettingsViewModelThemeTests {
     val settingsBaseRule = SettingsBaseRule()
 
     @Test
-    fun collectDefaultTheme_isCorrect() = runTest {
-        settingsBaseRule.viewModel.uiState.test {
+    override fun collectDefaultTheme_isCorrect() = runTest {
+        settingsBaseRule.viewModel.themeState.test {
+            // skip 1 items since the first item emitted is the default state
             skipItems(1)
-            assertEquals(true, awaitItem().isThemeDark)
+            assertEquals(true, awaitItem())
         }
     }
 
     @Test
-    fun setTheme_isCorrect() = runTest {
+    override fun setTheme_isCorrect() = runTest {
         settingsBaseRule.viewModel.apply {
-            uiState.test {
+            themeState.test {
                 skipItems(1)
-                assertEquals(true, awaitItem().isThemeDark)
+                assertEquals(true, awaitItem())
                 for (dark in listOf(false, true)) {
                     // set theme to light on the first run
                     handleIntent(SettingsIntent.SwitchTheme)
-                    repeat(9999999) {
-                        advanceUntilIdle()
-                    }
+                    advanceUntilIdle()
                     coVerify { settingsBaseRule.settingsRepository.setTheme(dark) }
-                    assertEquals(dark, awaitItem().isThemeDark!!)
+                    assertEquals(dark, awaitItem()!!)
                 }
             }
         }

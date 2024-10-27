@@ -21,16 +21,14 @@ import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.data.CurrentWeatherUnits
 import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
-import com.weathersync.features.home.presentation.HomeIntent
 import com.weathersync.features.home.presentation.HomeViewModel
 import com.weathersync.utils.LimitManager
 import com.weathersync.utils.LimitManagerConfig
 import io.ktor.http.HttpStatusCode
+import io.mockk.mockk
 import io.mockk.spyk
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.koin.core.context.stopKoin
@@ -82,7 +80,8 @@ class HomeBaseRule: TestWatcher() {
                 geocoderException = geocoderException,
                 lastLocationException = lastLocationException
             ),
-            currentWeatherDAO = currentWeatherLocalDB.currentWeatherDao()
+            currentWeatherDAO = currentWeatherLocalDB.currentWeatherDao(),
+            weatherUnitsManager = mockk()
         )
     }
     fun setupHomeRepository(

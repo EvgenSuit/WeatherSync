@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weathersync.R
 import com.weathersync.common.ui.CustomButton
-import com.weathersync.common.ui.CustomProgressIndicator
+import com.weathersync.common.ui.CustomCircularProgressIndicator
 import com.weathersync.common.ui.TextFieldState
 import com.weathersync.common.ui.UIText
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningIntent
@@ -109,7 +109,7 @@ fun PlanYourActivityComposable(
         } else {
             Text(text = stringResource(id = R.string.planning_activities))
             Spacer(modifier = Modifier.height(12.dp))
-            CustomProgressIndicator(modifier = Modifier.testTag("ActivityPlannerProgress"))
+            CustomCircularProgressIndicator(modifier = Modifier.testTag("ActivityPlannerProgress"))
         }
     }
 }

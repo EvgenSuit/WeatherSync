@@ -9,6 +9,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -54,7 +55,7 @@ fun ThemeSwitcher(
     )
     Box(modifier = Modifier
         .width(size * 2)
-        .height(size)
+        .fillMaxHeight()
         .clip(shape = parentShape)
         .clickable(enabled = darkTheme != null) { onClick() }
         .background(MaterialTheme.colorScheme.secondaryContainer)
@@ -119,8 +120,10 @@ fun ThemeSwitcher(
 fun ThemeSwitchPreview() {
     WeatherSyncTheme(darkTheme = true) {
         Surface {
-            ThemeSwitcher(darkTheme = true) {
+            CommonSettingsComponent(textId = R.string.theme) {
+                ThemeSwitcher(darkTheme = null) {
 
+                }
             }
         }
     }

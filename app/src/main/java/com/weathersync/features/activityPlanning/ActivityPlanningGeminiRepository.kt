@@ -9,7 +9,8 @@ import java.time.ZoneId
 
 val activitiesPlanningTag = "[ACTIVITIES_PLANNING]"
 class ActivityPlanningGeminiRepository(
-    private val generativeModel: GenerativeModel
+    private val generativeModel: GenerativeModel,
+    private val is24HourFormat: Boolean
 ): GeminiRepository {
     suspend fun generateRecommendations(
         activity: String,
@@ -17,6 +18,7 @@ class ActivityPlanningGeminiRepository(
         val forecastPrompt = constructForecastText(forecast)
         val prompt = constructPrompt(
             locality = forecast.locality,
+            is24HourFormat = is24HourFormat,
             activity = activity.trim(),
             currentDatetime = forecast.forecast[0].time.value.toString(),
             lastForecastDatetime = forecast.forecast.last().time.value.toString(),
@@ -31,6 +33,7 @@ class ActivityPlanningGeminiRepository(
     }
     private fun constructPrompt(
         locality: String,
+        is24HourFormat: Boolean,
         activity: String,
         currentDatetime: String,
         lastForecastDatetime: String,
@@ -48,7 +51,7 @@ class ActivityPlanningGeminiRepository(
 - **Only** if the activity is scheduled **within** this exact date and time range (including hour and minute), or if an activity text doesn't feature any date, should you provide the appropriate forecast details.
 - **If** the activity is scheduled **outside** this date and time range, even by one minute, and ONLY if a date is present withing the activity text, you must return an empty string with **no** response. Do not print or output anything else.
         Output WITHOUT numeration, *, #, dots at the end, and other symbols.
-            You must print times in a format appropriate to the ${ZoneId.systemDefault()} timezone, and dates in the format like October 12, 2023.
+            Is 24 hour format: $is24HourFormat. Print dates in 24 hours format if Is 24 hour format is true, otherwise use AM/PM also print dates in the format like October 12, 2023.
             If the activity is not suitable for the weather, explain why.
             For each activity, if it involves a visit (e.g., visiting a dentist, friend, or location), suggest specific times based on weather suitability. 
             Your responsibility is to shortly recommend a couple of perfect times for an activity followed by reasons and corresponding dates and times

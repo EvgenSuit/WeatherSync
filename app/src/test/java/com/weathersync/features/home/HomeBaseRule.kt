@@ -9,28 +9,36 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
 import com.weathersync.common.TestException
 import com.weathersync.common.TestHelper
+import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.mockEngine
 import com.weathersync.common.mockGenerativeModel
+import com.weathersync.common.utils.fetchedFirestoreWeatherUnits
+import com.weathersync.common.utils.fetchedWeatherUnits
 import com.weathersync.common.utils.locationInfo
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
 import com.weathersync.common.utils.mockLocationClient
+import com.weathersync.common.utils.mockWeatherUnitsManager
+import com.weathersync.common.utils.mockWeatherUnitsManagerFirestore
 import com.weathersync.features.home.data.CurrWeather
 import com.weathersync.features.home.data.CurrentOpenMeteoWeather
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.data.CurrentWeatherUnits
 import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
-import com.weathersync.features.home.presentation.HomeIntent
 import com.weathersync.features.home.presentation.HomeViewModel
+import com.weathersync.features.settings.data.WeatherUnit
+import com.weathersync.utils.Country
+import com.weathersync.utils.FirestoreWeatherUnit
 import com.weathersync.utils.LimitManager
 import com.weathersync.utils.LimitManagerConfig
+import com.weathersync.utils.WeatherUnitDocName
+import com.weathersync.utils.WeatherUnitsManager
 import io.ktor.http.HttpStatusCode
+import io.mockk.mockk
 import io.mockk.spyk
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.koin.core.context.stopKoin
@@ -57,6 +65,7 @@ class HomeBaseRule: TestWatcher() {
     lateinit var limitManagerFirestore: FirebaseFirestore
     lateinit var generativeModel: GenerativeModel
     lateinit var geminiRepository: GeminiRepository
+    lateinit var weatherUnitsManager: WeatherUnitsManager
 
     fun manageLocationPermission(grant: Boolean) {
         val permission = Manifest.permission.ACCESS_COARSE_LOCATION
@@ -72,17 +81,19 @@ class HomeBaseRule: TestWatcher() {
     }
 
     fun setupWeatherRepository(
+        weatherUnits: List<WeatherUnit> = fetchedWeatherUnits,
         status: HttpStatusCode = HttpStatusCode.OK,
         geocoderException: Exception? = null,
         lastLocationException: Exception? = null
     ) {
         currentWeatherRepository = CurrentWeatherRepository(
-            engine = mockEngine(status, responseValue = mockedWeather),
+            engine = mockEngine(status, responseValue = getMockedWeather(weatherUnits)),
             locationClient = mockLocationClient(
                 geocoderException = geocoderException,
                 lastLocationException = lastLocationException
             ),
-            currentWeatherDAO = currentWeatherLocalDB.currentWeatherDao()
+            currentWeatherDAO = currentWeatherLocalDB.currentWeatherDao(),
+            weatherUnitsManager = weatherUnitsManager
         )
     }
     fun setupHomeRepository(
@@ -98,6 +109,17 @@ class HomeBaseRule: TestWatcher() {
             currentWeatherRepository = currentWeatherRepository,
             geminiRepository = geminiRepository
         ))
+    }
+    fun setupWeatherUnitsManager(
+        units: List<WeatherUnit> = fetchedWeatherUnits,
+        unitsFetchException: Exception? = null,
+        unitSetException: Exception? = null
+    ) {
+        weatherUnitsManager = mockWeatherUnitsManager(
+            firestoreUnits = units.map { FirestoreWeatherUnit(it.unitName) },
+            unitsFetchException = unitsFetchException,
+            unitSetException = unitSetException
+        )
     }
     fun setupLimitManager(
         timestamps: List<Timestamp> = listOf(),
@@ -143,6 +165,7 @@ class HomeBaseRule: TestWatcher() {
         setupLimitManager(
             limitManagerConfig = LimitManagerConfig(6, 6)
         )
+        setupWeatherUnitsManager()
         setupWeatherRepository()
         setupHomeRepository(generatedSuggestions = generatedSuggestions)
         setupViewModel()
@@ -173,28 +196,31 @@ data class TestSuggestions(
     val unrecommendedActivities: List<String> = listOf("Avoid swimming outdoors for prolonged periods of time", "Avoid eating ice cream"),
     val whatToBring: List<String> = listOf("Light shoes", "A hat")
 )
-val mockedWeather = CurrentOpenMeteoWeather(
-    latitude = locationInfo.latitude,
-    longitude = locationInfo.longitude,
-    timezone = "GMT",
-    elevation = 34.0,
-    currentWeatherUnits = CurrentWeatherUnits(
-        time = "iso8601",
-        interval = "seconds",
-        temperature = "°C",
-        windSpeed = "km/h",
-        windDirection = "°"
-    ),
-    currentWeather = CurrWeather(
-        time = "2023-09-26T12:00:00Z",
-        interval = 900,
-        temperature = 20.0,
-        windSpeed = 15.0,
-        windDirection = 270,
-        isDay = 1,
-        weatherCode = 2
+fun getMockedWeather(
+    units: List<WeatherUnit>
+) = CurrentOpenMeteoWeather(
+        latitude = locationInfo.latitude,
+        longitude = locationInfo.longitude,
+        timezone = "GMT",
+        elevation = 34.0,
+        currentWeatherUnits = CurrentWeatherUnits(
+            time = "iso8601",
+            interval = "seconds",
+            temperature = units.first { it is WeatherUnit.Temperature }.unitName,
+            windSpeed = units.first { it is WeatherUnit.WindSpeed }.unitName,
+            windDirection = "°"
+        ),
+        currentWeather = CurrWeather(
+            time = "2023-09-26T12:00:00Z",
+            interval = 900,
+            temperature = 20.0,
+            windSpeed = 15.0,
+            windDirection = 270,
+            isDay = 1,
+            weatherCode = 2
+        )
     )
-)
+
 fun TestSuggestions.toSuggestions() = Suggestions(
     recommendedActivities = recommendedActivities,
     unrecommendedActivities = unrecommendedActivities,

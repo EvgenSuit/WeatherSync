@@ -7,7 +7,7 @@ import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
 import com.weathersync.features.home.LocationClient
-import com.weathersync.features.home.mockedWeather
+import com.weathersync.features.home.getMockedWeather
 import io.mockk.every
 import io.mockk.mockk
 
@@ -49,7 +49,7 @@ fun mockLocationClient(
     return LocationClient(
         fusedLocationProviderClient = fusedLocationProviderClient,
         geocoder = mockk {
-            every { getFromLocation(mockedWeather.latitude, mockedWeather.longitude, 1) } answers {
+            every { getFromLocation(getMockedWeather(fetchedWeatherUnits).latitude, getMockedWeather(fetchedWeatherUnits).longitude, 1) } answers {
                 if (geocoderException != null) throw geocoderException
                 addresses
             }

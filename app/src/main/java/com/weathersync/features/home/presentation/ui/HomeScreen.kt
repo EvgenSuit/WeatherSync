@@ -75,31 +75,23 @@ fun HomeScreenContent(
         modifier = Modifier
             .fillMaxSize()) {
         ConstrainedComponent {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(5.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(4.dp)
+            Box(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Box(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    nextUpdateTime?.let { Text(text = stringResource(id = R.string.next_update_time, it)) }
-                }
-                CurrentWeatherComposable(
-                    weather = uiState.currentWeather,
-                    isFetchInProgress = listOf(uiState.currentWeatherFetchResult, uiState.currentWeatherRefreshResult).any { it.isInProgress() })
-                RecommendedActivitiesComposable(
-                    recommendedActivities = suggestions?.recommendedActivities,
-                    unrecommendedActivities = suggestions?.unrecommendedActivities,
-                    isGenerationSuccessful = uiState.suggestionsGenerationResult.isSuccess()
-                )
-                WhatToWearComposable(
-                    recommendations = suggestions?.whatToBring,
-                    isGenerationSuccessful = uiState.suggestionsGenerationResult.isSuccess()
-                )
+                nextUpdateTime?.let { Text(text = stringResource(id = R.string.next_update_time, it)) }
             }
+            CurrentWeatherComposable(
+                weather = uiState.currentWeather,
+                isFetchInProgress = listOf(uiState.currentWeatherFetchResult, uiState.currentWeatherRefreshResult).any { it.isInProgress() })
+            RecommendedActivitiesComposable(
+                recommendedActivities = suggestions?.recommendedActivities,
+                unrecommendedActivities = suggestions?.unrecommendedActivities,
+                isGenerationSuccessful = uiState.suggestionsGenerationResult.isSuccess()
+            )
+            WhatToWearComposable(
+                recommendations = suggestions?.whatToBring,
+                isGenerationSuccessful = uiState.suggestionsGenerationResult.isSuccess()
+            )
         }
     }
 }

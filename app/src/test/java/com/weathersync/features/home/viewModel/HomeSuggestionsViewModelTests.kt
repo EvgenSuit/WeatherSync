@@ -5,8 +5,9 @@ import com.google.firebase.Timestamp
 import com.weathersync.common.TestException
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.common.utils.createDescendingTimestamps
+import com.weathersync.common.utils.fetchedWeatherUnits
 import com.weathersync.features.home.HomeBaseRule
-import com.weathersync.features.home.mockedWeather
+import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.HomeIntent
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.features.home.toSuggestions
@@ -45,7 +46,7 @@ class HomeSuggestionsViewModelTests {
             coVerifyAll {
                 calculateLimit()
                 getCurrentWeather(isLimitReached = false)
-                generateSuggestions(isLimitReached = false, currentWeather = mockedWeather.toCurrentWeather())
+                generateSuggestions(isLimitReached = false, currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
             }
             coVerifyAll(inverse = true) {
                 recordTimestamp()
@@ -58,7 +59,7 @@ class HomeSuggestionsViewModelTests {
         homeBaseRule.setupViewModel()
         homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
         homeBaseRule.advance(this)
-        assertEquals(mockedWeather.toCurrentWeather(), homeBaseRule.viewModel.uiState.value.currentWeather)
+        assertEquals(getMockedWeather(fetchedWeatherUnits).toCurrentWeather(), homeBaseRule.viewModel.uiState.value.currentWeather)
         assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is EmptyGeminiResponse)
         homeBaseRule.homeRepository.apply {
             coVerifyAll {
@@ -66,7 +67,7 @@ class HomeSuggestionsViewModelTests {
                 getCurrentWeather(isLimitReached = false)
                 generateSuggestions(
                     isLimitReached = false,
-                    currentWeather = mockedWeather.toCurrentWeather()
+                    currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather()
                 )
             }
             coVerifyAll(inverse = true) {
@@ -80,7 +81,7 @@ class HomeSuggestionsViewModelTests {
         homeBaseRule.setupViewModel()
         homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
         homeBaseRule.advance(this)
-        assertEquals(mockedWeather.toCurrentWeather(), homeBaseRule.viewModel.uiState.value.currentWeather)
+        assertEquals(getMockedWeather(fetchedWeatherUnits).toCurrentWeather(), homeBaseRule.viewModel.uiState.value.currentWeather)
         assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is AtLeastOneGenerationTagMissing)
         homeBaseRule.homeRepository.apply {
             coVerifyAll {
@@ -88,7 +89,7 @@ class HomeSuggestionsViewModelTests {
                 getCurrentWeather(isLimitReached = false)
                 generateSuggestions(
                     isLimitReached = false,
-                    currentWeather = mockedWeather.toCurrentWeather()
+                    currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather()
                 )
             }
             coVerifyAll(inverse = true) {
@@ -110,7 +111,7 @@ class HomeSuggestionsViewModelTests {
             coVerifyAll {
                 calculateLimit()
                 getCurrentWeather(isLimitReached = false)
-                generateSuggestions(isLimitReached = false, currentWeather = mockedWeather.toCurrentWeather())
+                generateSuggestions(isLimitReached = false, currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
                 recordTimestamp()
             }
         }
@@ -145,7 +146,7 @@ class HomeSuggestionsViewModelTests {
     @Test
     fun generateSuggestions_accountLimitReached_localSuggestionsAreNotNull() = runTest {
         homeBaseRule.currentWeatherLocalDB.currentWeatherDao().apply {
-            insertWeather(mockedWeather.toCurrentWeather())
+            insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
             insertSuggestions(homeBaseRule.testSuggestions.toSuggestions())
         }
         val timestamps = createDescendingTimestamps(
@@ -165,7 +166,7 @@ class HomeSuggestionsViewModelTests {
             coVerifyAll {
                 calculateLimit()
                 getCurrentWeather(isLimitReached = true)
-                generateSuggestions(isLimitReached = true, currentWeather = mockedWeather.toCurrentWeather())
+                generateSuggestions(isLimitReached = true, currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
             }
             coVerify(inverse = true) {
                 recordTimestamp()

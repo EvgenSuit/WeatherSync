@@ -1,7 +1,6 @@
 package com.weathersync.features.home.presentation.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -24,11 +22,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weathersync.R
-import com.weathersync.common.ui.CustomProgressIndicator
+import com.weathersync.common.ui.CustomCircularProgressIndicator
 import com.weathersync.ui.theme.WeatherSyncTheme
 import com.weathersync.ui.theme.ubuntuRegular
-import com.weathersync.utils.CustomResult
-import com.weathersync.utils.isSuccess
 
 @Composable
 fun RecommendedActivitiesComposable(
@@ -53,7 +49,7 @@ fun RecommendedActivitiesComposable(
                     ActivityComposable(activity = activity, recommended = false)
                 }
             }
-        } else CustomProgressIndicator(modifier = Modifier.testTag("SuggestionsProgress"))
+        } else CustomCircularProgressIndicator(modifier = Modifier.testTag("SuggestionsProgress"))
     }
 }
 
@@ -67,7 +63,7 @@ fun WhatToWearComposable(recommendations: List<String>?,
                     style = MaterialTheme.typography.labelMedium
                         .copy(fontSize = 21.sp))
             }
-        } else CustomProgressIndicator(modifier = Modifier.testTag("WhatToBringProgress"))
+        } else CustomCircularProgressIndicator(modifier = Modifier.testTag("WhatToBringProgress"))
     }
 }
 

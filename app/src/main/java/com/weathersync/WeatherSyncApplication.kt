@@ -4,6 +4,7 @@ import android.app.Application
 import com.weathersync.di.activityPlanningModule
 import com.weathersync.di.authModule
 import com.weathersync.di.homeModule
+import com.weathersync.di.settingsModule
 import com.weathersync.di.utilsModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -20,7 +21,8 @@ class WeatherSyncApplication: Application() {
                 authModule,
                 utilsModule,
                 homeModule,
-                activityPlanningModule
+                activityPlanningModule,
+                settingsModule
             )
         }
     }

@@ -63,6 +63,8 @@ room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 
+datastore-preferences = { module = "androidx.datastore:datastore-preferences", version = "1.1.1" }
+
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version = "1.9.0" }
 robolectric = { module = "org.robolectric:robolectric", version = "4.13" }
 mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
@@ -72,6 +74,7 @@ roborazzi-gradle-plugin = { module = "io.github.takahirom.roborazzi:roborazzi-gr
 roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
 roborazzi-junit-rule = { module = "io.github.takahirom.roborazzi:roborazzi-junit-rule", version.ref = "roborazzi" }
+turbine = { module = "app.cash.turbine:turbine", version = "1.2.0" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

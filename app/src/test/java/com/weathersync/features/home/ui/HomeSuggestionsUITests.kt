@@ -22,9 +22,10 @@ import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.printToLog
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.common.utils.MainDispatcherRule
+import com.weathersync.common.utils.fetchedWeatherUnits
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.data.Suggestions
-import com.weathersync.features.home.mockedWeather
+import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.HomeIntent
 import com.weathersync.features.home.presentation.ui.HomeScreen
 import com.weathersync.features.home.toCurrentWeather
@@ -160,7 +161,7 @@ class HomeSuggestionsUITests {
     @Test
     fun generateSuggestions_accountLimitReached_localSuggestionsAreNotNull() = runTest {
         homeBaseRule.currentWeatherLocalDB.currentWeatherDao().apply {
-            insertWeather(mockedWeather.toCurrentWeather())
+            insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
             insertSuggestions(homeBaseRule.testSuggestions.toSuggestions())
         }
         homeBaseRule.manageLocationPermission(true)

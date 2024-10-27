@@ -12,24 +12,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
-
-enum class TemperatureUnit(val symbol: String) {
-    CELSIUS("celsius"),
-    FAHRENHEIT("fahrenheit")
-}
-
-enum class VisibilityUnit(val symbol: String) {
-    METERS("m"),
-    KILOMETERS("km"),
-    MILES("mi"),
-    NAUTICAL_MILES("nm")
-}
-enum class WindSpeedUnit(val symbol: String) {
-    KMH("kmh"),
-    MS("ms"),
-    MPH("mph"),
-    KN("kn")
-}
+import kotlin.math.pow
+import kotlin.math.roundToInt
 
 interface WeatherRepository {
     val timezone: ZoneId
@@ -49,31 +33,16 @@ interface WeatherRepository {
                 url("https://api.open-meteo.com/v1/")
             }
         }
-    fun timezoneToUnits(): RequestUnits {
-        val country = Locale.getDefault().country
-        val tempUnit = when(country) {
-            "US", "BS", "LR", "MM" -> TemperatureUnit.FAHRENHEIT
-            else -> TemperatureUnit.CELSIUS
-        }
-        val windSpeedUnit = when (country) {
-            "US", "GB" -> WindSpeedUnit.MPH // U.S. and U.K. commonly use mph
-            "JP" -> WindSpeedUnit.MS // Japan uses m/s
-            "NO" -> WindSpeedUnit.KN // Norway and maritime environments use knots (kn)
-            else -> WindSpeedUnit.KMH // Default to km/h for most other countries
-        }
-        val visibilityUnit = when (country) {
-            "US", "GB" -> VisibilityUnit.MILES // U.S. and U.K. use miles
-            "JP" -> VisibilityUnit.METERS // Japan uses meters
-            "NO" -> VisibilityUnit.NAUTICAL_MILES // Norway uses nautical miles
-            else -> VisibilityUnit.KILOMETERS // Default to kilometers
-        }
-        return RequestUnits(temp = tempUnit, windSpeed = windSpeedUnit, visibility = visibilityUnit)
-    }
+
     fun convertToCorrectDateFormat(time: String): String {
         val formatterInput = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
         val formatterOutput = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(Locale.getDefault())
         val dateTime = LocalDateTime.parse(time, formatterInput)
         return dateTime.format(formatterOutput)
+    }
+    fun Double.round(decimals: Int): Double {
+        val factor = 10.0.pow(decimals)
+        return (this * factor).roundToInt() / factor
     }
 }
 
@@ -109,9 +78,3 @@ fun weatherCodeToDescription(weatherCode: Int): String =
         99 -> "Thunderstorm with heavy hail"
         else -> "Unknown weather code"
     }
-
-data class RequestUnits(
-    val temp: TemperatureUnit,
-    val windSpeed: WindSpeedUnit,
-    val visibility: VisibilityUnit
-)

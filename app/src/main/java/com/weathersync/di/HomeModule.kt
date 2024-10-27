@@ -32,7 +32,8 @@ val homeModule = module {
     single { CurrentWeatherRepository(
         engine = CIO.create(),
         locationClient = get(),
-        currentWeatherDAO = get()
+        currentWeatherDAO = get(),
+        weatherUnitsManager = get()
     ) }
     single { LocationClient(
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(androidContext()),

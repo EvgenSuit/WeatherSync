@@ -116,6 +116,9 @@ dependencies {
     implementation(libs.room.ktx)
     testImplementation(libs.room.testing)
 
+    // datastore
+    implementation(libs.datastore.preferences)
+
     // DI
     implementation(libs.koin)
     implementation(libs.androidx.junit.ktx)
@@ -132,6 +135,8 @@ dependencies {
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
     testImplementation(libs.roborazzi.junit.rule)
+    // A small testing library for kotlinx.coroutines Flow
+    testImplementation(libs.turbine)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

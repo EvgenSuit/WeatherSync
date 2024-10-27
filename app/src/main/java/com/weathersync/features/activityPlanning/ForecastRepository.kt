@@ -17,11 +17,12 @@ class ForecastRepository(
 ): WeatherRepository {
     private val httpClient = getHttpClient(engine)
 
-    // make this request to see what the forecast looks like in plain json:
-    // https://api.open-meteo.com/v1/forecast?latitude=51.1&longitude=17.03333&start_hour=2024-09-30T23:00&end_hour=2024-10-01T23:00&timezone=Europe/Warsaw&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,precipitation_probability,weather_code,visibility,pressure_msl
+    // make this request to see what a forecast looks like in plain json:
+    // https://api.open-meteo.com/v1/forecast?latitude=51.1&longitude=17.03333&temperature_unit=fahrenheit&start_hour=2024-09-30T23:00&end_hour=2024-10-01T23:00&timezone=Europe/Warsaw&hourly=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,precipitation_probability,weather_code,visibility,pressure_msl
     suspend fun getForecast(forecastDates: ForecastDates): OpenMeteoForecast {
         val coordinates = locationClient.getCoordinates()
         val fetchedUnits = weatherUnitsManager.getUnits()
+        // all parameters except temperature, wind speed and visibility are available in only 1 unit format
         val requestUrl =
             "forecast?start_hour=${forecastDates.startDate}&end_hour=${forecastDates.endDate}" +
                     "&latitude=${coordinates.lat}&longitude=${coordinates.lon}" +

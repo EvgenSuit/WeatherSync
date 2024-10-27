@@ -1,5 +1,6 @@
 package com.weathersync.di
 
+import android.text.format.DateFormat
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
@@ -9,6 +10,7 @@ import com.weathersync.features.activityPlanning.ActivityPlanningRepository
 import com.weathersync.features.activityPlanning.ForecastRepository
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
 import io.ktor.client.engine.cio.CIO
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 import java.util.Locale
 
@@ -25,7 +27,8 @@ val activityPlanningModule = module {
         activityPlanningGeminiRepository = get()
     ) }
     single { ActivityPlanningGeminiRepository(
-        generativeModel = getGenerativeModel()
+        generativeModel = getGenerativeModel(),
+        is24HourFormat = DateFormat.is24HourFormat(androidContext())
     ) }
     single {
         ForecastRepository(

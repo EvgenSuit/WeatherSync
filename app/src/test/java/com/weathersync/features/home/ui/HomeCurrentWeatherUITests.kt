@@ -17,9 +17,10 @@ import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.common.utils.createDescendingTimestamps
+import com.weathersync.common.utils.fetchedWeatherUnits
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.data.CurrentWeather
-import com.weathersync.features.home.mockedWeather
+import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.ui.HomeScreen
 import com.weathersync.features.home.toCurrentWeather
 import io.ktor.http.HttpStatusCode
@@ -61,7 +62,7 @@ class HomeCurrentWeatherUITests {
             waitForIdle()
             onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
             homeBaseRule.advance(this@runTest)
-            val currentWeather = mockedWeather.toCurrentWeather()
+            val currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather()
             assertEquals(currentWeather, homeBaseRule.viewModel.uiState.value.currentWeather)
             assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
 
@@ -106,7 +107,7 @@ class HomeCurrentWeatherUITests {
     }
     @Test
     fun getCurrentWeather_limitReached_localWeatherIsNotNull() = runTest {
-        homeBaseRule.currentWeatherLocalDB.currentWeatherDao().insertWeather(mockedWeather.toCurrentWeather())
+        homeBaseRule.currentWeatherLocalDB.currentWeatherDao().insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
         homeBaseRule.manageLocationPermission(true)
         val timestamps = createDescendingTimestamps(
             limitManagerConfig = homeBaseRule.limitManagerConfig,
@@ -123,7 +124,7 @@ class HomeCurrentWeatherUITests {
             onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
             homeBaseRule.advance(this@runTest)
             assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
-            assertCorrectCurrentWeatherUI(mockedWeather.toCurrentWeather())
+            assertCorrectCurrentWeatherUI(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
 
             checkDisplayedLimit(timestamps = timestamps)
         }

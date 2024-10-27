@@ -2,13 +2,34 @@ package com.weathersync.common.utils
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObject
+import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.auth.userId
 import com.weathersync.common.mockTask
 import com.weathersync.features.settings.data.WeatherUnit
+import com.weathersync.utils.Country
 import com.weathersync.utils.FirestoreWeatherUnit
 import com.weathersync.utils.WeatherUnitDocName
+import com.weathersync.utils.WeatherUnitsManager
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
+
+fun mockWeatherUnitsManager(
+    firestoreUnits: List<FirestoreWeatherUnit> = fetchedFirestoreWeatherUnits,
+    unitsFetchException: Exception? = null,
+    unitSetException: Exception? = null
+): WeatherUnitsManager = spyk(
+        WeatherUnitsManager(
+        auth = mockAuth(),
+        firestore = mockWeatherUnitsManagerFirestore(
+            unitDocNames = WeatherUnitDocName.entries.map { it.n },
+            units = firestoreUnits,
+            unitSetException = unitSetException,
+            unitsFetchException = unitsFetchException
+        ),
+        country = Country.US.name
+    )
+    )
 
 fun mockWeatherUnitsManagerFirestore(
     unitDocNames: List<String>,

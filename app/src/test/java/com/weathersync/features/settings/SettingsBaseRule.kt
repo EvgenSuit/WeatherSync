@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.weathersync.common.TestHelper
 import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.utils.fetchedFirestoreWeatherUnits
+import com.weathersync.common.utils.mockWeatherUnitsManager
 import com.weathersync.common.utils.mockWeatherUnitsManagerFirestore
 import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.features.settings.data.themeDatastore
@@ -41,16 +42,10 @@ class SettingsBaseRule: TestWatcher() {
         unitsFetchException: Exception? = null,
         unitSetException: Exception? = null
     ) {
-        weatherUnitsManager = spyk(WeatherUnitsManager(
-            auth = mockAuth(),
-            firestore = mockWeatherUnitsManagerFirestore(
-                unitDocNames = WeatherUnitDocName.entries.map { it.n },
-                units = fetchedFirestoreWeatherUnits,
-                unitSetException = unitSetException,
-                unitsFetchException = unitsFetchException
-            ),
-            country = Country.US.name
-        ))
+        weatherUnitsManager = mockWeatherUnitsManager(
+            unitsFetchException = unitsFetchException,
+            unitSetException = unitSetException
+        )
     }
 
     override fun starting(description: Description) {

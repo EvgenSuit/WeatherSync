@@ -3,9 +3,10 @@ package com.weathersync.features.home.repository
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.weathersync.common.TestException
 import com.weathersync.common.utils.BaseGenerationTest
+import com.weathersync.common.utils.fetchedWeatherUnits
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.data.Suggestions
-import com.weathersync.features.home.mockedWeather
+import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.features.home.toSuggestions
 import com.weathersync.utils.AtLeastOneGenerationTagMissing
@@ -59,7 +60,7 @@ class HomeRepositorySuggestionsUnitTests: BaseGenerationTest {
     @Test
     fun generateSuggestions_limitReached_localSuggestionsAreNull() = runTest {
         val dao = homeBaseRule.currentWeatherLocalDB.currentWeatherDao()
-        dao.insertWeather(mockedWeather.toCurrentWeather())
+        dao.insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
 
         homeBaseRule.setupHomeRepository(generatedSuggestions = homeBaseRule.generatedSuggestions)
         val suggestions = generateSuggestions(isLimitReached = true)
@@ -72,7 +73,7 @@ class HomeRepositorySuggestionsUnitTests: BaseGenerationTest {
     fun generateSuggestions_limitReached_localSuggestionsAreNotNull() = runTest {
         val dao = homeBaseRule.currentWeatherLocalDB.currentWeatherDao()
         dao.apply {
-                insertWeather(mockedWeather.toCurrentWeather())
+                insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
                 insertSuggestions(homeBaseRule.testSuggestions.toSuggestions())
         }
         homeBaseRule.setupHomeRepository(generatedSuggestions = homeBaseRule.generatedSuggestions)

@@ -7,18 +7,23 @@ import com.weathersync.common.TestClock
 import com.weathersync.common.TestException
 import com.weathersync.common.TestHelper
 import com.weathersync.common.mockGenerativeModel
+import com.weathersync.common.utils.fetchedWeatherUnits
 import com.weathersync.common.utils.locationInfo
 import com.weathersync.common.utils.mockCrashlyticsManager
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
 import com.weathersync.common.utils.mockLocationClient
+import com.weathersync.common.utils.mockWeatherUnitsManager
 import com.weathersync.features.activityPlanning.data.ForecastUnits
 import com.weathersync.features.activityPlanning.data.Hourly
 import com.weathersync.features.activityPlanning.data.OpenMeteoForecast
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
+import com.weathersync.features.settings.data.WeatherUnit
+import com.weathersync.utils.FirestoreWeatherUnit
 import com.weathersync.utils.LimitManager
 import com.weathersync.utils.LimitManagerConfig
+import com.weathersync.utils.WeatherUnitsManager
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -39,7 +44,6 @@ import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.koin.core.context.stopKoin
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -59,6 +63,7 @@ class ActivityPlanningBaseRule: TestWatcher() {
     lateinit var geminiRepository: ActivityPlanningGeminiRepository
     lateinit var activityPlanningRepository: ActivityPlanningRepository
     lateinit var forecastRepository: ForecastRepository
+    lateinit var weatherUnitsManager: WeatherUnitsManager
 
     fun advance(testScope: TestScope) = repeat(9999999) { testScope.advanceUntilIdle() }
     private var capturedUrl = ""
@@ -84,16 +89,29 @@ class ActivityPlanningBaseRule: TestWatcher() {
         )
     }
     fun setupForecastRepository(
+        units: List<WeatherUnit> = fetchedWeatherUnits,
         status: HttpStatusCode = HttpStatusCode.OK,
         geocoderException: Exception? = null,
         lastLocationException: Exception? = null
     ) {
         forecastRepository = ForecastRepository(
-            engine = mockForecastEngine(status),
+            engine = mockForecastEngine(status, units = units),
             locationClient = mockLocationClient(
                 geocoderException = geocoderException,
                 lastLocationException = lastLocationException
-            )
+            ),
+            weatherUnitsManager = weatherUnitsManager
+        )
+    }
+    fun setupWeatherUnitsManager(
+        units: List<WeatherUnit> = fetchedWeatherUnits,
+        unitsFetchException: Exception? = null,
+        unitSetException: Exception? = null
+    ) {
+        weatherUnitsManager = mockWeatherUnitsManager(
+            firestoreUnits = units.map { FirestoreWeatherUnit(it.unitName) },
+            unitsFetchException = unitsFetchException,
+            unitSetException = unitSetException
         )
     }
     fun setupLimitManager(
@@ -117,20 +135,21 @@ class ActivityPlanningBaseRule: TestWatcher() {
     }
 
     private fun mockForecastEngine(
-        status: HttpStatusCode
+        status: HttpStatusCode,
+        units: List<WeatherUnit>,
     ): HttpClientEngine = MockEngine { request ->
         capturedUrl = request.url.toString()
         val extractedTimes = extractTimes(capturedUrl)
         val mockedForecast = OpenMeteoForecast(
             forecastUnits = ForecastUnits(
                 time = "hours",
-                temp = "°C",
+                temp = units.first { it is WeatherUnit.Temperature }.unitName,
                 humidity = "%",
                 apparentTemp = "°C",
-                windSpeed = "km/h",
+                windSpeed = units.first { it is WeatherUnit.WindSpeed }.unitName,
                 precipProb = "%",
                 weatherCode = "wmo code",
-                visibility = "km",
+                visibility = units.first { it is WeatherUnit.Visibility }.unitName,
                 pressure = "hPa"
             ),
             hourly = Hourly(
@@ -160,13 +179,15 @@ class ActivityPlanningBaseRule: TestWatcher() {
     ): ActivityPlanningGeminiRepository {
         generativeModel = mockGenerativeModel(generatedContent, generationException = suggestionsGenerationException)
         return ActivityPlanningGeminiRepository(
-            generativeModel = generativeModel
+            generativeModel = generativeModel,
+            is24HourFormat = true
         )
     }
     override fun starting(description: Description?) {
         stopKoin()
-        setupForecastRepository()
         setupLimitManager(limitManagerConfig = limitManagerConfig)
+        setupWeatherUnitsManager()
+        setupForecastRepository()
         setupActivityPlanningRepository(generatedSuggestions = generatedSuggestions)
         setupViewModel()
     }

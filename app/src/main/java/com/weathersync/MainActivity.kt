@@ -11,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,13 +24,23 @@ import androidx.lifecycle.lifecycleScope
 import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.common.ui.SnackbarController
 import com.weathersync.features.navigation.NavManager
+import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.ui.theme.WeatherSyncTheme
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
+    private val themeManager: ThemeManager by inject()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val initTheme = runBlocking { themeManager.themeFlow(true).first() }
         setContent {
+            val isThemeDark by themeManager.themeFlow(true).collectAsState(initial = initTheme)
             window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
             val snackbarHostState = remember { SnackbarHostState() }
             val snackbarController by remember {
@@ -38,7 +49,7 @@ class MainActivity : ComponentActivity() {
                     snackbarHostState = snackbarHostState,
                     coroutineScope = lifecycleScope))
             }
-            WeatherSyncTheme {
+            WeatherSyncTheme(isThemeDark) {
                 CompositionLocalProvider(LocalSnackbarController provides snackbarController) {
                     NavManager()
                 }

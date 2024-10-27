@@ -4,8 +4,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.firebase.Timestamp
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.common.utils.createDescendingTimestamps
+import com.weathersync.common.utils.fetchedWeatherUnits
 import com.weathersync.features.home.HomeBaseRule
-import com.weathersync.features.home.mockedWeather
+import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.HomeIntent
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.utils.LimitManagerConfig
@@ -15,6 +16,7 @@ import io.mockk.coVerify
 import io.mockk.coVerifyAll
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -32,6 +34,11 @@ class HomeCurrentWeatherViewModelTests {
     @get: Rule(order = 1)
     val homeBaseRule = HomeBaseRule()
 
+    @After
+    fun after() {
+        coVerify { homeBaseRule.weatherUnitsManager.getUnits() }
+    }
+
     @Test
     fun getCurrentWeather_limitNotReached_success() = runTest {
         homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
@@ -40,12 +47,12 @@ class HomeCurrentWeatherViewModelTests {
             if (isCaptured) println(captured)
             assertFalse(isCaptured)
         }
-        assertEquals(mockedWeather.toCurrentWeather(), homeBaseRule.viewModel.uiState.value.currentWeather)
+        assertEquals(getMockedWeather(fetchedWeatherUnits).toCurrentWeather(), homeBaseRule.viewModel.uiState.value.currentWeather)
         coVerifyAll {
             homeBaseRule.homeRepository.apply {
                 calculateLimit()
                 getCurrentWeather(isLimitReached = false)
-                generateSuggestions(isLimitReached = false, currentWeather = mockedWeather.toCurrentWeather())
+                generateSuggestions(isLimitReached = false, currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
                 recordTimestamp()
             }
         }
@@ -73,13 +80,13 @@ class HomeCurrentWeatherViewModelTests {
         coVerifyAll(inverse = true) {
             homeBaseRule.homeRepository.apply {
                 recordTimestamp()
-                generateSuggestions(isLimitReached = true, currentWeather = mockedWeather.toCurrentWeather())
+                generateSuggestions(isLimitReached = true, currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
             }
         }
     }
     @Test
     fun getCurrentWeather_limitReached_localWeatherIsNotNull() = runTest {
-        homeBaseRule.currentWeatherLocalDB.currentWeatherDao().insertWeather(mockedWeather.toCurrentWeather())
+        homeBaseRule.currentWeatherLocalDB.currentWeatherDao().insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
 
         homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
         homeBaseRule.advance(this)

@@ -48,4 +48,12 @@
     <string name="planning_activities">Planning your activities…</string>
     <string name="based_on_forecast">Recommendations are based on a %1$s-day hourly forecast for your locality only</string>
     <string name="could_not_plan_activities">Could not plan provided activities</string>
+
+    <string name="theme">Theme</string>
+    <string name="could_not_switch_theme">Could not switch theme</string>
+    <string name="could_not_load_units">Could not load units</string>
+    <string name="could_not_set_units">Could not set unit</string>
+    <string name="temp_unit">Temperature unit</string>
+    <string name="visibility_unit">Visibility unit</string>
+    <string name="wind_speed_unit">Wind speed unit</string>
 </resources>

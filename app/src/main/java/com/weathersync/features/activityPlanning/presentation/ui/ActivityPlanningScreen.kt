@@ -61,24 +61,16 @@ fun ActivityPlanningScreenContent(
     val nextUpdateTime = uiState.limit.formattedNextUpdateTime
     val output = uiState.generatedText
     ConstrainedComponent {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(5.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(4.dp)
-        ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                nextUpdateTime?.let { Text(text = stringResource(id = R.string.next_generation_available_at, it),
-                    modifier = Modifier.testTag("Next generation time")) }
-            }
-            PlanYourActivityComposable(
-                textFieldState = uiState.activityTextFieldState,
-                isInProgress = uiState.generationResult.isInProgress(),
-                output = output,
-                onIntent = onIntent
-            )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            nextUpdateTime?.let { Text(text = stringResource(id = R.string.next_generation_available_at, it),
+                modifier = Modifier.testTag("Next generation time")) }
         }
+        PlanYourActivityComposable(
+            textFieldState = uiState.activityTextFieldState,
+            isInProgress = uiState.generationResult.isInProgress(),
+            output = output,
+            onIntent = onIntent
+        )
     }
 }
 

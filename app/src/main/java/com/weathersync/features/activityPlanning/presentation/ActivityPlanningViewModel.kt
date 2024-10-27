@@ -43,7 +43,8 @@ class ActivityPlanningViewModel(
                 _uiState.update { it.copy(limit = limit) }
 
                 if (!limit.isReached) {
-                    val suggestions = activityPlanningRepository.generateRecommendations(activity = input)
+                    val forecast = activityPlanningRepository.getForecast()
+                    val suggestions = activityPlanningRepository.generateRecommendations(activity = input, forecast = forecast)
                     activityPlanningRepository.recordTimestamp()
                     _uiState.update { it.copy(generatedText = suggestions) }
                 }

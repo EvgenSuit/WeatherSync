@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -40,17 +41,20 @@ import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.features.activityPlanning.presentation.ui.ActivityPlanningScreen
 import com.weathersync.features.auth.presentation.ui.AuthScreen
 import com.weathersync.features.home.presentation.ui.HomeScreen
+import com.weathersync.features.settings.presentation.ui.SettingsScreen
 import com.weathersync.ui.theme.WeatherSyncTheme
 
 sealed class Route(val route: String, val icon: ImageVector? = null) {
     data object Auth: Route("Auth")
     data object Home: Route("Home", Icons.Filled.Home)
     data object ActivityPlanning: Route("ActivityPlanning", Icons.Filled.DateRange)
+    data object Settings: Route("Settings", Icons.Filled.Settings)
 }
 
 val topLevelRoutes = listOf(
     Route.Home,
-    Route.ActivityPlanning
+    Route.ActivityPlanning,
+    Route.Settings
 )
 
 @Composable
@@ -109,6 +113,11 @@ fun NavManager(
                 enterTransition = { enterAnimation },
                 exitTransition = { exitAnimation }) {
                 ActivityPlanningScreen()
+            }
+            composable(Route.Settings.route,
+                enterTransition = { enterAnimation },
+                exitTransition = { exitAnimation }) {
+                SettingsScreen()
             }
         }
     }

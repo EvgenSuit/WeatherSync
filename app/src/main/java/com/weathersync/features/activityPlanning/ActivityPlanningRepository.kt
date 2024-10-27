@@ -1,5 +1,6 @@
 package com.weathersync.features.activityPlanning
 
+import com.weathersync.features.activityPlanning.data.Forecast
 import com.weathersync.features.activityPlanning.data.ForecastDates
 import com.weathersync.features.activityPlanning.data.toForecast
 import com.weathersync.features.home.CurrentWeatherRepository
@@ -15,16 +16,18 @@ class ActivityPlanningRepository(
     private val forecastRepository: ForecastRepository,
     private val activityPlanningGeminiRepository: ActivityPlanningGeminiRepository
 ) {
-    suspend fun calculateLimit(): Limit = limitManager.calculateLimit(GenerationType.ActivityRecommendations)
+    suspend fun calculateLimit() = limitManager.calculateLimit(GenerationType.ActivityRecommendations)
     suspend fun recordTimestamp() = limitManager.recordTimestamp(GenerationType.ActivityRecommendations)
-    suspend fun generateRecommendations(activity: String): String {
+
+    suspend fun getForecast(): Forecast {
         val openMeteoForecast = forecastRepository.getForecast(forecastDates = calculateForecastDays())
-        val convertedForecast = openMeteoForecast.toForecast()
-        val times = activityPlanningGeminiRepository.generateRecommendations(
-            activity = activity,
-            forecast = convertedForecast)
-        return times
+        return openMeteoForecast.toForecast()
     }
+    suspend fun generateRecommendations(activity: String, forecast: Forecast) =
+        activityPlanningGeminiRepository.generateRecommendations(
+            activity = activity,
+            forecast = forecast)
+
     private fun calculateForecastDays(): ForecastDates {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.getDefault())
         val currDate = dateFormat.parse(dateFormat.format(System.currentTimeMillis()))

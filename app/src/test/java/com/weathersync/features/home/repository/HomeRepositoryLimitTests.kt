@@ -7,16 +7,14 @@ import com.weathersync.common.TestException
 import com.weathersync.common.auth.userId
 import com.weathersync.common.utils.BaseLimitTest
 import com.weathersync.common.utils.createDescendingTimestamps
+import com.weathersync.common.utils.fetchedWeatherUnits
 import com.weathersync.features.home.HomeBaseRule
-import com.weathersync.features.home.mockedWeather
+import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.utils.FirestoreLimitCollection
 import com.weathersync.utils.GenerationType
 import com.weathersync.utils.Limit
-import com.weathersync.utils.LimitManagerConfig
 import io.mockk.coVerify
-import io.mockk.verify
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,12 +22,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Date
-import java.util.concurrent.TimeUnit
 
 
 @RunWith(AndroidJUnit4::class)
@@ -93,7 +88,7 @@ class HomeRepositoryLimitTests: BaseLimitTest {
         coVerify(inverse = true) { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
         assertFalse(firstLimit.isReached)
 
-        dao.insertWeather(mockedWeather.toCurrentWeather())
+        dao.insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
         val secondLimit = calculateLimit()
         coVerify { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
         assertTrue(secondLimit.isReached)
@@ -108,7 +103,7 @@ class HomeRepositoryLimitTests: BaseLimitTest {
         assertFalse(firstLimit.isReached)
 
         val currTime = LocalDateTime.ofInstant(homeBaseRule.testClock.instant(), ZoneId.systemDefault())
-        dao.insertWeather(mockedWeather.toCurrentWeather().copy(time = currTime.format(DateTimeFormatter.ISO_DATE_TIME)))
+        dao.insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather().copy(time = currTime.format(DateTimeFormatter.ISO_DATE_TIME)))
         homeBaseRule.testClock.advanceBy((homeBaseRule.weatherUpdater.minutes*60*1000).toLong())
         val secondLimit = calculateLimit()
         coVerify { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }

@@ -52,7 +52,6 @@ class HomeBaseRule: TestWatcher() {
 
     val crashlyticsExceptionSlot = testHelper.crashlyticsExceptionSlot
     val exception = TestException("exception")
-    val snackbarScope = TestScope()
     val crashlyticsManager = testHelper.crashlyticsManager
     lateinit var viewModel: HomeViewModel
     fun advance(testScope: TestScope) = repeat(99999999) { testScope.advanceUntilIdle() }

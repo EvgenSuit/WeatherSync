@@ -12,28 +12,23 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.weathersync.R
-import com.weathersync.common.BaseTest
 import com.weathersync.common.auth.invalidEmails
 import com.weathersync.common.auth.invalidPasswords
-import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.auth.validEmail
 import com.weathersync.common.auth.validPassword
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.assertSnackbarTextEquals
 import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.setContentWithSnackbar
-import com.weathersync.features.auth.GoogleAuthRepository
-import com.weathersync.features.auth.RegularAuthRepository
-import com.weathersync.features.auth.presentation.AuthViewModel
+import com.weathersync.common.utils.MainDispatcherRule
+import com.weathersync.features.auth.BaseAuthRule
 import com.weathersync.features.auth.presentation.ui.AuthScreen
-import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,36 +37,24 @@ import org.robolectric.annotation.GraphicsMode
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class AuthUITests: BaseTest() {
-    private lateinit var viewModel: AuthViewModel
+class AuthUITests {
     @get: Rule
     val composeRule = createComposeRule()
+    @get: Rule(order = 0)
+    val mainDispatcherRule = MainDispatcherRule()
+    @get: Rule(order = 1)
+    val baseAuthRule = BaseAuthRule()
+    private val snackbarScope = TestScope()
     /*@get: Rule
     val roborazziRule = RoborazziRule(
         composeRule = composeRule,
         captureRoot = composeRule.onRoot(),
     )*/
 
-    private fun setup(
-        exception: Exception? = null
-    ) {
-        auth = mockAuth(exception = exception)
-        val regularAuthRepository = RegularAuthRepository(auth)
-        val googleAuthRepository = mockk<GoogleAuthRepository>()
-        viewModel = AuthViewModel(
-            regularAuthRepository = regularAuthRepository,
-            googleAuthRepository = googleAuthRepository,
-            crashlyticsManager = crashlyticsManager
-        )
-    }
-    @Before
-    fun before() {
-        setup()
-    }
     @Test
     fun performManualSignIn_inputIsValid_success() = runTest {
         setContentWithSnackbar(composeRule, snackbarScope,
-            uiContent = { AuthScreen(viewModel = viewModel, onNavigateToHome = {}) }) {
+            uiContent = { AuthScreen(viewModel = baseAuthRule.viewModel, onNavigateToHome = {}) }) {
             performAuth(true, this@runTest)
             assertSnackbarIsNotDisplayed(snackbarScope)
         }
@@ -79,35 +62,35 @@ class AuthUITests: BaseTest() {
     @Test
     fun performManualSignUp_inputIsValid_success() = runTest {
         setContentWithSnackbar(composeRule, snackbarScope,
-            uiContent = { AuthScreen(viewModel = viewModel, onNavigateToHome = {}) }) {
+            uiContent = { AuthScreen(viewModel = baseAuthRule.viewModel, onNavigateToHome = {}) }) {
             performAuth(false, this@runTest)
             assertSnackbarIsNotDisplayed(snackbarScope)
         }
     }
     @Test
     fun performManualSignIn_inputIsValid_error() = runTest {
-        setup(exception = exception)
+        baseAuthRule.setup(exception = baseAuthRule.testHelper.testException)
         setContentWithSnackbar(composeRule, snackbarScope,
-            uiContent = { AuthScreen(viewModel = viewModel, onNavigateToHome = {}) }) {
+            uiContent = { AuthScreen(viewModel = baseAuthRule.viewModel, onNavigateToHome = {}) }) {
             performAuth(true, this@runTest)
             assertSnackbarTextEquals(R.string.auth_error, snackbarScope)
-            assertEquals(exception.message, crashlyticsExceptionSlot.captured.message)
+            assertEquals(baseAuthRule.testHelper.testException, baseAuthRule.testHelper.crashlyticsExceptionSlot.captured)
         }
     }
     @Test
     fun performManualSignUp_inputIsValid_error() = runTest {
-        setup(exception = exception)
+        baseAuthRule.setup(exception = baseAuthRule.testHelper.testException)
         setContentWithSnackbar(composeRule, snackbarScope,
-            uiContent = { AuthScreen(viewModel = viewModel, onNavigateToHome = {}) }) {
+            uiContent = { AuthScreen(viewModel = baseAuthRule.viewModel, onNavigateToHome = {}) }) {
             performAuth(false, this@runTest)
             assertSnackbarTextEquals(R.string.auth_error, snackbarScope)
-            assertEquals(exception.message, crashlyticsExceptionSlot.captured.message)
+            assertEquals(baseAuthRule.testHelper.testException, baseAuthRule.testHelper.crashlyticsExceptionSlot.captured)
         }
     }
     @Test
     fun performInvalidInput_errorsAreNotEmpty() = runTest {
         setContentWithSnackbar(composeRule, snackbarScope,
-            uiContent = { AuthScreen(viewModel = viewModel, onNavigateToHome = {}) }) {
+            uiContent = { AuthScreen(viewModel = baseAuthRule.viewModel, onNavigateToHome = {}) }) {
             invalidEmails.forEach { email ->
                 if (email.isNotEmpty()) {
                     onNodeWithTag(getString(R.string.email), useUnmergedTree = true).performTextReplacement(email)
@@ -137,7 +120,7 @@ class AuthUITests: BaseTest() {
         onNodeWithText(getString(if (signIn) R.string.sign_in_with_google else R.string.sign_up_with_google)).assertIsNotEnabled()
 
         testScope.advanceUntilIdle()
-        verify { auth.apply {
+        verify { baseAuthRule.auth.apply {
             if (signIn) signInWithEmailAndPassword(validEmail, validPassword)
             else createUserWithEmailAndPassword(validEmail, validPassword)
         } }

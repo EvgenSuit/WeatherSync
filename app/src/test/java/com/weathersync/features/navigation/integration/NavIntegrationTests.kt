@@ -9,6 +9,7 @@ import com.weathersync.features.navigation.presentation.ui.NavManager
 import com.weathersync.features.navigation.presentation.ui.Route
 import com.weathersync.features.navigation.presentation.ui.topLevelRoutes
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -26,11 +27,12 @@ class NavIntegrationTests {
     val baseNavRule = BaseNavRule()
     @get: Rule
     val baseNavIntegrationRule = BaseNavIntegrationRule()
+    private val snackbarScope = TestScope()
 
 
     @Test
     fun loadUser_isUICorrect() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
@@ -45,7 +47,7 @@ class NavIntegrationTests {
 
     @Test
     fun navigateToScreens_isUICorrect() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
@@ -62,7 +64,7 @@ class NavIntegrationTests {
 
     @Test
     fun navigateToSameScreen_backStackIsSame() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
@@ -80,7 +82,7 @@ class NavIntegrationTests {
     }
     @Test
     fun pressBackOutsideOfHome_isInHome() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
@@ -97,7 +99,7 @@ class NavIntegrationTests {
     }
     @Test
     fun pressBackInHome_isRouteNull() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {

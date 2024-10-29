@@ -15,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import com.weathersync.R
 import io.mockk.verify
+import kotlinx.coroutines.test.TestScope
 import org.junit.Assert.assertEquals
 
 @RunWith(AndroidJUnit4::class)
@@ -24,10 +25,11 @@ class SettingsAuthUITests {
 
     @get: Rule
     val settingsBaseRule = SettingsBaseRule()
+    private val snackbarScope = TestScope()
 
     @Test
     fun signOut_isUserNull() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = settingsBaseRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 SettingsScreen(viewModel = settingsBaseRule.viewModel)
             }) {

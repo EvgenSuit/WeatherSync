@@ -4,7 +4,6 @@ import com.google.firebase.Timestamp
 import com.weathersync.common.utils.mockCrashlyticsManager
 import com.weathersync.utils.LimitManagerConfig
 import io.mockk.slot
-import kotlinx.coroutines.test.TestScope
 import java.text.SimpleDateFormat
 import java.time.Clock
 import java.time.Duration
@@ -42,7 +41,6 @@ class TestHelper {
     val crashlyticsExceptionSlot = slot<Exception>()
     val testException = TestException("exception")
     val crashlyticsManager = mockCrashlyticsManager(exceptionSlot = crashlyticsExceptionSlot)
-    val snackbarScope = TestScope()
 
     fun calculateNextUpdateDate(receivedNextUpdateDateTime: String?,
                                 limitManagerConfig: LimitManagerConfig,

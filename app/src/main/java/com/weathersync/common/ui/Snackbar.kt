@@ -1,13 +1,11 @@
 package com.weathersync.common.ui
 
 import android.content.Context
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -22,8 +20,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.weathersync.ui.theme.WeatherSyncTheme
-import com.weathersync.utils.CustomResult
-import com.weathersync.utils.isError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -66,10 +62,6 @@ fun CustomSnackbar(
             fontFamily = FontFamily.SansSerif,
             modifier = Modifier.testTag("Snackbar text: $it")) }
     }
-}
-
-sealed class UIEvent {
-    data class ShowSnackbar(val message: UIText): UIEvent()
 }
 
 @Preview(showBackground = true)

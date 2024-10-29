@@ -33,7 +33,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.stopKoin
 import org.robolectric.annotation.GraphicsMode
-import java.text.SimpleDateFormat
 
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(AndroidJUnit4::class)
@@ -44,6 +43,7 @@ class HomeCurrentWeatherUITests {
     val homeBaseRule = HomeBaseRule()
     @get: Rule
     val composeRule = createComposeRule()
+    private val snackbarScope = TestScope()
 
     @Before
     fun beforeTest() {
@@ -52,7 +52,7 @@ class HomeCurrentWeatherUITests {
 
     @Test
     fun fetchCurrentWeather_success() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
@@ -64,14 +64,14 @@ class HomeCurrentWeatherUITests {
             homeBaseRule.advance(this@runTest)
             val currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather()
             assertEquals(currentWeather, homeBaseRule.viewModel.uiState.value.currentWeather)
-            assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
+            assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
 
             assertCorrectCurrentWeatherUI(currentWeather)
         }
     }
     @Test
     fun fetchCurrentWeather_permissionDenied_requestPermissionShown() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
@@ -92,7 +92,7 @@ class HomeCurrentWeatherUITests {
         homeBaseRule.setupLimitManager(timestamps = timestamps, limitManagerConfig = homeBaseRule.limitManagerConfig)
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
@@ -100,7 +100,7 @@ class HomeCurrentWeatherUITests {
             onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
             homeBaseRule.advance(this@runTest)
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
-            assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
+            assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
 
             checkDisplayedLimit(timestamps = timestamps)
         }
@@ -116,14 +116,14 @@ class HomeCurrentWeatherUITests {
         homeBaseRule.setupLimitManager(timestamps = timestamps, limitManagerConfig = homeBaseRule.limitManagerConfig)
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
             waitForIdle()
             onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
             homeBaseRule.advance(this@runTest)
-            assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
+            assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
             assertCorrectCurrentWeatherUI(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
 
             checkDisplayedLimit(timestamps = timestamps)
@@ -135,12 +135,12 @@ class HomeCurrentWeatherUITests {
         homeBaseRule.setupWeatherRepository(geocoderException = homeBaseRule.exception)
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
             performWeatherAndSuggestionsFetch(testScope = this@runTest)
             assertEquals(null, homeBaseRule.viewModel.uiState.value.currentWeather)
-            assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = homeBaseRule.snackbarScope)
+            assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = snackbarScope)
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
         }
     }
@@ -150,12 +150,12 @@ class HomeCurrentWeatherUITests {
         homeBaseRule.setupWeatherRepository(status = HttpStatusCode.Forbidden)
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
             performWeatherAndSuggestionsFetch(testScope = this@runTest)
             assertEquals(null, homeBaseRule.viewModel.uiState.value.currentWeather)
-            assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = homeBaseRule.snackbarScope)
+            assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = snackbarScope)
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
         }
     }
@@ -165,12 +165,12 @@ class HomeCurrentWeatherUITests {
         homeBaseRule.setupWeatherRepository(lastLocationException = homeBaseRule.exception)
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
             performWeatherAndSuggestionsFetch(testScope = this@runTest)
             assertEquals(null, homeBaseRule.viewModel.uiState.value.currentWeather)
-            assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = homeBaseRule.snackbarScope)
+            assertSnackbarTextEquals(R.string.could_not_fetch_current_weather, snackbarScope = snackbarScope)
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
         }
     }

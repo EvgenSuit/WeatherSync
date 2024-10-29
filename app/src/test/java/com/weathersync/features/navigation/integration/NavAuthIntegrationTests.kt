@@ -38,10 +38,11 @@ class NavAuthIntegrationTests {
     val baseNavRule = BaseNavRule()
     @get: Rule(order = 2)
     val baseNavIntegrationRule = BaseNavIntegrationRule()
+    private val snackbarScope = TestScope()
 
     @Test
     fun signOut_isInAuth() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
@@ -57,7 +58,7 @@ class NavAuthIntegrationTests {
 
     @Test
     fun signIn_isInHome() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
@@ -74,7 +75,7 @@ class NavAuthIntegrationTests {
 
     @Test
     fun signOutTwice_isInAuth() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {

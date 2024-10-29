@@ -21,16 +21,16 @@ import androidx.compose.ui.unit.dp
 import com.weathersync.R
 import com.weathersync.common.ui.CustomButton
 import com.weathersync.common.ui.LocalSnackbarController
-import com.weathersync.common.ui.UIEvent
 import com.weathersync.common.ui.UIText
 import com.weathersync.features.auth.presentation.AuthIntent
 import com.weathersync.features.auth.presentation.AuthType
 import com.weathersync.features.auth.presentation.AuthUIState
 import com.weathersync.features.auth.presentation.AuthViewModel
+import com.weathersync.ui.AuthUIEvent
+import com.weathersync.ui.UIEvent
 import com.weathersync.ui.theme.WeatherSyncTheme
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.isInProgress
-import com.weathersync.utils.isSuccess
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
@@ -39,15 +39,11 @@ fun AuthScreen(viewModel: AuthViewModel = koinViewModel(),
                onNavigateToHome: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarController = LocalSnackbarController.current
-    uiState.authResult.let { result ->
-        LaunchedEffect(result) {
-            if (result.isSuccess()) onNavigateToHome()
-        }
-    }
     LaunchedEffect(viewModel) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
-                is UIEvent.ShowSnackbar -> snackbarController.showSnackbar(event.message)
+                is AuthUIEvent.ShowSnackbar -> snackbarController.showSnackbar(event.message)
+                is AuthUIEvent.NavigateToHome -> onNavigateToHome()
             }
         }
     }

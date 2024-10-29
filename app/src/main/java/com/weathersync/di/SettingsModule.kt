@@ -1,5 +1,7 @@
 package com.weathersync.di
 
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import com.weathersync.features.settings.SettingsRepository
 import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.features.settings.data.themeDatastore
@@ -10,8 +12,9 @@ import org.koin.dsl.module
 val settingsModule = module {
     single { ThemeManager(dataStore = androidContext().themeDatastore) }
     single { SettingsRepository(
+        auth = Firebase.auth,
         themeManager = get(),
         weatherUnitsManager = get())
     }
-    single { SettingsViewModel(settingsRepository = get(), crashlyticsManager = get()) }
+    factory { SettingsViewModel(settingsRepository = get(), crashlyticsManager = get()) }
 }

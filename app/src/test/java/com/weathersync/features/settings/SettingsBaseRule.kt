@@ -4,14 +4,10 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.weathersync.common.TestHelper
 import com.weathersync.common.auth.mockAuth
-import com.weathersync.common.utils.fetchedFirestoreWeatherUnits
 import com.weathersync.common.utils.mockWeatherUnitsManager
-import com.weathersync.common.utils.mockWeatherUnitsManagerFirestore
 import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.features.settings.data.themeDatastore
 import com.weathersync.features.settings.presentation.SettingsViewModel
-import com.weathersync.utils.Country
-import com.weathersync.utils.WeatherUnitDocName
 import com.weathersync.utils.WeatherUnitsManager
 import io.mockk.spyk
 import org.junit.rules.TestWatcher
@@ -19,6 +15,7 @@ import org.junit.runner.Description
 import org.koin.core.context.stopKoin
 
 class SettingsBaseRule: TestWatcher() {
+    val auth = mockAuth()
     lateinit var viewModel: SettingsViewModel
     lateinit var settingsRepository: SettingsRepository
     lateinit var weatherUnitsManager: WeatherUnitsManager
@@ -33,6 +30,7 @@ class SettingsBaseRule: TestWatcher() {
     fun setupRepository() {
         settingsRepository = spyk(
             SettingsRepository(
+                auth = auth,
             themeManager = ThemeManager(dataStore = ApplicationProvider.getApplicationContext<Context>()
                 .themeDatastore),
                 weatherUnitsManager = weatherUnitsManager

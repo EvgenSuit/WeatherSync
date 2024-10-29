@@ -15,6 +15,7 @@ class GeminiRepository(
     private val generativeModel: GenerativeModel,
     private val currentWeatherDAO: CurrentWeatherDAO
 ): GeminiRepository {
+
     suspend fun generateSuggestions(
         isLimitReached: Boolean,
         currentWeather: CurrentWeather): Suggestions? {

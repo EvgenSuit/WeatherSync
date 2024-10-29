@@ -20,7 +20,7 @@ import java.time.Clock
 import java.util.Locale
 
 val homeModule = module {
-    single { HomeViewModel(
+    factory { HomeViewModel(
         homeRepository = get(),
         crashlyticsManager = get()
     ) }

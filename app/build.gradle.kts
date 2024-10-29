@@ -137,6 +137,7 @@ dependencies {
     testImplementation(libs.roborazzi.junit.rule)
     // A small testing library for kotlinx.coroutines Flow
     testImplementation(libs.turbine)
+    testImplementation(libs.navigation.testing)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

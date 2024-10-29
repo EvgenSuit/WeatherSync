@@ -56,4 +56,5 @@
     <string name="temp_unit">Temperature unit</string>
     <string name="visibility_unit">Visibility unit</string>
     <string name="wind_speed_unit">Wind speed unit</string>
+    <string name="sign_out">Sign out</string>
 </resources>

@@ -1,10 +1,12 @@
 package com.weathersync.common.auth
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuth.AuthStateListener
 import com.google.firebase.auth.FirebaseUser
 import com.weathersync.common.mockTask
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 
 val username = "username"
 val userId = "uid"
@@ -16,12 +18,35 @@ val invalidPasswords = listOf("", " ", ", ", "password with whitespace", "shortP
 fun mockAuth(
     exception: Exception? = null
 ): FirebaseAuth {
+    val authStateListenerSlot = slot<AuthStateListener>()
     val user = mockk<FirebaseUser> {
         every { uid } returns userId
     }
     return mockk {
         every { currentUser } returns user
-        every { signInWithEmailAndPassword(any(), any()) } returns mockTask(taskException = exception)
-        every { createUserWithEmailAndPassword(any(), any()) } returns mockTask(taskException = exception)
+        every { signInWithEmailAndPassword(any(), any()) } answers {
+            if (authStateListenerSlot.isCaptured) authStateListenerSlot.captured.onAuthStateChanged(
+                mockk { every { currentUser } returns user }
+            )
+            mockTask(taskException = exception)
+        }
+        every { createUserWithEmailAndPassword(any(), any()) } answers {
+            if (authStateListenerSlot.isCaptured) authStateListenerSlot.captured.onAuthStateChanged(
+                mockk { every { currentUser } returns user }
+            )
+            mockTask(taskException = exception)
+        }
+
+        every { addAuthStateListener(capture(authStateListenerSlot)) } answers {
+            every { currentUser } returns user
+            authStateListenerSlot.captured.onAuthStateChanged(this@mockk)
+        }
+        every { removeAuthStateListener(any()) } returns Unit
+        every { signOut() } answers {
+            every { currentUser } returns null
+            if (authStateListenerSlot.isCaptured) authStateListenerSlot.captured.onAuthStateChanged(
+                mockk { every { currentUser } returns null }
+            )
+        }
     }
 }

@@ -15,7 +15,7 @@ import org.koin.dsl.module
 import java.util.Locale
 
 val activityPlanningModule = module {
-    single {
+    factory {
         ActivityPlanningViewModel(
             activityPlanningRepository = get(),
             crashlyticsManager = get()

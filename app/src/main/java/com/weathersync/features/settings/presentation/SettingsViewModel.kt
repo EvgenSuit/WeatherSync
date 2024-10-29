@@ -46,6 +46,7 @@ class SettingsViewModel(
             is SettingsIntent.SwitchTheme -> switchTheme()
             is SettingsIntent.FetchWeatherUnits -> fetchWeatherUnits(refresh = settingsIntent.refresh)
             is SettingsIntent.SetWeatherUnit -> setWeatherUnit(settingsIntent.unit)
+            is SettingsIntent.SignOut -> signOut()
         }
     }
 
@@ -96,6 +97,8 @@ class SettingsViewModel(
             }
         }
     }
+    private fun signOut() = settingsRepository.signOut()
+
     private fun updateUnitFetchResult(result: CustomResult) =
         _uiState.update { it.copy(weatherUnitsFetchResult = result) }
     private fun updateUnitRefreshResult(result: CustomResult) =

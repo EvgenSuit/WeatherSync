@@ -23,12 +23,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.lifecycle.lifecycleScope
 import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.common.ui.SnackbarController
-import com.weathersync.features.navigation.NavManager
+import com.weathersync.features.navigation.presentation.ui.NavManager
 import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.ui.theme.WeatherSyncTheme
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
 

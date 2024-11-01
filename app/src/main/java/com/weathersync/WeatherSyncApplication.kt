@@ -1,6 +1,10 @@
 package com.weathersync
 
 import android.app.Application
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.appcheck.ktx.appCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.google.firebase.ktx.Firebase
 import com.weathersync.di.activityPlanningModule
 import com.weathersync.di.authModule
 import com.weathersync.di.homeModule
@@ -15,6 +19,10 @@ import org.koin.core.logger.Level
 class WeatherSyncApplication: Application() {
     override fun onCreate() {
         super.onCreate()
+        Firebase.appCheck.installAppCheckProviderFactory(
+            if (BuildConfig.DEBUG) DebugAppCheckProviderFactory.getInstance()
+            else PlayIntegrityAppCheckProviderFactory.getInstance()
+        )
         startKoin {
             androidLogger(Level.DEBUG)
             androidContext(this@WeatherSyncApplication)

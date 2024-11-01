@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,7 +21,8 @@ import com.weathersync.R
 
 @Composable
 fun ConstrainedComponent(
-    content: @Composable ColumnScope.() -> Unit
+    footer: @Composable (() -> Unit)? = null, // Optional footer slot
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val maxAllowedWidth = dimensionResource(id = R.dimen.max_width)
     BoxWithConstraints(
@@ -28,27 +30,41 @@ fun ConstrainedComponent(
     ) {
         val maxWidth = maxWidth
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()) // without verticalScroll pull to refresh will not work
+            modifier = Modifier.fillMaxSize()
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = if (maxWidth > dimensionResource(id = R.dimen.max_width)) {
-                    Modifier.width(maxAllowedWidth)
-                } else {
-                    Modifier.fillMaxWidth()
-                }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()) // without verticalScroll pull to refresh will not work
             ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(5.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = if (maxWidth > dimensionResource(id = R.dimen.max_width)) {
+                        Modifier.width(maxAllowedWidth)
+                    } else {
+                        Modifier.fillMaxWidth()
+                    }
                 ) {
-                    content()
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                    ) {
+                        content()
+                    }
+                }
+            }
+            footer?.let {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    it()
                 }
             }
         }

@@ -24,10 +24,12 @@ import com.weathersync.R
 import com.weathersync.common.ui.ConstrainedComponent
 import com.weathersync.common.ui.CustomLinearProgressIndicator
 import com.weathersync.common.ui.LocalSnackbarController
+import com.weathersync.common.ui.PrivacyTermsLinks
 import com.weathersync.ui.UIEvent
 import com.weathersync.features.settings.data.Dark
 import com.weathersync.features.settings.presentation.SettingsUiState
 import com.weathersync.features.settings.presentation.SettingsViewModel
+import com.weathersync.features.settings.presentation.ui.components.AppVersionComponent
 import com.weathersync.features.settings.presentation.ui.components.CommonSettingsComponent
 import com.weathersync.features.settings.presentation.ui.components.ThemeSwitcher
 import com.weathersync.features.settings.presentation.ui.components.WeatherUnitsComponent
@@ -67,7 +69,9 @@ fun SettingsScreenContent(
     PullToRefreshBox(
         isRefreshing = uiState.weatherUnitsRefreshResult.isInProgress(),
         onRefresh = { onIntent(SettingsIntent.FetchWeatherUnits(refresh = true)) }) {
-        ConstrainedComponent {
+        ConstrainedComponent(footer = {
+            PrivacyTermsLinks()
+        }) {
             if (listOf(uiState.weatherUnitsFetchResult,
                     uiState.weatherUnitsRefreshResult,
                     uiState.weatherUnitSetResult).any { it.isInProgress() }) {
@@ -90,6 +94,7 @@ fun SettingsScreenContent(
                         style = MaterialTheme.typography.displayMedium)
                 }
             }
+            AppVersionComponent()
         }
     }
 }

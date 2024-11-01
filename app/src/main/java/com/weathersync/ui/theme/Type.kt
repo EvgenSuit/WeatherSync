@@ -28,5 +28,9 @@ val AppTypography = Typography(
     labelMedium = TextStyle(
         fontFamily = arapeyItalic,
         fontSize = 16.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = arapeyRegular,
+        fontSize = 15.sp
     )
 )

@@ -57,4 +57,10 @@
     <string name="visibility_unit">Visibility unit</string>
     <string name="wind_speed_unit">Wind speed unit</string>
     <string name="sign_out">Sign out</string>
+
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="privacy_policy_link">https://github.com/EvgenSuit/PrivacyPolicies/blob/master/WeatherSyncPrivacyPolicy</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="terms_of_service_link">https://github.com/EvgenSuit/PrivacyPolicies/blob/master/WeatherSyncTermsOfService</string>
+    <string name="app_version">App version:</string>
 </resources>

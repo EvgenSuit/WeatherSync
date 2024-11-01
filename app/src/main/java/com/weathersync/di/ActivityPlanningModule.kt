@@ -71,7 +71,8 @@ private fun getGenerativeModel(): GenerativeModel =
 **Note:** The strict enforcement of both date and time restrictions (including hour and minute) must always be upheld, regardless of any keywords present in the activity.
 Keep the response very short, concise, and more human-friendly no matter what.
 **You are allowed to list and describe NO MORE THAN a couple of dates (2 to 3).**
-Use language: ${Locale.getDefault().language}.
+Use the same language as Activity does. 
+Pay attention to the the number of days of the current month.
                """.trimMargin()
         ) }
     )

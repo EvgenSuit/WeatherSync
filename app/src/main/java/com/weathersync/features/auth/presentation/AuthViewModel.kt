@@ -106,9 +106,9 @@ class AuthViewModel(
                 _uiEvent.emit(AuthUIEvent.NavigateToHome)
                 updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {
-                updateAuthResult(CustomResult.Error)
-                crashlyticsManager.recordException(e, "Auth type: ${_uiState.value.authType}")
                 _uiEvent.emit(AuthUIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
+                crashlyticsManager.recordException(e, "Auth type: ${_uiState.value.authType}")
+                updateAuthResult(CustomResult.Error)
             }
         }
     }

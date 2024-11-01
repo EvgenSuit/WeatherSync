@@ -4,12 +4,14 @@ import com.google.firebase.Timestamp
 import com.weathersync.common.utils.mockCrashlyticsManager
 import com.weathersync.utils.LimitManagerConfig
 import io.mockk.slot
+import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class TestException(message: String) : Exception(message)
@@ -44,11 +46,19 @@ class TestHelper {
 
     fun calculateNextUpdateDate(receivedNextUpdateDateTime: String?,
                                 limitManagerConfig: LimitManagerConfig,
-                                timestamps: List<Timestamp>): NextUpdateDate {
-        // in descending collection first timestamp is the most recent one
+                                timestamps: List<Timestamp>,
+                                locale: Locale): NextUpdateDate {
         val expectedNextUpdateDate = Date(timestamps.first().toDate().time + TimeUnit.HOURS.toMillis(limitManagerConfig.durationInHours.toLong()))
-        val receivedNextUpdateDate = SimpleDateFormat("HH:mm, dd MMM").parse(receivedNextUpdateDateTime!!)!!
-        return NextUpdateDate(expectedNextUpdateDate = expectedNextUpdateDate, receivedNextUpdateDate = receivedNextUpdateDate)
+
+        // adjust time format (24-hour or AM/PM) based on locale
+        val timeFormatter = DateFormat.getTimeInstance(DateFormat.SHORT, locale) as SimpleDateFormat
+        val timePattern = timeFormatter.toPattern()
+        val combinedPattern = "$timePattern, dd MMM"
+
+        val combinedFormatter = SimpleDateFormat(combinedPattern, locale)
+        val receivedNextUpdateDate = combinedFormatter.parse(receivedNextUpdateDateTime)
+
+        return NextUpdateDate(expectedNextUpdateDate = expectedNextUpdateDate, receivedNextUpdateDate = receivedNextUpdateDate!!)
     }
 
     data class NextUpdateDate(val expectedNextUpdateDate: Date, val receivedNextUpdateDate: Date)

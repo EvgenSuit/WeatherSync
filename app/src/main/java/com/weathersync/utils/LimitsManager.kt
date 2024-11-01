@@ -10,6 +10,7 @@ import com.google.firebase.firestore.Query
 import com.weathersync.features.home.WeatherUpdater
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import kotlinx.coroutines.tasks.await
+import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -44,7 +45,8 @@ class LimitManager(
     auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val currentWeatherDAO: CurrentWeatherDAO,
-    private val weatherUpdater: WeatherUpdater
+    private val weatherUpdater: WeatherUpdater,
+    private val locale: Locale
 ) {
     private val limitsDoc = firestore.collection(auth.currentUser!!.uid).document("limits")
     private val currentWeatherLimitsRef = limitsDoc.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
@@ -90,17 +92,21 @@ class LimitManager(
 
     private fun Date.formatNextUpdateDateTime(currentTime: Timestamp): String {
         val currentDate = currentTime.toDate()
-        val currentDateCalendar = Calendar.getInstance()
-        currentDateCalendar.time = currentDate
+        val currentDateCalendar = Calendar.getInstance().apply { time = currentDate }
+        val nextUpdateDateCalendar = Calendar.getInstance().apply { time = this@formatNextUpdateDateTime }
 
-        val nextUpdateDateCalendar = Calendar.getInstance()
-        nextUpdateDateCalendar.time = this
-
-        var pattern = "HH:mm"
-        if (currentDateCalendar.get(Calendar.DAY_OF_MONTH) != nextUpdateDateCalendar.get(Calendar.DAY_OF_MONTH)) pattern += ", dd MMM"
-        if (currentDateCalendar.get(Calendar.YEAR) != nextUpdateDateCalendar.get(Calendar.YEAR)) pattern += ", yyyy"
-        return SimpleDateFormat(pattern, Locale.getDefault()).format(this)
+        // adjust time format (24-hour or AM/PM) based on locale
+        var dateTimePattern = (DateFormat.getTimeInstance(DateFormat.SHORT, locale) as SimpleDateFormat).toPattern()
+        if (currentDateCalendar.get(Calendar.DAY_OF_MONTH) != nextUpdateDateCalendar.get(Calendar.DAY_OF_MONTH)) {
+            dateTimePattern += ", dd MMM"
+        }
+        if (currentDateCalendar.get(Calendar.YEAR) != nextUpdateDateCalendar.get(Calendar.YEAR)) {
+            dateTimePattern += ", yyyy"
+        }
+        val formatter = SimpleDateFormat(dateTimePattern, locale)
+        return formatter.format(this)
     }
+
 
     private suspend fun deleteDocs(query: Query) {
         val batch = firestore.batch()

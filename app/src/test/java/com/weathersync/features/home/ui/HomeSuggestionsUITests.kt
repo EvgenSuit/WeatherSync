@@ -42,6 +42,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -143,7 +144,9 @@ class HomeSuggestionsUITests {
         val timestamps = List(limitManagerConfig.count+1) {
             Timestamp(Date(homeBaseRule.testClock.millis() + 10L * it))
         }
+        // use default locale since cases with different locales are tested inside of home current weather ui tests
         homeBaseRule.setupLimitManager(
+            locale = Locale.US,
             timestamps = timestamps,
             limitManagerConfig = limitManagerConfig
         )
@@ -171,6 +174,7 @@ class HomeSuggestionsUITests {
             Timestamp(Date(homeBaseRule.testClock.millis() + 10L * it))
         }
         homeBaseRule.setupLimitManager(
+            locale = Locale.US,
             timestamps = timestamps,
             limitManagerConfig = limitManagerConfig
         )

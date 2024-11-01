@@ -112,7 +112,7 @@ fun NavManagerContent(
             ) {
                 BottomBar(currRoute = currRoute?.destination?.route ?: Route.Auth.route,
                     onNavigateToRoute = { navController.navigate(it.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
+                        popUpTo(navController.graph.id) {
                             saveState = true
                         }
                         launchSingleTop = true
@@ -133,9 +133,7 @@ fun NavManagerContent(
             ) {
                 composable(Route.Auth.route) {
                     AuthScreen(onNavigateToHome = { navController.navigate(Route.Home.route) {
-                        popUpTo(Route.Auth.route) {
-                            inclusive = true
-                        }
+                        popUpTo(navController.graph.id)
                     } }) }
                 composable(
                     Route.Home.route,

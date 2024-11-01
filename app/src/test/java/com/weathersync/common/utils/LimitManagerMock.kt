@@ -20,18 +20,21 @@ import io.mockk.mockk
 import io.mockk.slot
 import java.time.Clock
 import java.util.Date
+import java.util.Locale
 
 fun mockLimitManager(
     limitManagerConfig: LimitManagerConfig,
     currentWeatherDAO: CurrentWeatherDAO,
     limitManagerFirestore: FirebaseFirestore,
-    weatherUpdater: WeatherUpdater
+    weatherUpdater: WeatherUpdater,
+    locale: Locale
 ) = LimitManager(
     limitManagerConfig = limitManagerConfig,
     auth = mockAuth(),
     firestore = limitManagerFirestore,
     currentWeatherDAO = currentWeatherDAO,
-    weatherUpdater = weatherUpdater
+    weatherUpdater = weatherUpdater,
+    locale = locale
 )
 fun mockLimitManagerFirestore(
     testClock: Clock,

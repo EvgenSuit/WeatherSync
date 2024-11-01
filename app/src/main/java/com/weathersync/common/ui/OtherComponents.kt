@@ -83,6 +83,7 @@ fun PrivacyTermsLinks() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
+            .padding(top = 20.dp)
     ) {
         Text(text = stringResource(id = R.string.privacy_policy),
             style = MaterialTheme.typography.labelSmall,

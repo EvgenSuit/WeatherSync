@@ -57,7 +57,9 @@ class NavIntegrationTests {
                     isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
                 )
                 baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, *topLevelRoutes.toTypedArray())
-                assertEquals(topLevelRoutes.size, baseNavIntegrationRule.navController.backStack.size)
+                baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, *topLevelRoutes.toTypedArray())
+                // back stack must only contain the root graph and the current destination
+                assertEquals(2, baseNavIntegrationRule.navController.backStack.size)
             }
         }
     }
@@ -81,7 +83,7 @@ class NavIntegrationTests {
         }
     }
     @Test
-    fun pressBackOutsideOfHome_isInHome() = runTest {
+    fun pressBackOutsideOfHome_isInOutsideOfApp() = runTest {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
@@ -93,7 +95,7 @@ class NavIntegrationTests {
                 )
                 baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, Route.ActivityPlanning)
                 baseNavIntegrationRule.navController.popBackStack()
-                baseNavIntegrationRule.assertRouteEquals(Route.Home)
+                baseNavIntegrationRule.assertRouteEquals(null)
             }
         }
     }

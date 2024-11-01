@@ -33,6 +33,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.stopKoin
 import org.robolectric.annotation.GraphicsMode
+import java.util.Locale
 
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(AndroidJUnit4::class)
@@ -83,13 +84,16 @@ class HomeCurrentWeatherUITests {
         }
     }
     @Test
-    fun getCurrentWeather_limitReached_localWeatherIsNull() = runTest {
+    fun getCurrentWeather_USLocale_limitReached_localWeatherIsNull() = runTest {
         homeBaseRule.manageLocationPermission(true)
         val timestamps = createDescendingTimestamps(
             limitManagerConfig = homeBaseRule.limitManagerConfig,
             currTimeMillis = homeBaseRule.testClock.millis()
         )
-        homeBaseRule.setupLimitManager(timestamps = timestamps, limitManagerConfig = homeBaseRule.limitManagerConfig)
+        homeBaseRule.setupLimitManager(
+            locale = Locale.US,
+            timestamps = timestamps,
+            limitManagerConfig = homeBaseRule.limitManagerConfig)
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
@@ -102,7 +106,33 @@ class HomeCurrentWeatherUITests {
             onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
             assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
 
-            checkDisplayedLimit(timestamps = timestamps)
+            checkDisplayedLimit(timestamps = timestamps, locale = Locale.US)
+        }
+    }
+    @Test
+    fun getCurrentWeather_UKLocale_limitReached_localWeatherIsNull() = runTest {
+        homeBaseRule.manageLocationPermission(true)
+        val timestamps = createDescendingTimestamps(
+            limitManagerConfig = homeBaseRule.limitManagerConfig,
+            currTimeMillis = homeBaseRule.testClock.millis()
+        )
+        homeBaseRule.setupLimitManager(
+            locale = Locale.UK,
+            timestamps = timestamps,
+            limitManagerConfig = homeBaseRule.limitManagerConfig)
+        homeBaseRule.setupHomeRepository()
+        homeBaseRule.setupViewModel()
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
+            HomeScreen(viewModel = homeBaseRule.viewModel)
+        }) {
+            onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
+            waitForIdle()
+            onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
+            homeBaseRule.advance(this@runTest)
+            onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
+            assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
+
+            checkDisplayedLimit(timestamps = timestamps, locale = Locale.UK)
         }
     }
     @Test
@@ -113,7 +143,10 @@ class HomeCurrentWeatherUITests {
             limitManagerConfig = homeBaseRule.limitManagerConfig,
             currTimeMillis = homeBaseRule.testClock.millis()
         )
-        homeBaseRule.setupLimitManager(timestamps = timestamps, limitManagerConfig = homeBaseRule.limitManagerConfig)
+        homeBaseRule.setupLimitManager(
+            locale = Locale.US,
+            timestamps = timestamps,
+            limitManagerConfig = homeBaseRule.limitManagerConfig)
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
@@ -126,7 +159,7 @@ class HomeCurrentWeatherUITests {
             assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
             assertCorrectCurrentWeatherUI(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
 
-            checkDisplayedLimit(timestamps = timestamps)
+            checkDisplayedLimit(timestamps = timestamps, locale = Locale.US)
         }
     }
     @Test
@@ -186,14 +219,17 @@ class HomeCurrentWeatherUITests {
         onNodeWithText(getString(R.string.wind_speed, "${currentWeather.windSpeed} ${currentWeather.windSpeedUnit}")).assertIsDisplayed()
     }
     private fun ComposeContentTestRule.checkDisplayedLimit(
-        timestamps: List<Timestamp>
+        timestamps: List<Timestamp>,
+        locale: Locale,
     ) {
         val nextUpdateDate = homeBaseRule.testHelper.calculateNextUpdateDate(
             receivedNextUpdateDateTime = homeBaseRule.viewModel.uiState.value.limit.formattedNextUpdateTime,
             limitManagerConfig = homeBaseRule.limitManagerConfig,
-            timestamps = timestamps)
+            timestamps = timestamps,
+            locale = locale)
         assertDisplayedLimitIsCorrect(
             resId = R.string.next_update_time,
-            expectedNextUpdateDate = nextUpdateDate.expectedNextUpdateDate)
+            expectedNextUpdateDate = nextUpdateDate.expectedNextUpdateDate,
+            locale = locale)
     }
 }

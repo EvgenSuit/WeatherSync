@@ -18,6 +18,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.util.Locale
 
 class ActivityPlanningLimitTests: BaseLimitTest {
     @get: Rule
@@ -26,6 +27,7 @@ class ActivityPlanningLimitTests: BaseLimitTest {
     @Test(expected = TestException::class)
     override fun getServerTimestamp_exception() = runTest {
         activityPlanningBaseRule.setupLimitManager(
+            locale = Locale.US,
             limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
             serverTimestampGetException = activityPlanningBaseRule.exception)
         calculateLimit()
@@ -34,25 +36,40 @@ class ActivityPlanningLimitTests: BaseLimitTest {
     @Test(expected = TestException::class)
     override fun deleteServerTimestamp_exception() = runTest {
         activityPlanningBaseRule.setupLimitManager(
+            locale = Locale.US,
             limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
             serverTimestampDeleteException = activityPlanningBaseRule.exception)
         calculateLimit()
     }
 
     @Test
-    override fun limitReached_isLimitCorrect() = runTest {
-        calculateReachedLimit(timestamps = createDescendingTimestamps(
+    override fun limitReached_UKLocale_isLimitCorrect() = runTest {
+        calculateReachedLimit(
+            locale = Locale.UK,
+            timestamps = createDescendingTimestamps(
             limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
             currTimeMillis = activityPlanningBaseRule.testClock.millis())
         )
     }
 
     @Test
+    override fun limitReached_USLocale_isLimitCorrect() = runTest {
+        calculateReachedLimit(
+            locale = Locale.US,
+            timestamps = createDescendingTimestamps(
+                limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
+                currTimeMillis = activityPlanningBaseRule.testClock.millis())
+        )
+    }
+
+    @Test
     override fun deleteOutdatedTimestamps_success() = runTest {
+        val locale = Locale.US
         val timestamps = createDescendingTimestamps(
             limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
             currTimeMillis = activityPlanningBaseRule.testClock.millis())
         activityPlanningBaseRule.setupLimitManager(
+            locale = locale,
             timestamps = timestamps,
             limitManagerConfig = activityPlanningBaseRule.limitManagerConfig
         )
@@ -60,6 +77,7 @@ class ActivityPlanningLimitTests: BaseLimitTest {
 
         activityPlanningBaseRule.testClock.advanceLimitBy(limitManagerConfig = activityPlanningBaseRule.limitManagerConfig)
         activityPlanningBaseRule.setupLimitManager(
+            locale = locale,
             timestamps = timestamps,
             limitManagerConfig = activityPlanningBaseRule.limitManagerConfig
         )
@@ -86,9 +104,10 @@ class ActivityPlanningLimitTests: BaseLimitTest {
     }
 
     override suspend fun calculateReachedLimit(
-        timestamps: List<Timestamp>
+        timestamps: List<Timestamp>, locale: Locale
     ): Limit {
         activityPlanningBaseRule.setupLimitManager(
+            locale = locale,
             timestamps = timestamps,
             limitManagerConfig = activityPlanningBaseRule.limitManagerConfig
         )
@@ -96,7 +115,8 @@ class ActivityPlanningLimitTests: BaseLimitTest {
         val nextUpdateDate = activityPlanningBaseRule.testHelper.calculateNextUpdateDate(
             receivedNextUpdateDateTime = limit.formattedNextUpdateTime,
             limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
-            timestamps = timestamps)
+            timestamps = timestamps,
+            locale = locale,)
         assertEquals(nextUpdateDate.expectedNextUpdateDate.time, nextUpdateDate.receivedNextUpdateDate.time)
         assertTrue(limit.isReached)
         coVerify { activityPlanningBaseRule.limitManager.calculateLimit(GenerationType.ActivityRecommendations) }

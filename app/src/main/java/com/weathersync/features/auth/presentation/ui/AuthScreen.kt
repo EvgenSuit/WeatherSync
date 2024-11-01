@@ -66,7 +66,7 @@ fun AuthScreenContent(
     onIntent: (AuthIntent) -> Unit,
     onGetIntentSender: suspend () -> IntentSender?
 ) {
-    ConstrainedComponent(footer = { PrivacyTermsLinks() }) {
+    ConstrainedComponent {
         AppTitle()
         MainComponents(
             // add password reset result later
@@ -76,6 +76,7 @@ fun AuthScreenContent(
             onAuthIntent = onIntent,
             onGetIntentSender = onGetIntentSender
         )
+        PrivacyTermsLinks()
     }
 }
 

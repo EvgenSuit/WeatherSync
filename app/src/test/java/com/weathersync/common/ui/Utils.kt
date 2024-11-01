@@ -6,12 +6,14 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.printToString
 import androidx.test.core.app.ApplicationProvider
-import com.google.firebase.Timestamp
-import com.weathersync.R
+import java.text.DateFormat
+import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 fun getString(@StringRes resId: Int,
               vararg args: Any): String =
@@ -25,8 +27,10 @@ fun SemanticsNodeInteraction.printToLog(
 }
 fun ComposeContentTestRule.assertDisplayedLimitIsCorrect(
     @StringRes resId: Int,
-    expectedNextUpdateDate: Date?) {
+    expectedNextUpdateDate: Date?,
+    locale: Locale) {
+    val timePattern = (DateFormat.getTimeInstance(DateFormat.SHORT, locale) as SimpleDateFormat).toPattern()
     onNodeWithText(
-        getString(resId, SimpleDateFormat("HH:mm, dd MMM").format(expectedNextUpdateDate)),
-        useUnmergedTree = true).assertIsDisplayed()
+        getString(resId, SimpleDateFormat("$timePattern, dd MMM", locale).format(expectedNextUpdateDate)),
+        useUnmergedTree = true).performScrollTo().assertIsDisplayed()
 }

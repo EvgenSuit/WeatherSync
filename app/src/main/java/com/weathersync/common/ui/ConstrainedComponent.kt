@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,7 +20,6 @@ import com.weathersync.R
 
 @Composable
 fun ConstrainedComponent(
-    footer: @Composable (() -> Unit)? = null, // Optional footer slot
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val maxAllowedWidth = dimensionResource(id = R.dimen.max_width)
@@ -56,15 +54,6 @@ fun ConstrainedComponent(
                     ) {
                         content()
                     }
-                }
-            }
-            footer?.let {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                ) {
-                    it()
                 }
             }
         }

@@ -24,22 +24,22 @@ val homeModule = module {
         homeRepository = get(),
         crashlyticsManager = get()
     ) }
-    single { HomeRepository(
+    factory { HomeRepository(
         limitManager = get(),
         currentWeatherRepository = get(),
         geminiRepository = get()
     ) }
-    single { CurrentWeatherRepository(
+    factory { CurrentWeatherRepository(
         engine = CIO.create(),
         locationClient = get(),
         currentWeatherDAO = get(),
         weatherUnitsManager = get()
     ) }
-    single { LocationClient(
+    factory { LocationClient(
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(androidContext()),
         geocoder = Geocoder(androidContext(), Locale.getDefault())
     ) }
-    single { GeminiRepository(
+    factory { GeminiRepository(
         generativeModel = getGenerativeModel(),
         currentWeatherDAO = get()
     ) }

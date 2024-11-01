@@ -21,16 +21,16 @@ val activityPlanningModule = module {
             crashlyticsManager = get()
         )
     }
-    single { ActivityPlanningRepository(
+    factory { ActivityPlanningRepository(
         limitManager = get(),
         forecastRepository = get(),
         activityPlanningGeminiRepository = get()
     ) }
-    single { ActivityPlanningGeminiRepository(
+    factory { ActivityPlanningGeminiRepository(
         generativeModel = getGenerativeModel(),
         is24HourFormat = DateFormat.is24HourFormat(androidContext())
     ) }
-    single {
+    factory {
         ForecastRepository(
             engine = CIO.create(),
             locationClient = get(),

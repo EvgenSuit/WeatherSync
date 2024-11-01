@@ -25,6 +25,7 @@ import org.junit.runner.RunWith
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 
 @RunWith(AndroidJUnit4::class)
@@ -35,6 +36,7 @@ class HomeRepositoryLimitTests: BaseLimitTest {
     @Test(expected = TestException::class)
     override fun getServerTimestamp_exception() = runTest {
         homeBaseRule.setupLimitManager(
+            locale = Locale.US,
             limitManagerConfig = homeBaseRule.limitManagerConfig,
             serverTimestampGetException = homeBaseRule.exception)
         calculateLimit()
@@ -42,24 +44,37 @@ class HomeRepositoryLimitTests: BaseLimitTest {
     @Test(expected = TestException::class)
     override fun deleteServerTimestamp_exception() = runTest {
         homeBaseRule.setupLimitManager(
+            locale = Locale.US,
             limitManagerConfig = homeBaseRule.limitManagerConfig,
             serverTimestampDeleteException = homeBaseRule.exception)
         calculateLimit()
     }
 
     @Test
-    override fun limitReached_isLimitCorrect() = runTest {
-        calculateReachedLimit(timestamps = createDescendingTimestamps(
+    override fun limitReached_UKLocale_isLimitCorrect() = runTest {
+        calculateReachedLimit(
+            timestamps = createDescendingTimestamps(
             limitManagerConfig = homeBaseRule.limitManagerConfig,
-            currTimeMillis = homeBaseRule.testClock.millis()))
+            currTimeMillis = homeBaseRule.testClock.millis()),
+            locale = Locale.UK)
+    }
+    @Test
+    override fun limitReached_USLocale_isLimitCorrect() = runTest {
+        calculateReachedLimit(
+            timestamps = createDescendingTimestamps(
+                limitManagerConfig = homeBaseRule.limitManagerConfig,
+                currTimeMillis = homeBaseRule.testClock.millis()),
+            locale = Locale.US)
     }
 
     @Test
     override fun deleteOutdatedTimestamps_success() = runTest {
+        val locale = Locale.US
         val timestamps = createDescendingTimestamps(
             limitManagerConfig = homeBaseRule.limitManagerConfig,
             currTimeMillis = homeBaseRule.testClock.millis())
         homeBaseRule.setupLimitManager(
+            locale = locale,
             timestamps = timestamps,
             limitManagerConfig = homeBaseRule.limitManagerConfig
         )
@@ -67,6 +82,7 @@ class HomeRepositoryLimitTests: BaseLimitTest {
 
         homeBaseRule.testClock.advanceLimitBy(limitManagerConfig = homeBaseRule.limitManagerConfig)
         homeBaseRule.setupLimitManager(
+            locale = locale,
             timestamps = timestamps,
             limitManagerConfig = homeBaseRule.limitManagerConfig
         )
@@ -121,9 +137,11 @@ class HomeRepositoryLimitTests: BaseLimitTest {
     }
 
     override suspend fun calculateReachedLimit(
-        timestamps: List<Timestamp>
+        timestamps: List<Timestamp>,
+        locale: Locale
     ): Limit {
         homeBaseRule.setupLimitManager(
+            locale = locale,
             timestamps = timestamps,
             limitManagerConfig = homeBaseRule.limitManagerConfig
         )
@@ -131,7 +149,8 @@ class HomeRepositoryLimitTests: BaseLimitTest {
         val nextUpdateDate = homeBaseRule.testHelper.calculateNextUpdateDate(
             receivedNextUpdateDateTime = limit.formattedNextUpdateTime,
             limitManagerConfig = homeBaseRule.limitManagerConfig,
-            timestamps = timestamps)
+            timestamps = timestamps,
+            locale = locale)
         assertEquals(nextUpdateDate.expectedNextUpdateDate.time, nextUpdateDate.receivedNextUpdateDate.time)
         assertTrue(limit.isReached)
         return limit

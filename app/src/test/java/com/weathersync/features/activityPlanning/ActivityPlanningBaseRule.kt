@@ -46,6 +46,7 @@ import org.koin.core.context.stopKoin
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 class ActivityPlanningBaseRule: TestWatcher() {
     val limitManagerConfig = LimitManagerConfig(2, 24)
@@ -115,6 +116,7 @@ class ActivityPlanningBaseRule: TestWatcher() {
         )
     }
     fun setupLimitManager(
+        locale: Locale,
         timestamps: List<Timestamp> = listOf(),
         limitManagerConfig: LimitManagerConfig,
         serverTimestampGetException: Exception? = null,
@@ -130,7 +132,8 @@ class ActivityPlanningBaseRule: TestWatcher() {
             limitManagerConfig = limitManagerConfig,
             limitManagerFirestore = limitManagerFirestore,
             currentWeatherDAO = currentWeatherDAO,
-            weatherUpdater = mockk()
+            weatherUpdater = mockk(),
+            locale = locale
         ))
     }
 
@@ -185,7 +188,9 @@ class ActivityPlanningBaseRule: TestWatcher() {
     }
     override fun starting(description: Description?) {
         stopKoin()
-        setupLimitManager(limitManagerConfig = limitManagerConfig)
+        setupLimitManager(
+            locale = Locale.US,
+            limitManagerConfig = limitManagerConfig)
         setupWeatherUnitsManager()
         setupForecastRepository()
         setupActivityPlanningRepository(generatedSuggestions = generatedSuggestions)

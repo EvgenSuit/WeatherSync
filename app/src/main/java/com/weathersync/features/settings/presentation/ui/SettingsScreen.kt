@@ -69,9 +69,7 @@ fun SettingsScreenContent(
     PullToRefreshBox(
         isRefreshing = uiState.weatherUnitsRefreshResult.isInProgress(),
         onRefresh = { onIntent(SettingsIntent.FetchWeatherUnits(refresh = true)) }) {
-        ConstrainedComponent(footer = {
-            PrivacyTermsLinks()
-        }) {
+        ConstrainedComponent {
             if (listOf(uiState.weatherUnitsFetchResult,
                     uiState.weatherUnitsRefreshResult,
                     uiState.weatherUnitSetResult).any { it.isInProgress() }) {
@@ -95,6 +93,7 @@ fun SettingsScreenContent(
                 }
             }
             AppVersionComponent()
+            PrivacyTermsLinks()
         }
     }
 }

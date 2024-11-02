@@ -1,12 +1,9 @@
 package com.weathersync.features.settings.presentation.ui
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -17,9 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -29,13 +24,15 @@ import com.weathersync.R
 import com.weathersync.common.ui.ConstrainedComponent
 import com.weathersync.common.ui.CustomLinearProgressIndicator
 import com.weathersync.common.ui.LocalSnackbarController
-import com.weathersync.common.ui.UIEvent
+import com.weathersync.common.ui.PrivacyTermsLinks
 import com.weathersync.features.settings.data.Dark
 import com.weathersync.features.settings.presentation.SettingsUiState
 import com.weathersync.features.settings.presentation.SettingsViewModel
+import com.weathersync.features.settings.presentation.ui.components.AppVersionComponent
 import com.weathersync.features.settings.presentation.ui.components.CommonSettingsComponent
 import com.weathersync.features.settings.presentation.ui.components.ThemeSwitcher
 import com.weathersync.features.settings.presentation.ui.components.WeatherUnitsComponent
+import com.weathersync.ui.SettingsUIEvent
 import com.weathersync.ui.theme.WeatherSyncTheme
 import com.weathersync.utils.isInProgress
 import kotlinx.coroutines.flow.collectLatest
@@ -43,7 +40,8 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = koinViewModel()
+    viewModel: SettingsViewModel = koinViewModel(),
+    onSignOut: () -> Unit
 ) {
     val snackbar = LocalSnackbarController.current
     val uiState by viewModel.uiState.collectAsState()
@@ -51,7 +49,8 @@ fun SettingsScreen(
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collectLatest { event ->
             when (event) {
-                is UIEvent.ShowSnackbar -> snackbar.showSnackbar(event.message)
+                is SettingsUIEvent.ShowSnackbar -> snackbar.showSnackbar(event.message)
+                is SettingsUIEvent.SignOut -> onSignOut()
             }
         }
     }
@@ -95,6 +94,8 @@ fun SettingsScreenContent(
                         style = MaterialTheme.typography.displayMedium)
                 }
             }
+            AppVersionComponent()
+            PrivacyTermsLinks()
         }
     }
 }

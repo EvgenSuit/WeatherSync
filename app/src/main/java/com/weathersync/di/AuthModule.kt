@@ -29,8 +29,8 @@ val authModule = module {
         regularAuthRepository = get(),
         googleAuthRepository = get(),
         crashlyticsManager = get()) }
-    single { RegularAuthRepository(Firebase.auth) }
-    single { GoogleAuthRepository(
+    factory { RegularAuthRepository(Firebase.auth) }
+    factory { GoogleAuthRepository(
         auth = Firebase.auth,
         oneTapClient = getOneTapClient(androidContext()),
         beginSignInRequest = getSignInRequest()) }

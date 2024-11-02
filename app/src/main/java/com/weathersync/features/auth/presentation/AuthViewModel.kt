@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.common.api.ApiException
 import com.weathersync.R
-import com.weathersync.common.ui.UIEvent
+import com.weathersync.ui.UIEvent
 import com.weathersync.common.ui.UIText
 import com.weathersync.features.auth.EmailValidator
 import com.weathersync.features.auth.GoogleAuthRepository
@@ -16,6 +16,7 @@ import com.weathersync.features.auth.RegularAuthRepository
 import com.weathersync.features.auth.presentation.ui.AuthFieldType
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldState
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldsState
+import com.weathersync.ui.AuthUIEvent
 import com.weathersync.utils.CrashlyticsManager
 import com.weathersync.utils.CustomResult
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -36,7 +37,7 @@ class AuthViewModel(
     private val _uiState = MutableStateFlow(AuthUIState())
     val uiState = _uiState.asStateFlow()
 
-    private val _uiEvent = MutableSharedFlow<UIEvent>()
+    private val _uiEvent = MutableSharedFlow<AuthUIEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
 
     fun handleIntent(intent: AuthIntent) {
@@ -70,7 +71,7 @@ class AuthViewModel(
             updateAuthResult(CustomResult.InProgress)
             googleAuthRepository.onTapSignIn()
         } catch (e: Exception) {
-            _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.google_sign_in_error)))
+            _uiEvent.emit(AuthUIEvent.ShowSnackbar(UIText.StringResource(R.string.google_sign_in_error)))
             updateAuthResult(CustomResult.Error)
             crashlyticsManager.recordException(e)
             null
@@ -83,10 +84,11 @@ class AuthViewModel(
                     return@launch
                 }
                 googleAuthRepository.signInWithIntent(activityResult.data!!)
+                _uiEvent.emit(AuthUIEvent.NavigateToHome)
                 updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {
                 if ((e is ApiException && e.statusCode != 16) || e !is ApiException) {
-                    _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
+                    _uiEvent.emit(AuthUIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
                     updateAuthResult(CustomResult.Error)
                 } else updateAuthResult(CustomResult.None)
             }
@@ -101,11 +103,12 @@ class AuthViewModel(
                 regularAuthRepository.apply {
                     if (_uiState.value.authType == AuthType.SignIn) signIn(email, password) else signUp(email, password)
                 }
+                _uiEvent.emit(AuthUIEvent.NavigateToHome)
                 updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {
-                updateAuthResult(CustomResult.Error)
+                _uiEvent.emit(AuthUIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
                 crashlyticsManager.recordException(e, "Auth type: ${_uiState.value.authType}")
-                _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
+                updateAuthResult(CustomResult.Error)
             }
         }
     }

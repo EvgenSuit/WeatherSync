@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,27 +22,20 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.weathersync.clearFocusOnNonButtonClick
-import com.weathersync.common.ui.CustomCircularProgressIndicator
 import com.weathersync.common.ui.CustomSnackbar
 import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.common.ui.SnackbarController
@@ -73,11 +65,9 @@ fun NavManager(
     navManagerViewModel: NavManagerViewModel = koinViewModel()
 ) {
     val snackbarController = LocalSnackbarController.current
-    val isUserNull by navManagerViewModel.isUserNullFlow.collectAsState()
     NavManagerContent(
         navController = navController,
         isUserNullInit = navManagerViewModel.isUserNullInit,
-        isUserNull = isUserNull,
         snackbarController = snackbarController
     )
 }
@@ -86,19 +76,11 @@ fun NavManager(
 fun NavManagerContent(
     navController: NavHostController,
     isUserNullInit: Boolean,
-    isUserNull: Boolean?,
     snackbarController: SnackbarController
 ) {
     val enterAnimation = slideInVertically { it/4 }
     val exitAnimation = fadeOut()
     val currRoute by navController.currentBackStackEntryAsState()
-    LaunchedEffect(isUserNull) {
-        if (currRoute?.destination?.route != Route.Auth.route && isUserNull == true) {
-            navController.navigate(Route.Auth.route) {
-                popUpTo(navController.graph.id)
-            }
-        }
-    }
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarController.hostState) {
@@ -112,7 +94,7 @@ fun NavManagerContent(
             ) {
                 BottomBar(currRoute = currRoute?.destination?.route ?: Route.Auth.route,
                     onNavigateToRoute = { navController.navigate(it.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
+                        popUpTo(navController.graph.id) {
                             saveState = true
                         }
                         launchSingleTop = true
@@ -132,11 +114,11 @@ fun NavManagerContent(
                     .clearFocusOnNonButtonClick(LocalFocusManager.current)
             ) {
                 composable(Route.Auth.route) {
-                    AuthScreen(onNavigateToHome = { navController.navigate(Route.Home.route) {
-                        popUpTo(Route.Auth.route) {
-                            inclusive = true
+                    AuthScreen(onNavigateToHome = {
+                        navController.navigate(Route.Home.route) {
+                            popUpTo(navController.graph.id)
                         }
-                    } }) }
+                    }) }
                 composable(
                     Route.Home.route,
                     enterTransition = { enterAnimation },
@@ -153,7 +135,13 @@ fun NavManagerContent(
                     Route.Settings.route,
                     enterTransition = { enterAnimation },
                     exitTransition = { exitAnimation }) {
-                    SettingsScreen()
+                    SettingsScreen(
+                        onSignOut = {
+                            navController.navigate(Route.Auth.route) {
+                                popUpTo(navController.graph.id)
+                            }
+                        }
+                    )
                 }
             }
 
@@ -187,7 +175,6 @@ fun NavManagerPreview() {
             // works only if isUserNull is null
             NavManagerContent(navController = rememberNavController(),
                 isUserNullInit = true,
-                isUserNull = null,
                 snackbarController = SnackbarController(
                     context = LocalContext.current,
                     snackbarHostState = SnackbarHostState(),

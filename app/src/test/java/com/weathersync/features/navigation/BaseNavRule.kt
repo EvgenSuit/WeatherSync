@@ -2,6 +2,7 @@ package com.weathersync.features.navigation
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.google.firebase.auth.FirebaseAuth
 import com.weathersync.common.TestHelper
 import com.weathersync.common.auth.mockAuth
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
@@ -24,14 +25,16 @@ import org.koin.dsl.module
 
 class BaseNavRule: TestWatcher() {
     val testHelper = TestHelper()
-    val auth = mockAuth()
+    lateinit var auth: FirebaseAuth
     lateinit var viewModel: NavManagerViewModel
-    lateinit var authListener: AuthListener
 
-    fun setupKoin() {
+    fun setupKoin(
+        inputAuth: FirebaseAuth = mockAuth()
+    ) {
+        auth = inputAuth
         val authModule = module {
             factory { AuthViewModel(
-                regularAuthRepository = RegularAuthRepository(auth),
+                regularAuthRepository = RegularAuthRepository(inputAuth),
                 googleAuthRepository = mockk(relaxed = true),
                 crashlyticsManager = mockk(relaxed = true)
             ) }
@@ -54,7 +57,7 @@ class BaseNavRule: TestWatcher() {
         }
         val settingsModule = module {
             factory { SettingsViewModel(
-                settingsRepository = SettingsRepository(auth = auth, themeManager = get(), weatherUnitsManager = mockk()),
+                settingsRepository = SettingsRepository(auth = auth, themeManager = get(), weatherUnitsManager = mockk(relaxed = true)),
                 crashlyticsManager = mockk(relaxed = true)
             ) }
             single { ThemeManager(dataStore = ApplicationProvider.getApplicationContext<Context>().themeDatastore) }
@@ -72,17 +75,13 @@ class BaseNavRule: TestWatcher() {
         }
     }
 
-    fun setupAuthListener() {
-        authListener = AuthListener(auth)
-    }
     fun setupViewModel() {
-        viewModel = NavManagerViewModel(authListener = authListener)
+        viewModel = NavManagerViewModel(auth = auth)
     }
 
     override fun starting(description: Description?) {
         stopKoin()
-        setupAuthListener()
-        setupViewModel()
         setupKoin()
+        setupViewModel()
     }
 }

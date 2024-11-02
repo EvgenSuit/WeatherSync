@@ -39,7 +39,7 @@ class SettingsThemeUITests: ThemeTest {
     override fun collectDefaultTheme_isCorrect() = runTest {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                SettingsScreen(viewModel = settingsBaseRule.viewModel)
+                SettingsScreen(viewModel = settingsBaseRule.viewModel, onSignOut = {})
             }) {
             onNodeWithTag("ThemeSwitcher").apply {
                 launch {
@@ -60,7 +60,7 @@ class SettingsThemeUITests: ThemeTest {
     override fun setTheme_isCorrect() = runTest {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                SettingsScreen(viewModel = settingsBaseRule.viewModel)
+                SettingsScreen(viewModel = settingsBaseRule.viewModel, onSignOut = {})
             }) {
             onNodeWithTag("ThemeSwitcher").apply {
                 launch {

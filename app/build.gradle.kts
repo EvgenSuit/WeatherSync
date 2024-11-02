@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.dsl.NdkOptions.DebugSymbolLevel
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -5,8 +7,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.ksp.plugin)
-    alias(libs.plugins.crashlytics)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.crashlytics)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.roborazzi.plugin)
 }
@@ -22,7 +24,7 @@ android {
         applicationId = "com.weathersync"
         minSdk = 28
         targetSdk = 34
-        versionCode = 1
+        versionCode = 4
         versionName = "1.0.0-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -40,7 +42,12 @@ android {
     }
     buildTypes {
         release {
-            isMinifyEnabled = false
+            configure<CrashlyticsExtension> {
+                nativeSymbolUploadEnabled = true
+                unstrippedNativeLibsDir = file("${project.buildDir}/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib")
+            }
+            ndk.debugSymbolLevel = "FULL"
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -68,7 +75,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -90,6 +96,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.crashlytics.ndk)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
 
@@ -125,6 +132,10 @@ dependencies {
 
     // Gemini
     implementation(libs.generative.ai)
+
+    implementation(libs.splashscreen)
+    implementation(libs.play.integrity)
+    implementation(libs.appcheck.debug)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

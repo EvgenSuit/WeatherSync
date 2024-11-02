@@ -1,5 +1,6 @@
 package com.weathersync.utils
 
+import androidx.annotation.Keep
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
@@ -99,4 +100,5 @@ class WeatherUnitsManager(
     private fun DocumentSnapshot?.getUnitName() = this?.toObject<FirestoreWeatherUnit>()?.unitName
 
 }
+@Keep
 data class FirestoreWeatherUnit(val unitName: String = "")

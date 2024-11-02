@@ -20,7 +20,7 @@ import com.weathersync.R
 
 @Composable
 fun ConstrainedComponent(
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     val maxAllowedWidth = dimensionResource(id = R.dimen.max_width)
     BoxWithConstraints(
@@ -28,27 +28,32 @@ fun ConstrainedComponent(
     ) {
         val maxWidth = maxWidth
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()) // without verticalScroll pull to refresh will not work
+            modifier = Modifier.fillMaxSize()
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = if (maxWidth > dimensionResource(id = R.dimen.max_width)) {
-                    Modifier.width(maxAllowedWidth)
-                } else {
-                    Modifier.fillMaxWidth()
-                }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()) // without verticalScroll pull to refresh will not work
             ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(5.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = if (maxWidth > dimensionResource(id = R.dimen.max_width)) {
+                        Modifier.width(maxAllowedWidth)
+                    } else {
+                        Modifier.fillMaxWidth()
+                    }
                 ) {
-                    content()
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                    ) {
+                        content()
+                    }
                 }
             }
         }

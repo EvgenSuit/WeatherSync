@@ -42,6 +42,7 @@ class SettingsWeatherUnitsUITests: WeatherUnitTest {
     val mainDispatcherRule = MainDispatcherRule()
     @get: Rule(order = 1)
     val settingsBaseRule = SettingsBaseRule()
+    private val snackbarScope = TestScope()
 
     @Test
     override fun fetchUnits_success() = runTest {
@@ -74,9 +75,9 @@ class SettingsWeatherUnitsUITests: WeatherUnitTest {
     }
 
     private fun fetchUnits(success: Boolean, testScope: TestScope) {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = settingsBaseRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                SettingsScreen(viewModel = settingsBaseRule.viewModel)
+                SettingsScreen(viewModel = settingsBaseRule.viewModel, onSignOut = {})
             }) {
             // MUST call inside of testContent body of setContentWithSnackbar, otherwise the ui event doesn't get emitted during fetch
             testScope.advanceUntilIdle()
@@ -84,15 +85,15 @@ class SettingsWeatherUnitsUITests: WeatherUnitTest {
                 onNodeWithText(unit.unitName, useUnmergedTree = true).apply { if (success) assertIsDisplayed() else assertIsNotDisplayed() }
             }
             onAllNodesWithTag("Dropdown").assertAll(isEnabled())
-            if (!success) assertSnackbarTextEquals(resId = R.string.could_not_load_units, settingsBaseRule.testHelper.snackbarScope)
-            else assertSnackbarIsNotDisplayed(settingsBaseRule.testHelper.snackbarScope)
+            if (!success) assertSnackbarTextEquals(resId = R.string.could_not_load_units, snackbarScope)
+            else assertSnackbarIsNotDisplayed(snackbarScope)
         }
     }
 
     private fun setUnit(success: Boolean, testScope: TestScope) {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = settingsBaseRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                SettingsScreen(viewModel = settingsBaseRule.viewModel)
+                SettingsScreen(viewModel = settingsBaseRule.viewModel, onSignOut = {})
             }) {
             testScope.advanceUntilIdle()
             fetchedWeatherUnits.forEach { unit ->
@@ -110,8 +111,8 @@ class SettingsWeatherUnitsUITests: WeatherUnitTest {
             testScope.advanceUntilIdle()
             unitToChange.apply { if (success) assertIsNotDisplayed() else assertIsDisplayed() }
             unitToSelect.apply { if (success) assertIsDisplayed() else assertIsNotDisplayed() }
-            if (!success) assertSnackbarTextEquals(resId = R.string.could_not_set_units, settingsBaseRule.testHelper.snackbarScope)
-            else assertSnackbarIsNotDisplayed(settingsBaseRule.testHelper.snackbarScope)
+            if (!success) assertSnackbarTextEquals(resId = R.string.could_not_set_units, snackbarScope)
+            else assertSnackbarIsNotDisplayed(snackbarScope)
         }
     }
 

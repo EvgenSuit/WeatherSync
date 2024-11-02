@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -25,12 +26,14 @@ import com.weathersync.R
 import com.weathersync.common.ui.assertDisplayedLimitIsCorrect
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.assertSnackbarTextEquals
+import com.weathersync.common.ui.printToLog
 import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.utils.AtLeastOneGenerationTagMissing
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import org.junit.Assert.assertTrue
 import org.junit.runner.RunWith
+import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
 class ActivityPlanningUITests {
@@ -58,29 +61,12 @@ class ActivityPlanningUITests {
         }
     }
     @Test
-    fun generateRecommendations_limitReached() = runTest {
-        val timestamps = createDescendingTimestamps(
-            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
-            currTimeMillis = activityPlanningBaseRule.testClock.millis()
-        )
-        activityPlanningBaseRule.apply {
-            setupLimitManager(
-                timestamps = timestamps, limitManagerConfig = activityPlanningBaseRule.limitManagerConfig
-            )
-            setupActivityPlanningRepository()
-            setupViewModel()
-        }
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
-            uiContent = {
-                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel)
-            }) {
-            performActivityPlanning()
-
-            // post advancement checks
-            onNodeWithText(activityPlanningBaseRule.activityPlanningSuggestions).assertIsNotDisplayed()
-            assertSnackbarIsNotDisplayed(snackbarScope)
-            checkDisplayedLimit(timestamps)
-        }
+    fun generateRecommendations_USLocale_limitReached() = runTest {
+        generateRecommendations_limitReached(Locale.US)
+    }
+    @Test
+    fun generateRecommendations_UKLocale_limitReached() = runTest {
+        generateRecommendations_limitReached(Locale.UK)
     }
     @Test
     fun generateRecommendations_errorHttpResponse_error() = runTest {
@@ -177,15 +163,44 @@ class ActivityPlanningUITests {
             }
         }
     }
+    private fun TestScope.generateRecommendations_limitReached(locale: Locale) {
+        val timestamps = createDescendingTimestamps(
+            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
+            currTimeMillis = activityPlanningBaseRule.testClock.millis()
+        )
+        activityPlanningBaseRule.apply {
+            setupLimitManager(
+                locale = locale,
+                timestamps = timestamps,
+                limitManagerConfig = activityPlanningBaseRule.limitManagerConfig
+            )
+            setupActivityPlanningRepository()
+            setupViewModel()
+        }
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+            uiContent = {
+                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel)
+            }) {
+            performActivityPlanning()
+
+            // post advancement checks
+            onNodeWithText(activityPlanningBaseRule.activityPlanningSuggestions).assertIsNotDisplayed()
+            assertSnackbarIsNotDisplayed(snackbarScope)
+            checkDisplayedLimit(timestamps, locale = locale)
+        }
+    }
     private fun ComposeContentTestRule.checkDisplayedLimit(
-        timestamps: List<Timestamp>
+        timestamps: List<Timestamp>,
+        locale: Locale
     ) {
         val nextUpdateDate = activityPlanningBaseRule.testHelper.calculateNextUpdateDate(
             receivedNextUpdateDateTime = activityPlanningBaseRule.viewModel.uiState.value.limit.formattedNextUpdateTime,
             limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
-            timestamps = timestamps)
+            timestamps = timestamps,
+            locale = locale)
         assertDisplayedLimitIsCorrect(
             resId = R.string.next_generation_available_at,
-            expectedNextUpdateDate = nextUpdateDate.expectedNextUpdateDate)
+            expectedNextUpdateDate = nextUpdateDate.expectedNextUpdateDate,
+            locale = locale)
     }
 }

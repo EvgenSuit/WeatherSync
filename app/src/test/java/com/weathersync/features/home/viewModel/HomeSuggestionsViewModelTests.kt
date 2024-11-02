@@ -17,6 +17,7 @@ import com.weathersync.utils.LimitManagerConfig
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -25,6 +26,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -117,31 +119,12 @@ class HomeSuggestionsViewModelTests {
         }
     }
     @Test
-    fun generateSuggestions_accountLimitReached_localSuggestionsAreNull() = runTest {
-        val timestamps = createDescendingTimestamps(
-            limitManagerConfig = homeBaseRule.limitManagerConfig,
-            currTimeMillis = homeBaseRule.testClock.millis()
-        )
-        homeBaseRule.setupLimitManager(
-            timestamps = timestamps,
-            limitManagerConfig = homeBaseRule.limitManagerConfig
-        )
-        homeBaseRule.setupHomeRepository()
-        homeBaseRule.setupViewModel()
-        homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
-        homeBaseRule.advance(this)
-        assertEquals(null, homeBaseRule.viewModel.uiState.value.currentWeather)
-        homeBaseRule.homeRepository.apply {
-            coVerifyAll {
-                calculateLimit()
-                getCurrentWeather(isLimitReached = true)
-            }
-            coVerify(inverse = true) {
-                generateSuggestions(isLimitReached = any(), currentWeather = any())
-                recordTimestamp()
-            }
-        }
-        assertTrue(homeBaseRule.viewModel.uiState.value.limit.isReached)
+    fun generateSuggestions_USLocale_accountLimitReached_localSuggestionsAreNull() = runTest {
+        generateSuggestions_LimitReached(locale = Locale.US)
+    }
+    @Test
+    fun generateSuggestions_UKLocale_accountLimitReached_localSuggestionsAreNull() = runTest {
+        generateSuggestions_LimitReached(locale = Locale.UK)
     }
     @Test
     fun generateSuggestions_accountLimitReached_localSuggestionsAreNotNull() = runTest {
@@ -154,6 +137,7 @@ class HomeSuggestionsViewModelTests {
             currTimeMillis = homeBaseRule.testClock.millis()
         )
         homeBaseRule.setupLimitManager(
+            locale = Locale.US,
             timestamps = timestamps,
             limitManagerConfig = homeBaseRule.limitManagerConfig
         )
@@ -175,4 +159,37 @@ class HomeSuggestionsViewModelTests {
         assertTrue(homeBaseRule.viewModel.uiState.value.limit.isReached)
     }
 
+    private fun TestScope.generateSuggestions_LimitReached(locale: Locale) {
+        val timestamps = createDescendingTimestamps(
+            limitManagerConfig = homeBaseRule.limitManagerConfig,
+            currTimeMillis = homeBaseRule.testClock.millis()
+        )
+        homeBaseRule.setupLimitManager(
+            locale = locale,
+            timestamps = timestamps,
+            limitManagerConfig = homeBaseRule.limitManagerConfig
+        )
+        homeBaseRule.setupHomeRepository()
+        homeBaseRule.setupViewModel()
+        homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
+        homeBaseRule.advance(this)
+        assertEquals(null, homeBaseRule.viewModel.uiState.value.currentWeather)
+        homeBaseRule.homeRepository.apply {
+            coVerifyAll {
+                calculateLimit()
+                getCurrentWeather(isLimitReached = true)
+            }
+            coVerify(inverse = true) {
+                generateSuggestions(isLimitReached = any(), currentWeather = any())
+                recordTimestamp()
+            }
+        }
+        assertTrue(homeBaseRule.viewModel.uiState.value.limit.isReached)
+        val nextUpdateDate = homeBaseRule.testHelper.calculateNextUpdateDate(
+            receivedNextUpdateDateTime = homeBaseRule.viewModel.uiState.value.limit.formattedNextUpdateTime,
+            limitManagerConfig = homeBaseRule.limitManagerConfig,
+            timestamps = timestamps,
+            locale = locale)
+        assertEquals(nextUpdateDate.expectedNextUpdateDate.time, nextUpdateDate.receivedNextUpdateDate.time)
+    }
 }

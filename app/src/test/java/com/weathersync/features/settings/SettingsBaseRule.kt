@@ -2,6 +2,7 @@ package com.weathersync.features.settings
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.google.firebase.auth.FirebaseAuth
 import com.weathersync.common.TestHelper
 import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.utils.mockWeatherUnitsManager
@@ -15,7 +16,7 @@ import org.junit.runner.Description
 import org.koin.core.context.stopKoin
 
 class SettingsBaseRule: TestWatcher() {
-    val auth = mockAuth()
+    lateinit var auth: FirebaseAuth
     lateinit var viewModel: SettingsViewModel
     lateinit var settingsRepository: SettingsRepository
     lateinit var weatherUnitsManager: WeatherUnitsManager
@@ -27,7 +28,10 @@ class SettingsBaseRule: TestWatcher() {
             crashlyticsManager = testHelper.crashlyticsManager
         )
     }
-    fun setupRepository() {
+    fun setupRepository(
+        inputAuth: FirebaseAuth = mockAuth()
+    ) {
+        auth = inputAuth
         settingsRepository = spyk(
             SettingsRepository(
                 auth = auth,

@@ -15,14 +15,23 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -34,6 +43,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weathersync.R
@@ -79,6 +90,7 @@ fun AuthTextField(
 ) {
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
+    var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
     val type = fieldState.type
     val state = fieldState.state
     val error = state.error?.asString(context) ?: ""
@@ -99,6 +111,16 @@ fun AuthTextField(
                 modifier = Modifier.alpha(0.6f)) },
             onValueChange = {
                 onInput(AuthIntent.AuthInput(fieldState.copy(state = fieldState.state.copy(value = it))))
+            },
+            visualTransformation = if (!isPasswordVisible) PasswordVisualTransformation() else VisualTransformation.None,
+            trailingIcon = {
+                if (type == AuthFieldType.Password && state.value.isNotBlank()) {
+                    val icon = if (isPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                    val description = if (isPasswordVisible) "Password visible" else "Password not visible"
+                    IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        Icon(imageVector = icon, contentDescription = description)
+                    }
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()

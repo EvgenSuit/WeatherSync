@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -50,6 +51,29 @@ class AuthUITests {
         composeRule = composeRule,
         captureRoot = composeRule.onRoot(),
     )*/
+
+    @Test
+    fun `test visibility toggle`() = runTest {
+        setContentWithSnackbar(composeRule, snackbarScope,
+            uiContent = { AuthScreen(viewModel = baseAuthRule.viewModel, onNavigateToHome = {}) }) {
+            val passwordField = onNodeWithTag(getString(R.string.password))
+            val passwordVisibleIcon = onNodeWithContentDescription("Password visible")
+            val passwordNotVisibleIcon = onNodeWithContentDescription("Password not visible")
+
+            // assert visibility toggle is not displayed when the password text field is blank
+            passwordVisibleIcon.assertDoesNotExist()
+            passwordNotVisibleIcon.assertDoesNotExist()
+
+            passwordField.performTextReplacement(validPassword)
+            passwordNotVisibleIcon.assertIsDisplayed()
+            passwordVisibleIcon.assertDoesNotExist()
+
+            // show password
+            passwordNotVisibleIcon.performClick()
+            passwordVisibleIcon.assertIsDisplayed()
+            passwordNotVisibleIcon.assertDoesNotExist()
+        }
+    }
 
     @Test
     fun performManualSignIn_inputIsValid_success() = runTest {

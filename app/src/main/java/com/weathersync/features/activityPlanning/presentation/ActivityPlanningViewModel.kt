@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.weathersync.R
 import com.weathersync.common.ui.TextFieldState
-import com.weathersync.common.ui.UIEvent
+import com.weathersync.ui.UIEvent
 import com.weathersync.common.ui.UIText
 import com.weathersync.features.activityPlanning.ActivityPlanningRepository
 import com.weathersync.utils.CrashlyticsManager

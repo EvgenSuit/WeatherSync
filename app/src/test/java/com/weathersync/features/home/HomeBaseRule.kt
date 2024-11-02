@@ -44,6 +44,7 @@ import org.junit.runner.Description
 import org.koin.core.context.stopKoin
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows
+import java.util.Locale
 
 class HomeBaseRule: TestWatcher() {
     val limitManagerConfig = LimitManagerConfig(2, 24)
@@ -52,7 +53,6 @@ class HomeBaseRule: TestWatcher() {
 
     val crashlyticsExceptionSlot = testHelper.crashlyticsExceptionSlot
     val exception = TestException("exception")
-    val snackbarScope = TestScope()
     val crashlyticsManager = testHelper.crashlyticsManager
     lateinit var viewModel: HomeViewModel
     fun advance(testScope: TestScope) = repeat(99999999) { testScope.advanceUntilIdle() }
@@ -122,6 +122,7 @@ class HomeBaseRule: TestWatcher() {
         )
     }
     fun setupLimitManager(
+        locale: Locale,
         timestamps: List<Timestamp> = listOf(),
         limitManagerConfig: LimitManagerConfig,
         serverTimestampGetException: Exception? = null,
@@ -138,7 +139,8 @@ class HomeBaseRule: TestWatcher() {
             limitManagerConfig = limitManagerConfig,
             limitManagerFirestore = limitManagerFirestore,
             currentWeatherDAO = currentWeatherLocalDB.currentWeatherDao(),
-            weatherUpdater = weatherUpdater
+            weatherUpdater = weatherUpdater,
+            locale = locale
         ))
     }
 
@@ -163,6 +165,7 @@ class HomeBaseRule: TestWatcher() {
             ApplicationProvider.getApplicationContext(), CurrentWeatherLocalDB::class.java
         ).build()
         setupLimitManager(
+            locale = Locale.US,
             limitManagerConfig = LimitManagerConfig(6, 6)
         )
         setupWeatherUnitsManager()

@@ -24,6 +24,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Date
+import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)
 class HomeCurrentWeatherViewModelTests {
@@ -62,7 +63,10 @@ class HomeCurrentWeatherViewModelTests {
         val timestamps = createDescendingTimestamps(
             limitManagerConfig = homeBaseRule.limitManagerConfig,
             currTimeMillis = homeBaseRule.testClock.millis())
-        homeBaseRule.setupLimitManager(timestamps = timestamps, limitManagerConfig = homeBaseRule.limitManagerConfig)
+        homeBaseRule.setupLimitManager(
+            locale = Locale.US,
+            timestamps = timestamps,
+            limitManagerConfig = homeBaseRule.limitManagerConfig)
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
         homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
@@ -84,6 +88,7 @@ class HomeCurrentWeatherViewModelTests {
             }
         }
     }
+
     @Test
     fun getCurrentWeather_limitReached_localWeatherIsNotNull() = runTest {
         homeBaseRule.currentWeatherLocalDB.currentWeatherDao().insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())

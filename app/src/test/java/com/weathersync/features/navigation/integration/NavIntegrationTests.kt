@@ -9,6 +9,7 @@ import com.weathersync.features.navigation.presentation.ui.NavManager
 import com.weathersync.features.navigation.presentation.ui.Route
 import com.weathersync.features.navigation.presentation.ui.topLevelRoutes
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -26,88 +27,73 @@ class NavIntegrationTests {
     val baseNavRule = BaseNavRule()
     @get: Rule
     val baseNavIntegrationRule = BaseNavIntegrationRule()
+    private val snackbarScope = TestScope()
 
 
     @Test
     fun loadUser_isUICorrect() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-            }
+            baseNavIntegrationRule.assertRouteEquals(Route.Home)
         }
     }
 
     @Test
     fun navigateToScreens_isUICorrect() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-                baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, *topLevelRoutes.toTypedArray())
-                assertEquals(topLevelRoutes.size, baseNavIntegrationRule.navController.backStack.size)
+            baseNavIntegrationRule.apply {
+                assertRouteEquals(Route.Home)
+                navigateToRoute(composeRule = composeRule, *topLevelRoutes.toTypedArray())
+                navigateToRoute(composeRule = composeRule, *topLevelRoutes.toTypedArray())
+                assertEquals(2, navController.backStack.size)
             }
         }
     }
 
     @Test
     fun navigateToSameScreen_backStackIsSame() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-                val sizeBefore = baseNavIntegrationRule.navController.backStack.size
-                baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, Route.Home)
-                val sizeAfter = baseNavIntegrationRule.navController.backStack.size
+            baseNavIntegrationRule.apply {
+                assertRouteEquals(Route.Home)
+                val sizeBefore = navController.backStack.size
+                navigateToRoute(composeRule = composeRule, Route.Home)
+                val sizeAfter = navController.backStack.size
                 assertEquals(sizeAfter, sizeBefore)
             }
         }
     }
     @Test
-    fun pressBackOutsideOfHome_isInHome() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+    fun pressBackOutsideOfHome_isInOutsideOfApp() = runTest {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-                baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, Route.ActivityPlanning)
-                baseNavIntegrationRule.navController.popBackStack()
-                baseNavIntegrationRule.assertRouteEquals(Route.Home)
+            baseNavIntegrationRule.apply {
+                assertRouteEquals(Route.Home)
+                navigateToRoute(composeRule = composeRule, Route.ActivityPlanning)
+                navController.popBackStack()
+                assertRouteEquals(null)
             }
         }
     }
     @Test
-    fun pressBackInHome_isRouteNull() = runTest {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = baseNavRule.testHelper.snackbarScope,
+    fun pressBackInHome_isInOutsideOfApp() = runTest {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-                baseNavIntegrationRule.navController.popBackStack()
-                baseNavIntegrationRule.assertRouteEquals(null)
+            baseNavIntegrationRule.apply {
+                assertRouteEquals(Route.Home)
+                navController.popBackStack()
+                assertRouteEquals(null)
             }
         }
     }

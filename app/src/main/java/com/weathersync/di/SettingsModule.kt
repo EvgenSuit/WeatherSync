@@ -11,7 +11,7 @@ import org.koin.dsl.module
 
 val settingsModule = module {
     single { ThemeManager(dataStore = androidContext().themeDatastore) }
-    single { SettingsRepository(
+    factory { SettingsRepository(
         auth = Firebase.auth,
         themeManager = get(),
         weatherUnitsManager = get())

@@ -13,6 +13,7 @@ import kotlinx.coroutines.tasks.await
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 interface BaseLimitTest {
@@ -23,7 +24,9 @@ interface BaseLimitTest {
     fun deleteServerTimestamp_exception()
 
     @Test
-    fun limitReached_isLimitCorrect()
+    fun limitReached_UKLocale_isLimitCorrect()
+    @Test
+    fun limitReached_USLocale_isLimitCorrect()
 
     @Test
     fun deleteOutdatedTimestamps_success()
@@ -31,7 +34,7 @@ interface BaseLimitTest {
     @Test
     fun recordTimestamp_success()
 
-    suspend fun calculateReachedLimit(timestamps: List<Timestamp>): Limit
+    suspend fun calculateReachedLimit(timestamps: List<Timestamp>, locale: Locale): Limit
     suspend fun calculateLimit(): Limit
 
     /**

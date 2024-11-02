@@ -14,13 +14,14 @@ import org.koin.dsl.module
 import java.util.Locale
 
 val utilsModule = module {
-    single { CrashlyticsManager(auth = Firebase.auth, crashlytics = Firebase.crashlytics, analytics = Firebase.analytics) }
+    factory { CrashlyticsManager(auth = Firebase.auth, crashlytics = Firebase.crashlytics, analytics = Firebase.analytics) }
     factory { LimitManager(
         limitManagerConfig = LimitManagerConfig(6, 6),
         auth = Firebase.auth,
         firestore = Firebase.firestore,
         currentWeatherDAO = get(),
-        weatherUpdater = get()) }
+        weatherUpdater = get(),
+        locale = Locale.getDefault()) }
     factory { WeatherUnitsManager(
         country = Locale.getDefault().country,
         auth = Firebase.auth,

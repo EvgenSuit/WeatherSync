@@ -3,7 +3,7 @@ package com.weathersync.features.home.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.weathersync.R
-import com.weathersync.common.ui.UIEvent
+import com.weathersync.ui.UIEvent
 import com.weathersync.common.ui.UIText
 import com.weathersync.features.home.HomeRepository
 import com.weathersync.features.home.data.Suggestions

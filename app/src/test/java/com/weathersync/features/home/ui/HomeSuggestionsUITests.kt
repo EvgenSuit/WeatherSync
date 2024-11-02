@@ -34,6 +34,7 @@ import com.weathersync.utils.AtLeastOneGenerationTagMissing
 import com.weathersync.utils.LimitManagerConfig
 import io.mockk.coVerify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -41,6 +42,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -52,6 +54,7 @@ class HomeSuggestionsUITests {
     val homeBaseRule = HomeBaseRule()
     @get: Rule
     val composeRule = createComposeRule()
+    private val snackbarScope = TestScope()
 
 
     @Test
@@ -59,7 +62,7 @@ class HomeSuggestionsUITests {
         homeBaseRule.manageLocationPermission(true)
         homeBaseRule.setupHomeRepository(suggestionsGenerationException = homeBaseRule.exception)
         homeBaseRule.setupViewModel()
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = { HomeScreen(viewModel = homeBaseRule.viewModel)} ) {
             onNodeWithTag("SuggestionsProgress").assertIsDisplayed()
             // advance permission check
@@ -68,7 +71,7 @@ class HomeSuggestionsUITests {
             assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is TestException)
 
             assertSuggestionsUI(homeBaseRule.viewModel.uiState.value.suggestions, displayed = false)
-            assertSnackbarTextEquals(R.string.could_not_generate_suggestions, homeBaseRule.snackbarScope)
+            assertSnackbarTextEquals(R.string.could_not_generate_suggestions, snackbarScope)
             onNodeWithTag("SuggestionsProgress").assertIsDisplayed()
         }
     }
@@ -77,7 +80,7 @@ class HomeSuggestionsUITests {
         homeBaseRule.manageLocationPermission(true)
         homeBaseRule.setupHomeRepository(generatedSuggestions = "Content with no tags")
         homeBaseRule.setupViewModel()
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope,
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = { HomeScreen(viewModel = homeBaseRule.viewModel)} ) {
             onNodeWithTag("SuggestionsProgress", useUnmergedTree = true).assertIsDisplayed()
             waitForIdle()
@@ -85,7 +88,7 @@ class HomeSuggestionsUITests {
 
             assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is AtLeastOneGenerationTagMissing)
             assertSuggestionsUI(homeBaseRule.viewModel.uiState.value.suggestions, displayed = false)
-            assertSnackbarTextEquals(R.string.could_not_generate_suggestions, homeBaseRule.snackbarScope)
+            assertSnackbarTextEquals(R.string.could_not_generate_suggestions, snackbarScope)
             onNodeWithTag("SuggestionsProgress").assertIsDisplayed()
         }
     }
@@ -93,7 +96,7 @@ class HomeSuggestionsUITests {
     fun generateSuggestions_success() = runTest {
         homeBaseRule.manageLocationPermission(true)
         setContentWithSnackbar(composeRule = composeRule,
-            snackbarScope = homeBaseRule.snackbarScope, uiContent = { HomeScreen(viewModel = homeBaseRule.viewModel) }) {
+            snackbarScope = snackbarScope, uiContent = { HomeScreen(viewModel = homeBaseRule.viewModel) }) {
             onNodeWithTag("SuggestionsProgress", useUnmergedTree = true).assertIsDisplayed()
             waitForIdle()
             homeBaseRule.advance(this@runTest)
@@ -105,14 +108,14 @@ class HomeSuggestionsUITests {
             assertEquals(homeBaseRule.testSuggestions.whatToBring, suggestions?.whatToBring)
 
             assertSuggestionsUI(suggestions, displayed = true)
-            assertSnackbarIsNotDisplayed(homeBaseRule.snackbarScope)
+            assertSnackbarIsNotDisplayed(snackbarScope)
         }
     }
    /* @Test
     fun refreshSuggestions_localLimitReached_success() = runTest {
         homeBaseRule.manageLocationPermission(true)
         setContentWithSnackbar(composeRule = composeRule,
-            snackbarScope = homeBaseRule.snackbarScope, uiContent = { HomeScreen(viewModel = homeBaseRule.viewModel) }) {
+            snackbarScope = snackbarScope, uiContent = { HomeScreen(viewModel = homeBaseRule.viewModel) }) {
             onNodeWithTag("SuggestionsProgress", useUnmergedTree = true).assertIsDisplayed()
             waitForIdle()
             homeBaseRule.advance(this@runTest)
@@ -124,7 +127,7 @@ class HomeSuggestionsUITests {
             assertEquals(homeBaseRule.testSuggestions.whatToBring, suggestions?.whatToBring)
 
             assertSuggestionsUI(suggestions, displayed = true)
-            assertSnackbarIsNotDisplayed(homeBaseRule.snackbarScope)
+            assertSnackbarIsNotDisplayed(snackbarScope)
 
             onRoot().printToLog()
             onNodeWithTag("List").performTouchInput { swipeDown() }
@@ -141,13 +144,15 @@ class HomeSuggestionsUITests {
         val timestamps = List(limitManagerConfig.count+1) {
             Timestamp(Date(homeBaseRule.testClock.millis() + 10L * it))
         }
+        // use default locale since cases with different locales are tested inside of home current weather ui tests
         homeBaseRule.setupLimitManager(
+            locale = Locale.US,
             timestamps = timestamps,
             limitManagerConfig = limitManagerConfig
         )
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
             onNodeWithTag("SuggestionsProgress").assertIsDisplayed()
@@ -155,7 +160,7 @@ class HomeSuggestionsUITests {
             onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
             homeBaseRule.advance(this@runTest)
             onNodeWithTag("SuggestionsProgress").assertIsDisplayed()
-            assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
+            assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
         }
     }
     @Test
@@ -169,19 +174,20 @@ class HomeSuggestionsUITests {
             Timestamp(Date(homeBaseRule.testClock.millis() + 10L * it))
         }
         homeBaseRule.setupLimitManager(
+            locale = Locale.US,
             timestamps = timestamps,
             limitManagerConfig = limitManagerConfig
         )
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = homeBaseRule.snackbarScope, uiContent = {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
             onNodeWithTag("SuggestionsProgress").assertIsDisplayed()
             waitForIdle()
             onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
             homeBaseRule.advance(this@runTest)
-            assertSnackbarIsNotDisplayed(snackbarScope = homeBaseRule.snackbarScope)
+            assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
             assertSuggestionsUI(homeBaseRule.testSuggestions.toSuggestions(), displayed = true)
         }
     }

@@ -15,6 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.util.Locale
 
 
 class ActivityPlanningViewModelTests {
@@ -37,7 +38,9 @@ class ActivityPlanningViewModelTests {
     @Test
     fun generateRecommendations_limitReached() = runTest {
         activityPlanningBaseRule.apply {
-            setupLimitManager(timestamps = createDescendingTimestamps(
+            setupLimitManager(
+                locale = Locale.US,
+                timestamps = createDescendingTimestamps(
                 limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
                 currTimeMillis = activityPlanningBaseRule.testClock.millis()
             ), limitManagerConfig = activityPlanningBaseRule.limitManagerConfig)

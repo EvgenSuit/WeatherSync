@@ -25,7 +25,6 @@ import com.weathersync.common.ui.ConstrainedComponent
 import com.weathersync.common.ui.CustomLinearProgressIndicator
 import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.common.ui.PrivacyTermsLinks
-import com.weathersync.ui.UIEvent
 import com.weathersync.features.settings.data.Dark
 import com.weathersync.features.settings.presentation.SettingsUiState
 import com.weathersync.features.settings.presentation.SettingsViewModel
@@ -33,6 +32,7 @@ import com.weathersync.features.settings.presentation.ui.components.AppVersionCo
 import com.weathersync.features.settings.presentation.ui.components.CommonSettingsComponent
 import com.weathersync.features.settings.presentation.ui.components.ThemeSwitcher
 import com.weathersync.features.settings.presentation.ui.components.WeatherUnitsComponent
+import com.weathersync.ui.SettingsUIEvent
 import com.weathersync.ui.theme.WeatherSyncTheme
 import com.weathersync.utils.isInProgress
 import kotlinx.coroutines.flow.collectLatest
@@ -40,7 +40,8 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = koinViewModel()
+    viewModel: SettingsViewModel = koinViewModel(),
+    onSignOut: () -> Unit
 ) {
     val snackbar = LocalSnackbarController.current
     val uiState by viewModel.uiState.collectAsState()
@@ -48,7 +49,8 @@ fun SettingsScreen(
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collectLatest { event ->
             when (event) {
-                is UIEvent.ShowSnackbar -> snackbar.showSnackbar(event.message)
+                is SettingsUIEvent.ShowSnackbar -> snackbar.showSnackbar(event.message)
+                is SettingsUIEvent.SignOut -> onSignOut()
             }
         }
     }

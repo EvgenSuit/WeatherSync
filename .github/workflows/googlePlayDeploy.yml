@@ -1,7 +1,7 @@
 name: "Deploy to Google Play"
 on:
   workflow_run:
-    workflows: ["Test workflow"]
+    workflows: [Test workflow]
     types:
       - completed
 jobs:

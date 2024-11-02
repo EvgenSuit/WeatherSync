@@ -1,5 +1,5 @@
 name: "Test workflow"
-on: [pull_request, workflow_dispatch, push]
+on: [pull_request, workflow_dispatch]
 jobs:
   test_job:
     runs-on: ubuntu-latest
@@ -30,8 +30,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Run Gradle Build
-        run: ./gradlew build
+      - name: Run Unit Tests
+        run: ./gradlew test --stacktrace
 
       - name: Cache Gradle
         uses: actions/cache@v3
@@ -40,6 +40,3 @@ jobs:
           key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             gradle-
-
-#      - name: Run Unit Tests
-#        run: ./gradlew test --stacktrace

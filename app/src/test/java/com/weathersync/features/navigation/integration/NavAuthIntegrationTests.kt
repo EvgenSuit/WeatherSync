@@ -8,14 +8,18 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.weathersync.R
+import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.auth.validEmail
 import com.weathersync.common.auth.validPassword
+import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.features.navigation.BaseNavRule
 import com.weathersync.features.navigation.presentation.ui.NavManager
 import com.weathersync.features.navigation.presentation.ui.Route
+import io.mockk.every
+import io.mockk.spyk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -25,6 +29,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -46,30 +51,25 @@ class NavAuthIntegrationTests {
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-                signOut(testScope = this@runTest)
-            }
+            baseNavIntegrationRule.assertRouteEquals(Route.Home)
+            signOut(testScope = this@runTest)
         }
     }
 
     @Test
-    fun signIn_isInHome() = runTest {
+    fun signIn_userIsNull_isInHome() = runTest {
+        baseNavRule.apply {
+            stopKoin()
+            setupKoin(inputAuth = mockAuth(user = null))
+            setupViewModel()
+        }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-                signOut(testScope = this@runTest)
-                signIn(testScope = this@runTest)
-            }
+            baseNavIntegrationRule.assertRouteEquals(Route.Auth)
+            signIn(testScope = this@runTest)
+            assertEquals(2, baseNavIntegrationRule.navController.backStack.size)
         }
     }
 
@@ -79,15 +79,10 @@ class NavAuthIntegrationTests {
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-                signOut(testScope = this@runTest)
-                signIn(testScope = this@runTest)
-                signOut(testScope = this@runTest)
-            }
+            baseNavIntegrationRule.assertRouteEquals(Route.Home)
+            signOut(testScope = this@runTest)
+            signIn(testScope = this@runTest)
+            signOut(testScope = this@runTest)
         }
     }
 
@@ -95,9 +90,9 @@ class NavAuthIntegrationTests {
     private fun ComposeContentTestRule.signOut(testScope: TestScope) {
         baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, Route.Settings)
         onNodeWithText(getString(R.string.sign_out)).performClick()
-        // advance viewModelScope in isUserNullFlow's stateIn method
+        // advance event emission in the signOut method of SettingsViewModel
         testScope.advanceUntilIdle()
-        // wait for UI to receive updates from the isUserNull flow
+        // wait for SignOut event to be emitted in the SettingsScreen LaunchedEffect
         waitForIdle()
         baseNavIntegrationRule.assertRouteEquals(Route.Auth)
 
@@ -111,6 +106,7 @@ class NavAuthIntegrationTests {
         testScope.advanceUntilIdle()
 
         waitForIdle()
+        assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
         baseNavIntegrationRule.assertRouteEquals(Route.Home)
         assertEquals(2, baseNavIntegrationRule.navController.backStack.size)
     }

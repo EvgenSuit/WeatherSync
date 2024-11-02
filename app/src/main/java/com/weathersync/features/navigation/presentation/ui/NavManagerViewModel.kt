@@ -1,15 +1,10 @@
 package com.weathersync.features.navigation.presentation.ui
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.weathersync.features.navigation.AuthListener
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
+import com.google.firebase.auth.FirebaseAuth
 
 class NavManagerViewModel(
-    authListener: AuthListener
+    auth: FirebaseAuth
 ): ViewModel() {
-    val isUserNullInit = authListener.auth.currentUser == null
-    val isUserNullFlow = authListener.isUserNullFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    val isUserNullInit = auth.currentUser == null
 }

@@ -77,7 +77,7 @@ class SettingsWeatherUnitsUITests: WeatherUnitTest {
     private fun fetchUnits(success: Boolean, testScope: TestScope) {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                SettingsScreen(viewModel = settingsBaseRule.viewModel)
+                SettingsScreen(viewModel = settingsBaseRule.viewModel, onSignOut = {})
             }) {
             // MUST call inside of testContent body of setContentWithSnackbar, otherwise the ui event doesn't get emitted during fetch
             testScope.advanceUntilIdle()
@@ -93,7 +93,7 @@ class SettingsWeatherUnitsUITests: WeatherUnitTest {
     private fun setUnit(success: Boolean, testScope: TestScope) {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                SettingsScreen(viewModel = settingsBaseRule.viewModel)
+                SettingsScreen(viewModel = settingsBaseRule.viewModel, onSignOut = {})
             }) {
             testScope.advanceUntilIdle()
             fetchedWeatherUnits.forEach { unit ->

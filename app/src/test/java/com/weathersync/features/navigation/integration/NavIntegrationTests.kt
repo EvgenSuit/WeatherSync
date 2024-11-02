@@ -36,12 +36,7 @@ class NavIntegrationTests {
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-            }
+            baseNavIntegrationRule.assertRouteEquals(Route.Home)
         }
     }
 
@@ -51,15 +46,11 @@ class NavIntegrationTests {
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-                baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, *topLevelRoutes.toTypedArray())
-                baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, *topLevelRoutes.toTypedArray())
-                // back stack must only contain the root graph and the current destination
-                assertEquals(2, baseNavIntegrationRule.navController.backStack.size)
+            baseNavIntegrationRule.apply {
+                assertRouteEquals(Route.Home)
+                navigateToRoute(composeRule = composeRule, *topLevelRoutes.toTypedArray())
+                navigateToRoute(composeRule = composeRule, *topLevelRoutes.toTypedArray())
+                assertEquals(2, navController.backStack.size)
             }
         }
     }
@@ -70,14 +61,11 @@ class NavIntegrationTests {
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-                val sizeBefore = baseNavIntegrationRule.navController.backStack.size
-                baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, Route.Home)
-                val sizeAfter = baseNavIntegrationRule.navController.backStack.size
+            baseNavIntegrationRule.apply {
+                assertRouteEquals(Route.Home)
+                val sizeBefore = navController.backStack.size
+                navigateToRoute(composeRule = composeRule, Route.Home)
+                val sizeAfter = navController.backStack.size
                 assertEquals(sizeAfter, sizeBefore)
             }
         }
@@ -88,30 +76,24 @@ class NavIntegrationTests {
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-                baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, Route.ActivityPlanning)
-                baseNavIntegrationRule.navController.popBackStack()
-                baseNavIntegrationRule.assertRouteEquals(null)
+            baseNavIntegrationRule.apply {
+                assertRouteEquals(Route.Home)
+                navigateToRoute(composeRule = composeRule, Route.ActivityPlanning)
+                navController.popBackStack()
+                assertRouteEquals(null)
             }
         }
     }
     @Test
-    fun pressBackInHome_isRouteNull() = runTest {
+    fun pressBackInHome_isInOutsideOfApp() = runTest {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
-            launch {
-                baseNavIntegrationRule.loadUser(
-                    composeRule = composeRule,
-                    isUserNullFlow = baseNavRule.viewModel.isUserNullFlow
-                )
-                baseNavIntegrationRule.navController.popBackStack()
-                baseNavIntegrationRule.assertRouteEquals(null)
+            baseNavIntegrationRule.apply {
+                assertRouteEquals(Route.Home)
+                navController.popBackStack()
+                assertRouteEquals(null)
             }
         }
     }

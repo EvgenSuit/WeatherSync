@@ -22,7 +22,7 @@ import java.util.Locale
 val homeModule = module {
     factory { HomeViewModel(
         homeRepository = get(),
-        crashlyticsManager = get()
+        analyticsManager = get()
     ) }
     factory { HomeRepository(
         limitManager = get(),

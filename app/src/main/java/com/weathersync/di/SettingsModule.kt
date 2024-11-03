@@ -16,5 +16,5 @@ val settingsModule = module {
         themeManager = get(),
         weatherUnitsManager = get())
     }
-    factory { SettingsViewModel(settingsRepository = get(), crashlyticsManager = get()) }
+    factory { SettingsViewModel(settingsRepository = get(), analyticsManager = get()) }
 }

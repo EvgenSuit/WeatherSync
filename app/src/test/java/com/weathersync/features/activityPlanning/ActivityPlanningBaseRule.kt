@@ -4,12 +4,10 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
-import com.weathersync.common.TestException
 import com.weathersync.common.TestHelper
 import com.weathersync.common.mockGenerativeModel
 import com.weathersync.common.utils.fetchedWeatherUnits
 import com.weathersync.common.utils.locationInfo
-import com.weathersync.common.utils.mockCrashlyticsManager
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
 import com.weathersync.common.utils.mockLocationClient
@@ -32,7 +30,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.spyk
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -53,9 +50,6 @@ class ActivityPlanningBaseRule: TestWatcher() {
     val testHelper = TestHelper()
     val testClock = TestClock()
 
-    val exceptionSlot = slot<Exception>()
-    val exception = TestException("exception")
-
     lateinit var viewModel: ActivityPlanningViewModel
     lateinit var limitManager: LimitManager
     val currentWeatherDAO: CurrentWeatherDAO = mockk()
@@ -72,7 +66,7 @@ class ActivityPlanningBaseRule: TestWatcher() {
     fun setupViewModel() {
         viewModel = ActivityPlanningViewModel(
             activityPlanningRepository = activityPlanningRepository,
-            crashlyticsManager = mockCrashlyticsManager(exceptionSlot = exceptionSlot)
+            analyticsManager = testHelper.analyticsManager
         )
     }
     fun setupActivityPlanningRepository(
@@ -83,11 +77,11 @@ class ActivityPlanningBaseRule: TestWatcher() {
             generatedContent = generatedSuggestions,
             suggestionsGenerationException = suggestionsGenerationException
         ))
-        activityPlanningRepository = ActivityPlanningRepository(
+        activityPlanningRepository = spyk(ActivityPlanningRepository(
             limitManager = limitManager,
             forecastRepository = forecastRepository,
             activityPlanningGeminiRepository = geminiRepository
-        )
+        ))
     }
     fun setupForecastRepository(
         units: List<WeatherUnit> = fetchedWeatherUnits,

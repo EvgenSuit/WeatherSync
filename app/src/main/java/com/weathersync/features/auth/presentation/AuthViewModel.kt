@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.common.api.ApiException
 import com.weathersync.R
-import com.weathersync.ui.UIEvent
 import com.weathersync.common.ui.UIText
 import com.weathersync.features.auth.EmailValidator
 import com.weathersync.features.auth.GoogleAuthRepository
@@ -17,8 +16,9 @@ import com.weathersync.features.auth.presentation.ui.AuthFieldType
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldState
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldsState
 import com.weathersync.ui.AuthUIEvent
-import com.weathersync.utils.CrashlyticsManager
+import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
+import com.weathersync.utils.FirebaseEvent
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 class AuthViewModel(
     private val regularAuthRepository: RegularAuthRepository,
     private val googleAuthRepository: GoogleAuthRepository,
-    private val crashlyticsManager: CrashlyticsManager,
+    private val analyticsManager: AnalyticsManager,
 ): ViewModel() {
     private val emailValidator = EmailValidator()
     private val passwordValidator = PasswordValidator()
@@ -73,7 +73,7 @@ class AuthViewModel(
         } catch (e: Exception) {
             _uiEvent.emit(AuthUIEvent.ShowSnackbar(UIText.StringResource(R.string.google_sign_in_error)))
             updateAuthResult(CustomResult.Error)
-            crashlyticsManager.recordException(e)
+            analyticsManager.recordException(e)
             null
         }
     private fun signInWithGoogle(activityResult: ActivityResult) {
@@ -84,6 +84,7 @@ class AuthViewModel(
                     return@launch
                 }
                 googleAuthRepository.signInWithIntent(activityResult.data!!)
+                analyticsManager.logEvent(FirebaseEvent.SIGN_IN_WITH_GOOGLE)
                 _uiEvent.emit(AuthUIEvent.NavigateToHome)
                 updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {
@@ -100,14 +101,17 @@ class AuthViewModel(
             try {
                 val email = _uiState.value.fieldsState.email.state.value
                 val password = _uiState.value.fieldsState.password.state.value
+                val authType = _uiState.value.authType
                 regularAuthRepository.apply {
-                    if (_uiState.value.authType == AuthType.SignIn) signIn(email, password) else signUp(email, password)
+                    if (authType == AuthType.SignIn) signIn(email, password) else signUp(email, password)
                 }
+                analyticsManager.logEvent(if (authType == AuthType.SignIn) FirebaseEvent.MANUAL_SIGN_IN
+                else FirebaseEvent.MANUAL_SIGN_UP)
                 _uiEvent.emit(AuthUIEvent.NavigateToHome)
                 updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {
                 _uiEvent.emit(AuthUIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
-                crashlyticsManager.recordException(e, "Auth type: ${_uiState.value.authType}")
+                analyticsManager.recordException(e, "Auth type: ${_uiState.value.authType}")
                 updateAuthResult(CustomResult.Error)
             }
         }

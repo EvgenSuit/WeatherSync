@@ -9,17 +9,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
 import com.weathersync.common.TestException
 import com.weathersync.common.TestHelper
-import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.mockEngine
 import com.weathersync.common.mockGenerativeModel
-import com.weathersync.common.utils.fetchedFirestoreWeatherUnits
 import com.weathersync.common.utils.fetchedWeatherUnits
 import com.weathersync.common.utils.locationInfo
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
 import com.weathersync.common.utils.mockLocationClient
 import com.weathersync.common.utils.mockWeatherUnitsManager
-import com.weathersync.common.utils.mockWeatherUnitsManagerFirestore
 import com.weathersync.features.home.data.CurrWeather
 import com.weathersync.features.home.data.CurrentOpenMeteoWeather
 import com.weathersync.features.home.data.CurrentWeather
@@ -28,14 +25,11 @@ import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
 import com.weathersync.features.home.presentation.HomeViewModel
 import com.weathersync.features.settings.data.WeatherUnit
-import com.weathersync.utils.Country
 import com.weathersync.utils.FirestoreWeatherUnit
 import com.weathersync.utils.LimitManager
 import com.weathersync.utils.LimitManagerConfig
-import com.weathersync.utils.WeatherUnitDocName
 import com.weathersync.utils.WeatherUnitsManager
 import io.ktor.http.HttpStatusCode
-import io.mockk.mockk
 import io.mockk.spyk
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -51,9 +45,9 @@ class HomeBaseRule: TestWatcher() {
     val testHelper = TestHelper()
     val testClock = TestClock()
 
-    val crashlyticsExceptionSlot = testHelper.crashlyticsExceptionSlot
+    val crashlyticsExceptionSlot = testHelper.exceptionSlot
     val exception = TestException("exception")
-    val crashlyticsManager = testHelper.crashlyticsManager
+    val crashlyticsManager = testHelper.analyticsManager
     lateinit var viewModel: HomeViewModel
     fun advance(testScope: TestScope) = repeat(99999999) { testScope.advanceUntilIdle() }
 
@@ -76,7 +70,7 @@ class HomeBaseRule: TestWatcher() {
     fun setupViewModel() {
         viewModel = HomeViewModel(
             homeRepository = homeRepository,
-            crashlyticsManager = crashlyticsManager
+            analyticsManager = crashlyticsManager
         )
     }
 

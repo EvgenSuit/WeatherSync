@@ -29,7 +29,7 @@ class ActivityPlanningLimitTests: BaseLimitTest {
         activityPlanningBaseRule.setupLimitManager(
             locale = Locale.US,
             limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
-            serverTimestampGetException = activityPlanningBaseRule.exception)
+            serverTimestampGetException = activityPlanningBaseRule.testHelper.testException)
         calculateLimit()
     }
 
@@ -38,7 +38,7 @@ class ActivityPlanningLimitTests: BaseLimitTest {
         activityPlanningBaseRule.setupLimitManager(
             locale = Locale.US,
             limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
-            serverTimestampDeleteException = activityPlanningBaseRule.exception)
+            serverTimestampDeleteException = activityPlanningBaseRule.testHelper.testException)
         calculateLimit()
     }
 

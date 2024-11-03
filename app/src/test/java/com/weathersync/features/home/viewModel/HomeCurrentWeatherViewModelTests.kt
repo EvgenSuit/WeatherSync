@@ -9,6 +9,7 @@ import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.HomeIntent
 import com.weathersync.features.home.toCurrentWeather
+import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.LimitManagerConfig
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
@@ -57,6 +58,8 @@ class HomeCurrentWeatherViewModelTests {
                 recordTimestamp()
             }
         }
+        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT, true)
+        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.FETCH_CURRENT_WEATHER, false)
     }
     @Test
     fun getCurrentWeather_limitReached_localWeatherIsNull() = runTest {
@@ -87,16 +90,22 @@ class HomeCurrentWeatherViewModelTests {
                 generateSuggestions(isLimitReached = true, currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
             }
         }
+        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT, false,
+            "next_update_time" to homeBaseRule.viewModel.uiState.value.limit.formattedNextUpdateTime!!)
+        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.FETCH_CURRENT_WEATHER, false)
     }
 
     @Test
-    fun getCurrentWeather_limitReached_localWeatherIsNotNull() = runTest {
+    fun getCurrentWeather_localLimitReached_localWeatherIsNotNull() = runTest {
         homeBaseRule.currentWeatherLocalDB.currentWeatherDao().insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
 
         homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
         homeBaseRule.advance(this)
         val localWeather = homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getWeather()
         assertTrue(listOf(homeBaseRule.viewModel.uiState.value.currentWeather, localWeather).all { it != null })
+        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT, false,
+            "next_update_time" to "")
+        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.FETCH_CURRENT_WEATHER, false)
     }
     @Test
     fun fetchCurrentWeather_geocoderError_error() = runTest {
@@ -104,7 +113,6 @@ class HomeCurrentWeatherViewModelTests {
         homeBaseRule.setupHomeRepository()
         homeBaseRule.setupViewModel()
         performErrorWeatherFetch(homeBaseRule.exception.message)
-
     }
     @Test
     fun fetchCurrentWeather_errorResponseStatus_error() = runTest {

@@ -36,13 +36,13 @@ class BaseNavRule: TestWatcher() {
             factory { AuthViewModel(
                 regularAuthRepository = RegularAuthRepository(inputAuth),
                 googleAuthRepository = mockk(relaxed = true),
-                crashlyticsManager = mockk(relaxed = true)
+                analyticsManager = mockk(relaxed = true)
             ) }
         }
         val homeModule = module {
             factory { HomeViewModel(
                 homeRepository = mockk(relaxed = true),
-                crashlyticsManager = mockk(relaxed = true)
+                analyticsManager = mockk(relaxed = true)
             ) }
         }
         val utilsModule = module {
@@ -52,13 +52,13 @@ class BaseNavRule: TestWatcher() {
         val activityPlanningModule = module {
             factory { ActivityPlanningViewModel(
                 activityPlanningRepository = mockk(relaxed = true),
-                crashlyticsManager = mockk(relaxed = true)
+                analyticsManager = mockk(relaxed = true)
             ) }
         }
         val settingsModule = module {
             factory { SettingsViewModel(
                 settingsRepository = SettingsRepository(auth = auth, themeManager = get(), weatherUnitsManager = mockk(relaxed = true)),
-                crashlyticsManager = mockk(relaxed = true)
+                analyticsManager = mockk(relaxed = true)
             ) }
             single { ThemeManager(dataStore = ApplicationProvider.getApplicationContext<Context>().themeDatastore) }
         }

@@ -12,13 +12,12 @@ import com.weathersync.features.activityPlanning.presentation.ActivityPlanningVi
 import io.ktor.client.engine.cio.CIO
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
-import java.util.Locale
 
 val activityPlanningModule = module {
     factory {
         ActivityPlanningViewModel(
             activityPlanningRepository = get(),
-            crashlyticsManager = get()
+            analyticsManager = get()
         )
     }
     factory { ActivityPlanningRepository(
@@ -72,7 +71,7 @@ private fun getGenerativeModel(): GenerativeModel =
 Keep the response very short, concise, and more human-friendly no matter what.
 **You are allowed to list and describe NO MORE THAN a couple of dates (2 to 3).**
 Use the same language as Activity does. 
-Pay attention to the the number of days of the current month.
+Pay attention to the the number of days in the current month.
                """.trimMargin()
         ) }
     )

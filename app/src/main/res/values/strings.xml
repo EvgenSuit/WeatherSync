@@ -46,7 +46,7 @@
     <string name="input_cannot_be_empty">Input cannot be empty</string>
     <string name="find_optimal_times">Find optimal times</string>
     <string name="planning_activities">Planning your activities…</string>
-    <string name="based_on_forecast">Recommendations are based on a %1$s-day hourly forecast for your locality only</string>
+    <string name="based_on_forecast">Recommendations are based on a %1$s-day hourly forecast for your location</string>
     <string name="could_not_plan_activities">Could not plan provided activities</string>
 
     <string name="theme">Theme</string>

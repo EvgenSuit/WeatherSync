@@ -98,7 +98,7 @@ class AuthUITests {
             uiContent = { AuthScreen(viewModel = baseAuthRule.viewModel, onNavigateToHome = {}) }) {
             performAuth(true, this@runTest)
             assertSnackbarTextEquals(R.string.auth_error, snackbarScope)
-            assertEquals(baseAuthRule.testHelper.testException, baseAuthRule.testHelper.crashlyticsExceptionSlot.captured)
+            assertEquals(baseAuthRule.testHelper.testException, baseAuthRule.testHelper.exceptionSlot.captured)
         }
     }
     @Test
@@ -108,7 +108,7 @@ class AuthUITests {
             uiContent = { AuthScreen(viewModel = baseAuthRule.viewModel, onNavigateToHome = {}) }) {
             performAuth(false, this@runTest)
             assertSnackbarTextEquals(R.string.auth_error, snackbarScope)
-            assertEquals(baseAuthRule.testHelper.testException, baseAuthRule.testHelper.crashlyticsExceptionSlot.captured)
+            assertEquals(baseAuthRule.testHelper.testException, baseAuthRule.testHelper.exceptionSlot.captured)
         }
     }
     @Test

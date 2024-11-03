@@ -7,8 +7,9 @@ import com.weathersync.common.ui.TextFieldState
 import com.weathersync.ui.UIEvent
 import com.weathersync.common.ui.UIText
 import com.weathersync.features.activityPlanning.ActivityPlanningRepository
-import com.weathersync.utils.CrashlyticsManager
+import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
+import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.Limit
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +21,7 @@ import kotlinx.coroutines.launch
 const val maxActivityInputLength = 200
 class ActivityPlanningViewModel(
     private val activityPlanningRepository: ActivityPlanningRepository,
-    private val crashlyticsManager: CrashlyticsManager
+    private val analyticsManager: AnalyticsManager
 ): ViewModel() {
     private val _uiState = MutableStateFlow(ActivityPlanningUIState())
     val uiState = _uiState.asStateFlow()
@@ -40,18 +41,21 @@ class ActivityPlanningViewModel(
             val input = _uiState.value.activityTextFieldState.value
             try {
                 val limit = activityPlanningRepository.calculateLimit()
+                if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.ACTIVITY_PLANNING_LIMIT,
+                    "next_generation_time" to (limit.formattedNextUpdateTime ?: ""))
                 _uiState.update { it.copy(limit = limit) }
 
                 if (!limit.isReached) {
                     val forecast = activityPlanningRepository.getForecast()
                     val suggestions = activityPlanningRepository.generateRecommendations(activity = input, forecast = forecast)
                     activityPlanningRepository.recordTimestamp()
+                    analyticsManager.logEvent(FirebaseEvent.PLAN_ACTIVITIES)
                     _uiState.update { it.copy(generatedText = suggestions) }
                 }
                 updateGenerationResult(CustomResult.Success)
             } catch (e: Exception) {
                 _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_plan_activities)))
-                crashlyticsManager.recordException(e, "Input: $input")
+                analyticsManager.recordException(e, "Input: $input")
                 updateGenerationResult(CustomResult.Error)
             }
         }

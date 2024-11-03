@@ -26,7 +26,7 @@ class ActivityPlanningSuggestionsUnitTests: BaseGenerationTest {
 
     @Test(expected = TestException::class)
     override fun generateSuggestions_generationException() = runTest {
-        activityPlanningBaseRule.setupActivityPlanningRepository(suggestionsGenerationException = activityPlanningBaseRule.exception)
+        activityPlanningBaseRule.setupActivityPlanningRepository(suggestionsGenerationException = activityPlanningBaseRule.testHelper.testException)
         val forecast = activityPlanningBaseRule.activityPlanningRepository.getForecast()
         activityPlanningBaseRule.activityPlanningRepository.generateRecommendations("", forecast)
     }

@@ -8,8 +8,9 @@ import com.weathersync.common.ui.UIText
 import com.weathersync.features.home.HomeRepository
 import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.CurrentWeather
-import com.weathersync.utils.CrashlyticsManager
+import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
+import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.Limit
 import com.weathersync.utils.isInProgress
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,7 +22,7 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val homeRepository: HomeRepository,
-    private val crashlyticsManager: CrashlyticsManager,
+    private val analyticsManager: AnalyticsManager,
 ): ViewModel() {
     private val _uiState = MutableStateFlow(HomeUIState())
     val uiState = _uiState.asStateFlow()
@@ -45,16 +46,19 @@ class HomeViewModel(
         viewModelScope.launch {
             try {
                 val limit = homeRepository.calculateLimit()
+                if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT,
+                    "next_update_time" to (limit.formattedNextUpdateTime ?: ""))
                 _uiState.update { it.copy(limit = limit) }
 
                 val weather = homeRepository.getCurrentWeather(isLimitReached = limit.isReached)
+                analyticsManager.logEvent(FirebaseEvent.FETCH_CURRENT_WEATHER)
                 _uiState.update { it.copy(currentWeather = weather) }
 
                 updateMethod(CustomResult.Success)
                 if (weather != null) generateSuggestions(isLimitReached = limit.isReached, currentWeather = weather)
             } catch (e: Exception) {
                 _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_fetch_current_weather)))
-                crashlyticsManager.recordException(e, "Is refreshing: $refresh")
+                analyticsManager.recordException(e, "Is refreshing: $refresh")
                 updateMethod(CustomResult.Error)
             }
         }
@@ -71,7 +75,7 @@ class HomeViewModel(
             updateSuggestionsGenerationResult(CustomResult.Success)
         } catch (e: Exception) {
             _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_generate_suggestions)))
-            crashlyticsManager.recordException(e)
+            analyticsManager.recordException(e)
             updateSuggestionsGenerationResult(CustomResult.Error)
         }
     }

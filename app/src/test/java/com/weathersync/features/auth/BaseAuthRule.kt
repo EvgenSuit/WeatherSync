@@ -22,7 +22,7 @@ class BaseAuthRule: TestWatcher() {
         viewModel = AuthViewModel(
             regularAuthRepository = regularAuthRepository,
             googleAuthRepository = googleAuthRepository,
-            crashlyticsManager = testHelper.crashlyticsManager
+            analyticsManager = testHelper.analyticsManager
         )
     }
     override fun starting(description: Description?) {

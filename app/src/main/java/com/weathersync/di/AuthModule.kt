@@ -28,7 +28,7 @@ val authModule = module {
     factory { AuthViewModel(
         regularAuthRepository = get(),
         googleAuthRepository = get(),
-        crashlyticsManager = get()) }
+        analyticsManager = get()) }
     factory { RegularAuthRepository(Firebase.auth) }
     factory { GoogleAuthRepository(
         auth = Firebase.auth,

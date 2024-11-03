@@ -25,7 +25,7 @@ class SettingsBaseRule: TestWatcher() {
     fun setupViewModel() {
         viewModel = SettingsViewModel(
             settingsRepository = settingsRepository,
-            crashlyticsManager = testHelper.crashlyticsManager
+            analyticsManager = testHelper.analyticsManager
         )
     }
     fun setupRepository(

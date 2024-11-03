@@ -87,39 +87,39 @@ class ActivityPlanningUITests {
     @Test
     fun generateRecommendations_geocoderException_error() = runTest {
         activityPlanningBaseRule.apply {
-            setupForecastRepository(geocoderException = activityPlanningBaseRule.exception)
+            setupForecastRepository(geocoderException = activityPlanningBaseRule.testHelper.testException)
             setupActivityPlanningRepository()
             setupViewModel()
         }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
-            performActivityPlanning(error = activityPlanningBaseRule.exception.message)
+            performActivityPlanning(error = activityPlanningBaseRule.testHelper.testException.message)
         }
     }
     @Test
     fun generateRecommendations_lastLocationException_error() = runTest {
         activityPlanningBaseRule.apply {
-            setupForecastRepository(lastLocationException = activityPlanningBaseRule.exception)
+            setupForecastRepository(lastLocationException = activityPlanningBaseRule.testHelper.testException)
             setupActivityPlanningRepository()
             setupViewModel()
         }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
-            performActivityPlanning(error = activityPlanningBaseRule.exception.message)
+            performActivityPlanning(error = activityPlanningBaseRule.testHelper.testException.message)
         }
     }
     @Test
     fun generateRecommendations_suggestionsGenerationException() = runTest {
         activityPlanningBaseRule.apply {
-            setupActivityPlanningRepository(suggestionsGenerationException = activityPlanningBaseRule.exception)
+            setupActivityPlanningRepository(suggestionsGenerationException = activityPlanningBaseRule.testHelper.testException)
             setupViewModel()
         }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
-            performActivityPlanning(error = activityPlanningBaseRule.exception.message)
+            performActivityPlanning(error = activityPlanningBaseRule.testHelper.testException.message)
         }
     }
     @Test
@@ -133,7 +133,7 @@ class ActivityPlanningUITests {
                 ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
             performActivityPlanning()
             activityPlanningBaseRule.assertUrlIsCorrect()
-            assertTrue(activityPlanningBaseRule.exceptionSlot.captured is AtLeastOneGenerationTagMissing)
+            assertTrue(activityPlanningBaseRule.testHelper.exceptionSlot.captured is AtLeastOneGenerationTagMissing)
             assertSnackbarTextEquals(R.string.could_not_plan_activities, snackbarScope)
         }
     }
@@ -155,7 +155,7 @@ class ActivityPlanningUITests {
 
             error?.let { e ->
                 onNodeWithText(activityPlanningBaseRule.activityPlanningSuggestions).assertIsNotDisplayed()
-                val exception = activityPlanningBaseRule.exceptionSlot.captured
+                val exception = activityPlanningBaseRule.testHelper.exceptionSlot.captured
                 exception.apply { if (this is ClientRequestException) assertEquals(e, this.response.status.description)
                 else assertEquals(e, this.message)
                 }

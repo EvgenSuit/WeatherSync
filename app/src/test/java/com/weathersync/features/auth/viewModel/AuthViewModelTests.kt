@@ -14,6 +14,7 @@ import com.weathersync.features.auth.presentation.AuthIntent
 import com.weathersync.features.auth.presentation.AuthType
 import com.weathersync.features.auth.presentation.ui.AuthFieldType
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldState
+import com.weathersync.utils.FirebaseEvent
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
@@ -38,24 +39,26 @@ class AuthViewModelTests {
     @Test
     fun performManualSignIn_inputIsValid_success() = runTest {
         performManualAuth(AuthType.SignIn)
-        assertFalse(baseAuthRule.testHelper.crashlyticsExceptionSlot.isCaptured)
+        assertFalse(baseAuthRule.testHelper.exceptionSlot.isCaptured)
+        baseAuthRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.MANUAL_SIGN_IN, false)
     }
     @Test
     fun performManualSignUp_inputIsValid_success() = runTest {
         performManualAuth(AuthType.SignUp)
-        assertFalse(baseAuthRule.testHelper.crashlyticsExceptionSlot.isCaptured)
+        assertFalse(baseAuthRule.testHelper.exceptionSlot.isCaptured)
+        baseAuthRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.MANUAL_SIGN_UP, false)
     }
     @Test
     fun performManualSignIn_inputIsValid_error() = runTest {
         baseAuthRule.setup(exception = baseAuthRule.testHelper.testException)
         performManualAuth(AuthType.SignIn)
-        assertEquals(baseAuthRule.testHelper.testException.message, baseAuthRule.testHelper.crashlyticsExceptionSlot.captured.message)
+        assertEquals(baseAuthRule.testHelper.testException.message, baseAuthRule.testHelper.exceptionSlot.captured.message)
     }
     @Test
     fun performManualSignUp_inputIsValid_error() = runTest {
         baseAuthRule.setup(exception = baseAuthRule.testHelper.testException)
         performManualAuth(AuthType.SignUp)
-        assertEquals(baseAuthRule.testHelper.testException.message, baseAuthRule.testHelper.crashlyticsExceptionSlot.captured.message)
+        assertEquals(baseAuthRule.testHelper.testException.message, baseAuthRule.testHelper.exceptionSlot.captured.message)
     }
     @Test
     fun performInvalidInput_errorsAreNotEmpty() {

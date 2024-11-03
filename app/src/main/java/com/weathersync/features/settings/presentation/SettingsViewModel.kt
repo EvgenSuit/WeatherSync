@@ -9,8 +9,9 @@ import com.weathersync.features.settings.data.SelectedWeatherUnits
 import com.weathersync.features.settings.data.WeatherUnit
 import com.weathersync.features.settings.presentation.ui.SettingsIntent
 import com.weathersync.ui.SettingsUIEvent
-import com.weathersync.utils.CrashlyticsManager
+import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
+import com.weathersync.utils.FirebaseEvent
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,7 +23,7 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
-    private val crashlyticsManager: CrashlyticsManager
+    private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
     private val _uiEvents = MutableSharedFlow<SettingsUIEvent>()
     val uiEvents = _uiEvents.asSharedFlow()
@@ -51,7 +52,7 @@ class SettingsViewModel(
             settingsRepository.setTheme(!themeState.value!!)
         } catch (e: Exception) {
             _uiEvents.emit(SettingsUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_switch_theme)))
-            crashlyticsManager.recordException(e, "Is theme dark: ${themeState.value}")
+            analyticsManager.recordException(e, "Is theme dark: ${themeState.value}")
         }
     }
     private fun fetchWeatherUnits(refresh: Boolean) {
@@ -61,10 +62,11 @@ class SettingsViewModel(
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(weatherUnits = settingsRepository.getUnits()) }
+                analyticsManager.logEvent(FirebaseEvent.FETCH_WEATHER_UNITS)
                 update(CustomResult.Success)
             } catch (e: Exception) {
                 _uiEvents.emit(SettingsUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_load_units)))
-                crashlyticsManager.recordException(e)
+                analyticsManager.recordException(e)
                 update(CustomResult.Error)
             }
         }
@@ -84,11 +86,15 @@ class SettingsViewModel(
                     is WeatherUnit.WindSpeed -> currentUnits.copy(windSpeed = unit)
                     is WeatherUnit.Visibility -> currentUnits.copy(visibility = unit)
                 }
+                analyticsManager.logEvent(FirebaseEvent.CHANGE_WEATHER_UNITS,
+                    "temp" to updatedUnits.temp.unitName,
+                    "windSpeed" to updatedUnits.windSpeed.unitName,
+                    "visibility" to updatedUnits.visibility.unitName)
                 _uiState.update { it.copy(weatherUnits = updatedUnits) }
                 updateUnitSetResult(CustomResult.Success)
             } catch (e: Exception) {
                 _uiEvents.emit(SettingsUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_set_units)))
-                crashlyticsManager.recordException(e)
+                analyticsManager.recordException(e)
                 updateUnitSetResult(CustomResult.Error)
             }
         }
@@ -96,6 +102,7 @@ class SettingsViewModel(
     private fun signOut() {
         viewModelScope.launch {
             settingsRepository.signOut()
+            analyticsManager.logEvent(FirebaseEvent.SIGN_OUT)
             _uiEvents.emit(SettingsUIEvent.SignOut)
         }
     }

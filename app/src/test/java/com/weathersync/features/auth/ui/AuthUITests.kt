@@ -1,5 +1,8 @@
 package com.weathersync.features.auth.ui
 
+import android.content.Intent
+import android.net.Uri
+import androidx.annotation.StringRes
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -30,10 +33,15 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.GraphicsMode
+import androidx.test.espresso.intent.Intents
+import androidx.test.espresso.intent.matcher.IntentMatchers
+import org.hamcrest.core.AllOf.allOf
+import org.junit.After
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -51,6 +59,15 @@ class AuthUITests {
         composeRule = composeRule,
         captureRoot = composeRule.onRoot(),
     )*/
+
+    @Test
+    fun `assert that privacy policy and terms links are working`() = runTest {
+        setContentWithSnackbar(composeRule, snackbarScope,
+            uiContent = { AuthScreen(viewModel = baseAuthRule.viewModel, onNavigateToHome = {}) }) {
+            performLinkCheck(privacyPolicy = true)
+            performLinkCheck(privacyPolicy = false)
+        }
+    }
 
     @Test
     fun `test visibility toggle`() = runTest {
@@ -148,5 +165,16 @@ class AuthUITests {
             if (signIn) signInWithEmailAndPassword(validEmail, validPassword)
             else createUserWithEmailAndPassword(validEmail, validPassword)
         } }
+    }
+    private fun ComposeContentTestRule.performLinkCheck(privacyPolicy: Boolean) {
+        val text = getString(if (privacyPolicy) R.string.privacy_policy else R.string.terms_of_service)
+        val link = getString(if (privacyPolicy) R.string.privacy_policy_link else R.string.terms_of_service_link)
+        Intents.init()
+        onNodeWithText(text, useUnmergedTree = true).performScrollTo().assertIsDisplayed().performClick()
+        Intents.intended(allOf(
+            IntentMatchers.hasAction(Intent.ACTION_VIEW),
+            IntentMatchers.hasData(Uri.parse(link))))
+
+        Intents.release()
     }
 }

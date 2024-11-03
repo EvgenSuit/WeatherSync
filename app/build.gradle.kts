@@ -120,6 +120,7 @@ dependencies {
 
     // room
     implementation(libs.room.runtime)
+    implementation(libs.androidx.espresso.intents)
     annotationProcessor(libs.room.compiler)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)

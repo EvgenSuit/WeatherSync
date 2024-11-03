@@ -59,8 +59,8 @@
     <string name="sign_out">Sign out</string>
 
     <string name="privacy_policy">Privacy Policy</string>
-    <string name="privacy_policy_link">https://github.com/EvgenSuit/PrivacyPolicies/blob/master/WeatherSyncPrivacyPolicy</string>
+    <string name="privacy_policy_link">https://sites.google.com/view/weathersync-privacy-policy/home</string>
     <string name="terms_of_service">Terms of Service</string>
-    <string name="terms_of_service_link">https://github.com/EvgenSuit/PrivacyPolicies/blob/master/WeatherSyncTermsOfService</string>
+    <string name="terms_of_service_link">https://sites.google.com/view/weathersync-terms-of-service/home</string>
     <string name="app_version">App version:</string>
 </resources>

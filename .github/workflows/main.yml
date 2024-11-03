@@ -35,7 +35,7 @@ jobs:
         run: ./gradlew test --stacktrace
 
   deploy:
-    needs: test_job
+    needs: test
     runs-on: ubuntu-latest
 
     steps:

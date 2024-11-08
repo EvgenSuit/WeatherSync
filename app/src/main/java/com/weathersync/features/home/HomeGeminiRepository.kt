@@ -4,7 +4,7 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
-import com.weathersync.utils.GeminiRepository
+import com.weathersync.utils.weather.GeminiRepository
 import com.weathersync.utils.EmptyGeminiResponse
 import java.util.Locale
 

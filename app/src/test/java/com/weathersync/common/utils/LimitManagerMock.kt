@@ -12,9 +12,9 @@ import com.weathersync.common.auth.userId
 import com.weathersync.common.mockTask
 import com.weathersync.features.home.WeatherUpdater
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
-import com.weathersync.utils.FirestoreLimitCollection
-import com.weathersync.utils.LimitManager
-import com.weathersync.utils.LimitManagerConfig
+import com.weathersync.utils.weather.FirestoreLimitCollection
+import com.weathersync.utils.weather.LimitManager
+import com.weathersync.utils.weather.LimitManagerConfig
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -67,7 +67,8 @@ fun mockLimitManagerFirestore(
         every { commit() } returns mockTask()
     }
     every { collection("serverTimestamp").document() } returns serverTimestamp
-    for (coll in listOf(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName,
+    for (coll in listOf(
+        FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName,
         FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName)) {
         every { collection(userId).document("limits").collection(coll).whereLessThan("timestamp", capture(someTimeAgo)).get() } answers {
             mockTask(

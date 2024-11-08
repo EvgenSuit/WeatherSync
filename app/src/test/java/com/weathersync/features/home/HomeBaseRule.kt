@@ -25,10 +25,10 @@ import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
 import com.weathersync.features.home.presentation.HomeViewModel
 import com.weathersync.features.settings.data.WeatherUnit
-import com.weathersync.utils.FirestoreWeatherUnit
-import com.weathersync.utils.LimitManager
-import com.weathersync.utils.LimitManagerConfig
-import com.weathersync.utils.WeatherUnitsManager
+import com.weathersync.utils.weather.FirestoreWeatherUnit
+import com.weathersync.utils.weather.LimitManager
+import com.weathersync.utils.weather.LimitManagerConfig
+import com.weathersync.utils.weather.WeatherUnitsManager
 import io.ktor.http.HttpStatusCode
 import io.mockk.spyk
 import kotlinx.coroutines.test.TestScope

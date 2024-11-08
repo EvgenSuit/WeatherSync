@@ -21,7 +21,7 @@ import com.weathersync.features.activityPlanning.presentation.ActivityPlanningUI
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
 import com.weathersync.features.activityPlanning.presentation.ui.components.PlanYourActivityComposable
 import com.weathersync.ui.theme.WeatherSyncTheme
-import com.weathersync.utils.Limit
+import com.weathersync.utils.weather.Limit
 import com.weathersync.utils.isInProgress
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel

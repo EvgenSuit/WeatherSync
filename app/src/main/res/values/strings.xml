@@ -56,6 +56,8 @@
     <string name="temp_unit">Temperature unit</string>
     <string name="visibility_unit">Visibility unit</string>
     <string name="wind_speed_unit">Wind speed unit</string>
+    <string name="subscriptions_url">https://play.google.com/store/account/subscriptions</string>
+    <string name="manage_subscriptions">Manage subscriptions</string>
     <string name="sign_out">Sign out</string>
 
     <string name="privacy_policy">Privacy Policy</string>
@@ -63,4 +65,30 @@
     <string name="terms_of_service">Terms of Service</string>
     <string name="terms_of_service_link">https://sites.google.com/view/weathersync-terms-of-service/home</string>
     <string name="app_version">App version:</string>
+
+    <string name="go_premium">Go Premium</string>
+    <string name="cancel_anytime">Cancel anytime</string>
+    <string name="improved_recommendations">Improved recommendations and planning</string>
+    <string name="increased_activity_planning_days">15-day based activities planning</string>
+    <string name="available_plans">Available plans</string>
+    <string name="increased_limits">Increased limits</string>
+    <string name="ad_free_experience">Ad-free experience</string>
+    <string name="free_trial">%1$s free trial</string>
+    <string name="after_free_trial">then %1$s</string>
+    <string name="start_plan">Start Plan</string>
+    <plurals name="month">
+        <item quantity="one">%1$s month</item>
+        <item quantity="other">%1$s months</item>
+    </plurals>
+    <plurals name="day">
+        <item quantity="one">%1$s day</item>
+        <item quantity="other">%1$s days</item>
+    </plurals>
+    <string name="day">day</string>
+    <string name="days">days</string>
+    <string name="month">month</string>
+    <string name="months">months</string>
+    <string name="could_not_fetch_subscription_info">Could not fetch subscription info</string>
+    <string name="could_not_update_purchases">Could not update purchases</string>
+    <string name="could_not_complete_purchase">Could not complete purchase</string>
 </resources>

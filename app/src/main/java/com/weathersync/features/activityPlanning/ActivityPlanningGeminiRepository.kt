@@ -3,8 +3,8 @@ package com.weathersync.features.activityPlanning
 import com.google.ai.client.generativeai.GenerativeModel
 import com.weathersync.features.activityPlanning.data.Forecast
 import com.weathersync.utils.EmptyGeminiResponse
-import com.weathersync.utils.GeminiRepository
-import com.weathersync.utils.weatherCodeToDescription
+import com.weathersync.utils.weather.GeminiRepository
+import com.weathersync.utils.weather.weatherCodeToDescription
 import java.time.ZoneId
 
 val activitiesPlanningTag = "[ACTIVITIES_PLANNING]"

@@ -1,4 +1,6 @@
-package com.weathersync.utils
+package com.weathersync.utils.weather
+
+import com.weathersync.utils.AtLeastOneGenerationTagMissing
 
 interface GeminiRepository {
 

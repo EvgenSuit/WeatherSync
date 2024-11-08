@@ -1,7 +1,6 @@
 package com.weathersync.features.home.viewModel
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.firebase.Timestamp
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.common.utils.fetchedWeatherUnits
@@ -10,7 +9,6 @@ import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.HomeIntent
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.utils.FirebaseEvent
-import com.weathersync.utils.LimitManagerConfig
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import io.mockk.coVerify
@@ -24,7 +22,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.Date
 import java.util.Locale
 
 @RunWith(AndroidJUnit4::class)

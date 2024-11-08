@@ -6,5 +6,7 @@ import com.weathersync.features.navigation.presentation.ui.NavManagerViewModel
 import org.koin.dsl.module
 
 val navModule = module {
-    single { NavManagerViewModel(auth = Firebase.auth) }
+    single { NavManagerViewModel(
+        auth = Firebase.auth,
+        subscriptionInfoDatastore = get()) }
 }

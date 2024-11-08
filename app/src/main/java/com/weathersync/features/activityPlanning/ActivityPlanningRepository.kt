@@ -3,10 +3,8 @@ package com.weathersync.features.activityPlanning
 import com.weathersync.features.activityPlanning.data.Forecast
 import com.weathersync.features.activityPlanning.data.ForecastDates
 import com.weathersync.features.activityPlanning.data.toForecast
-import com.weathersync.features.home.CurrentWeatherRepository
-import com.weathersync.utils.GenerationType
-import com.weathersync.utils.Limit
-import com.weathersync.utils.LimitManager
+import com.weathersync.utils.weather.GenerationType
+import com.weathersync.utils.weather.LimitManager
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale

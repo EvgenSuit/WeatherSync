@@ -3,11 +3,10 @@ package com.weathersync.common
 import android.os.Bundle
 import com.google.firebase.Timestamp
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.analytics.logEvent
 import com.weathersync.common.auth.userId
 import com.weathersync.common.utils.mockAnalyticsManager
 import com.weathersync.utils.FirebaseEvent
-import com.weathersync.utils.LimitManagerConfig
+import com.weathersync.utils.weather.LimitManagerConfig
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot

@@ -9,7 +9,7 @@ import com.weathersync.common.utils.mockWeatherUnitsManager
 import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.features.settings.data.themeDatastore
 import com.weathersync.features.settings.presentation.SettingsViewModel
-import com.weathersync.utils.WeatherUnitsManager
+import com.weathersync.utils.weather.WeatherUnitsManager
 import io.mockk.spyk
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description

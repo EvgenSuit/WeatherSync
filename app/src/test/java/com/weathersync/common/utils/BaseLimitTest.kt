@@ -5,9 +5,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
 import com.weathersync.common.TestException
 import com.weathersync.common.auth.userId
-import com.weathersync.utils.FirestoreLimitCollection
-import com.weathersync.utils.Limit
-import com.weathersync.utils.LimitManagerConfig
+import com.weathersync.utils.weather.FirestoreLimitCollection
+import com.weathersync.utils.weather.Limit
+import com.weathersync.utils.weather.LimitManagerConfig
 import io.mockk.verify
 import kotlinx.coroutines.tasks.await
 import org.junit.Assert.assertEquals

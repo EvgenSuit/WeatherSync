@@ -7,12 +7,10 @@ import com.weathersync.common.auth.userId
 import com.weathersync.common.utils.BaseLimitTest
 import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.features.activityPlanning.ActivityPlanningBaseRule
-import com.weathersync.utils.FirestoreLimitCollection
-import com.weathersync.utils.GenerationType
-import com.weathersync.utils.Limit
+import com.weathersync.utils.weather.FirestoreLimitCollection
+import com.weathersync.utils.weather.GenerationType
+import com.weathersync.utils.weather.Limit
 import io.mockk.coVerify
-import io.mockk.coVerifyAll
-import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

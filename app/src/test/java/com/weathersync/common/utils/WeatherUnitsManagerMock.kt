@@ -6,10 +6,10 @@ import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.auth.userId
 import com.weathersync.common.mockTask
 import com.weathersync.features.settings.data.WeatherUnit
-import com.weathersync.utils.Country
-import com.weathersync.utils.FirestoreWeatherUnit
-import com.weathersync.utils.WeatherUnitDocName
-import com.weathersync.utils.WeatherUnitsManager
+import com.weathersync.utils.weather.Country
+import com.weathersync.utils.weather.FirestoreWeatherUnit
+import com.weathersync.utils.weather.WeatherUnitDocName
+import com.weathersync.utils.weather.WeatherUnitsManager
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk

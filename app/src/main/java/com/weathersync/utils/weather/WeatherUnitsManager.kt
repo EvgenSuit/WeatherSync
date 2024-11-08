@@ -1,4 +1,4 @@
-package com.weathersync.utils
+package com.weathersync.utils.weather
 
 import androidx.annotation.Keep
 import com.google.firebase.auth.FirebaseAuth

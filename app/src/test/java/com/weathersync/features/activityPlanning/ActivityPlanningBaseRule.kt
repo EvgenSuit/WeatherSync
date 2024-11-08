@@ -18,10 +18,10 @@ import com.weathersync.features.activityPlanning.data.OpenMeteoForecast
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.features.settings.data.WeatherUnit
-import com.weathersync.utils.FirestoreWeatherUnit
-import com.weathersync.utils.LimitManager
-import com.weathersync.utils.LimitManagerConfig
-import com.weathersync.utils.WeatherUnitsManager
+import com.weathersync.utils.weather.FirestoreWeatherUnit
+import com.weathersync.utils.weather.LimitManager
+import com.weathersync.utils.weather.LimitManagerConfig
+import com.weathersync.utils.weather.WeatherUnitsManager
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond

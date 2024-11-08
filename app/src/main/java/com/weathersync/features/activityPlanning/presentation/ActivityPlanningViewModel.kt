@@ -40,17 +40,18 @@ class ActivityPlanningViewModel(
         viewModelScope.launch {
             val input = _uiState.value.activityTextFieldState.value
             try {
-                val limit = activityPlanningRepository.calculateLimit()
+                val isSubscribed = activityPlanningRepository.isSubscribed()
+                val limit = activityPlanningRepository.calculateLimit(isSubscribed = isSubscribed)
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.ACTIVITY_PLANNING_LIMIT,
                     "next_generation_time" to (limit.formattedNextUpdateTime ?: ""))
                 _uiState.update { it.copy(limit = limit) }
 
                 if (!limit.isReached) {
-                    val forecast = activityPlanningRepository.getForecast()
+                    val forecast = activityPlanningRepository.getForecast(isSubscribed = isSubscribed)
                     val suggestions = activityPlanningRepository.generateRecommendations(activity = input, forecast = forecast)
                     activityPlanningRepository.recordTimestamp()
                     analyticsManager.logEvent(FirebaseEvent.PLAN_ACTIVITIES)
-                    _uiState.update { it.copy(generatedText = suggestions) }
+                    _uiState.update { it.copy(generatedText = suggestions, forecastDays = forecast.forecastDays) }
                 }
                 updateGenerationResult(CustomResult.Success)
             } catch (e: Exception) {
@@ -74,5 +75,6 @@ data class ActivityPlanningUIState(
     val activityTextFieldState: TextFieldState = TextFieldState(),
     val limit: Limit = Limit(isReached = true),
     val generatedText: String? = null,
+    val forecastDays: Int? = null,
     val generationResult: CustomResult = CustomResult.None
 )

@@ -9,6 +9,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.weathersync.features.home.WeatherUpdater
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
+import com.weathersync.utils.subscription.IsSubscribed
 import kotlinx.coroutines.tasks.await
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -17,9 +18,18 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-sealed class GenerationType {
-    data object CurrentWeather: GenerationType()
-    data object ActivityRecommendations: GenerationType()
+sealed class GenerationType(
+    val regularLimitManagerConfig: LimitManagerConfig,
+    val premiumLimitManagerConfig: LimitManagerConfig
+) {
+    data object CurrentWeather: GenerationType(
+        regularLimitManagerConfig = LimitManagerConfig(6, 6),
+        premiumLimitManagerConfig = LimitManagerConfig(6, 4)
+    )
+    data object ActivityRecommendations: GenerationType(
+        regularLimitManagerConfig = LimitManagerConfig(6, 6),
+        premiumLimitManagerConfig = LimitManagerConfig(6, 4)
+    )
 }
 data class Limit(
     val isReached: Boolean,
@@ -41,7 +51,6 @@ enum class FirestoreLimitCollection(val collectionName: String) {
 }
 
 class LimitManager(
-    private val limitManagerConfig: LimitManagerConfig,
     auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val currentWeatherDAO: CurrentWeatherDAO,
@@ -52,19 +61,25 @@ class LimitManager(
     private val currentWeatherLimitsRef = limitsDoc.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
     private val activityRecommendationsLimitsRef = limitsDoc.collection(FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName)
 
-    suspend fun calculateLimit(generationType: GenerationType): Limit {
+    suspend fun calculateLimit(isSubscribed: IsSubscribed,
+                               generationType: GenerationType): Limit {
         val currentTime = getServerTimestamp()
-        return when (generationType) {
-            is GenerationType.CurrentWeather ->
-                currentWeatherLimitsRef.manageLimits(currentTime, generationType)
-            is GenerationType.ActivityRecommendations ->
-                activityRecommendationsLimitsRef.manageLimits(currentTime, generationType)
+        val ref = when (generationType) {
+            is GenerationType.CurrentWeather -> currentWeatherLimitsRef
+            is GenerationType.ActivityRecommendations -> activityRecommendationsLimitsRef
         }
+        return ref.manageLimits(isSubscribed = isSubscribed,
+            currentTime = currentTime,
+            generationType = generationType)
     }
     private suspend fun CollectionReference.manageLimits(
+        isSubscribed: IsSubscribed,
         currentTime: Timestamp,
         generationType: GenerationType
     ): Limit {
+        val limitManagerConfig = if (isSubscribed) generationType.premiumLimitManagerConfig
+        else generationType.regularLimitManagerConfig
+
         val duration = TimeUnit.HOURS.toMillis(limitManagerConfig.durationInHours.toLong())
         val sixHoursBefore = Timestamp(Date(currentTime.toDate().time - duration))
         val docsBefore = this.whereLessThan("timestamp", sixHoursBefore)

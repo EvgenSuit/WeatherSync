@@ -1,5 +1,8 @@
 name: "Main workflow"
-on: [pull_request, workflow_dispatch]
+on:
+  pull_request:
+      branches:
+      - 'alpha'
 jobs:
   test:
     runs-on: ubuntu-latest

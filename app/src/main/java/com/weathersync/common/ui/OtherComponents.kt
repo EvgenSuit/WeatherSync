@@ -73,17 +73,18 @@ fun CustomLinearProgressIndicator(
 }
 
 @Composable
-fun PrivacyTermsLinks() {
+fun PrivacyTermsLinks(
+    modifier: Modifier = Modifier.padding(16.dp)
+        .padding(top = 20.dp)
+) {
     val context = LocalContext.current
     val privacyPolicyLink = stringResource(id = R.string.privacy_policy_link)
     val termsOfServiceLink = stringResource(id = R.string.terms_of_service_link)
     Row(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .padding(top = 20.dp)
     ) {
         Text(text = stringResource(id = R.string.privacy_policy),
             style = MaterialTheme.typography.labelSmall,
@@ -94,7 +95,7 @@ fun PrivacyTermsLinks() {
     }
 }
 
-private fun openLinkInBrowser(context: Context, url: String) {
+fun openLinkInBrowser(context: Context, url: String) {
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
     context.startActivity(intent)
 }

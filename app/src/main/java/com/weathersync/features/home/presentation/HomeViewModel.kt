@@ -11,7 +11,7 @@ import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
-import com.weathersync.utils.Limit
+import com.weathersync.utils.weather.Limit
 import com.weathersync.utils.isInProgress
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

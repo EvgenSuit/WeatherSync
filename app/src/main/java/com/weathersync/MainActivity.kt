@@ -27,17 +27,41 @@ import com.weathersync.common.ui.SnackbarController
 import com.weathersync.features.navigation.presentation.ui.NavManager
 import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.ui.theme.WeatherSyncTheme
+import com.weathersync.utils.AnalyticsManager
+import com.weathersync.utils.subscription.SubscriptionManager
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
     private val themeManager: ThemeManager by inject()
+    private val subscriptionManager: SubscriptionManager by inject()
+    private val analyticsManager: AnalyticsManager by inject()
+    private val didCallBillingInitMethod = mutableStateOf(false)
+
+    private fun initBillingClient() = lifecycleScope.launch {
+        try {
+            subscriptionManager.initBillingClient()
+        } catch (e: Exception) {
+            analyticsManager.recordException(e)
+        }
+        didCallBillingInitMethod.value = true
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // https://developer.android.com/google/play/billing/integrate#fetch
+        initBillingClient()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        installSplashScreen()
+        installSplashScreen().setKeepOnScreenCondition {
+            !didCallBillingInitMethod.value
+        }
         enableEdgeToEdge()
+
         val initTheme = runBlocking { themeManager.themeFlow(true).first() }
         setContent {
             val isThemeDark by themeManager.themeFlow(true).collectAsState(initial = initTheme)

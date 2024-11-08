@@ -14,8 +14,8 @@ import com.weathersync.features.settings.SettingsRepository
 import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.features.settings.data.themeDatastore
 import com.weathersync.features.settings.presentation.SettingsViewModel
-import com.weathersync.utils.LimitManager
-import com.weathersync.utils.WeatherUnitsManager
+import com.weathersync.utils.weather.LimitManager
+import com.weathersync.utils.weather.WeatherUnitsManager
 import io.mockk.mockk
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description

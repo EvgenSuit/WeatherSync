@@ -6,9 +6,9 @@ import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.weathersync.utils.AnalyticsManager
-import com.weathersync.utils.LimitManager
-import com.weathersync.utils.LimitManagerConfig
-import com.weathersync.utils.WeatherUnitsManager
+import com.weathersync.utils.weather.LimitManager
+import com.weathersync.utils.weather.LimitManagerConfig
+import com.weathersync.utils.weather.WeatherUnitsManager
 import org.koin.dsl.module
 import java.util.Locale
 

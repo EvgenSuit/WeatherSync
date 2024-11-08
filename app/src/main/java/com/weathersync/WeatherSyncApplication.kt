@@ -10,6 +10,7 @@ import com.weathersync.di.authModule
 import com.weathersync.di.homeModule
 import com.weathersync.di.navModule
 import com.weathersync.di.settingsModule
+import com.weathersync.di.subscriptionModule
 import com.weathersync.di.utilsModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -27,6 +28,7 @@ class WeatherSyncApplication: Application() {
             androidLogger(Level.DEBUG)
             androidContext(this@WeatherSyncApplication)
             modules(
+                subscriptionModule,
                 navModule,
                 authModule,
                 utilsModule,

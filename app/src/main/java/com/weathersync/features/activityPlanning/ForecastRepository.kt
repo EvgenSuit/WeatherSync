@@ -4,8 +4,8 @@ import com.weathersync.features.activityPlanning.data.ForecastDates
 import com.weathersync.features.activityPlanning.data.OpenMeteoForecast
 import com.weathersync.features.home.LocationClient
 import com.weathersync.features.settings.data.WeatherUnit
-import com.weathersync.utils.WeatherUnitsManager
-import com.weathersync.utils.WeatherRepository
+import com.weathersync.utils.weather.WeatherUnitsManager
+import com.weathersync.utils.weather.WeatherRepository
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.request.get

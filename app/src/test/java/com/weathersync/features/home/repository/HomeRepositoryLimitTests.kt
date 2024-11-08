@@ -11,9 +11,9 @@ import com.weathersync.common.utils.fetchedWeatherUnits
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.toCurrentWeather
-import com.weathersync.utils.FirestoreLimitCollection
-import com.weathersync.utils.GenerationType
-import com.weathersync.utils.Limit
+import com.weathersync.utils.weather.FirestoreLimitCollection
+import com.weathersync.utils.weather.GenerationType
+import com.weathersync.utils.weather.Limit
 import io.mockk.coVerify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals

@@ -7,7 +7,10 @@ import com.weathersync.common.auth.userId
 import com.weathersync.common.utils.mockWeatherUnitsManagerFirestore
 import com.weathersync.features.settings.data.SelectedWeatherUnits
 import com.weathersync.features.settings.data.WeatherUnit
-import io.mockk.coVerify
+import com.weathersync.utils.weather.Country
+import com.weathersync.utils.weather.FirestoreWeatherUnit
+import com.weathersync.utils.weather.WeatherUnitDocName
+import com.weathersync.utils.weather.WeatherUnitsManager
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals

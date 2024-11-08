@@ -1,4 +1,4 @@
-package com.weathersync.utils
+package com.weathersync.utils.weather
 
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth

@@ -13,3 +13,7 @@ sealed class SettingsUIEvent {
     data class ShowSnackbar(val message: UIText): SettingsUIEvent()
     data object SignOut: SettingsUIEvent()
 }
+sealed class SubscriptionUIEvent {
+    data class ShowSnackbar(val message: UIText): SubscriptionUIEvent()
+    data object NavigateUp: SubscriptionUIEvent()
+}

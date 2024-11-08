@@ -1,7 +1,6 @@
 package com.weathersync.features.home.viewModel
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.firebase.Timestamp
 import com.weathersync.common.TestException
 import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.common.utils.createDescendingTimestamps
@@ -13,19 +12,16 @@ import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.features.home.toSuggestions
 import com.weathersync.utils.AtLeastOneGenerationTagMissing
 import com.weathersync.utils.EmptyGeminiResponse
-import com.weathersync.utils.LimitManagerConfig
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)

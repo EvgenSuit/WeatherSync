@@ -10,7 +10,7 @@ import com.weathersync.features.activityPlanning.ActivityPlanningRepository
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
-import com.weathersync.utils.Limit
+import com.weathersync.utils.weather.Limit
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow

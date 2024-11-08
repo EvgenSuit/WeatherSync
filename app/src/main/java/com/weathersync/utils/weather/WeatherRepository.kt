@@ -1,4 +1,4 @@
-package com.weathersync.utils
+package com.weathersync.utils.weather
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine

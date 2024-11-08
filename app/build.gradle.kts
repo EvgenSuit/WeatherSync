@@ -24,7 +24,7 @@ android {
         applicationId = "com.weathersync"
         minSdk = 28
         targetSdk = 34
-        versionCode = 6
+        versionCode = 7
         versionName = "1.0.0-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -139,6 +139,9 @@ dependencies {
     implementation(libs.splashscreen)
     implementation(libs.play.integrity)
     implementation(libs.appcheck.debug)
+
+    // Billing
+    implementation(libs.billing.client)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

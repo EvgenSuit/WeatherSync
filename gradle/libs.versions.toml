@@ -23,6 +23,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 ui-test-junit = { module = "androidx.compose.ui:ui-test-junit4" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-espresso-intents = { group = "androidx.test.espresso", name = "espresso-intents", version.ref = "espressoIntents" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -84,7 +85,9 @@ navigation-testing = { module = "androidx.navigation:navigation-testing", versio
 play-integrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
 splashscreen = { module = "androidx.core:core-splashscreen", version = "1.0.1" }
-androidx-espresso-intents = { group = "androidx.test.espresso", name = "espresso-intents", version.ref = "espressoIntents" }
+
+billing-client = { module = "com.android.billingclient:billing-ktx", version = "7.1.1" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

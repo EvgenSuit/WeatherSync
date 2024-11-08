@@ -2,10 +2,9 @@ package com.weathersync.features.home
 
 import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.CurrentWeather
-import com.weathersync.utils.GenerationType
-import com.weathersync.utils.Limit
-import com.weathersync.utils.LimitManager
-import java.util.Date
+import com.weathersync.utils.weather.GenerationType
+import com.weathersync.utils.weather.Limit
+import com.weathersync.utils.weather.LimitManager
 
 class HomeRepository(
     private val limitManager: LimitManager,

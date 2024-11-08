@@ -27,7 +27,7 @@ import com.weathersync.features.home.presentation.ui.components.CurrentWeatherCo
 import com.weathersync.features.home.presentation.ui.components.RecommendedActivitiesComposable
 import com.weathersync.features.home.presentation.ui.components.WhatToWearComposable
 import com.weathersync.ui.theme.WeatherSyncTheme
-import com.weathersync.utils.Limit
+import com.weathersync.utils.weather.Limit
 import com.weathersync.utils.isInProgress
 import com.weathersync.utils.isNone
 import com.weathersync.utils.isSuccess

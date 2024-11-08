@@ -4,7 +4,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.weathersync.features.settings.data.Dark
 import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.features.settings.data.WeatherUnit
-import com.weathersync.utils.WeatherUnitsManager
+import com.weathersync.utils.weather.WeatherUnitsManager
 
 class SettingsRepository(
     private val auth: FirebaseAuth,

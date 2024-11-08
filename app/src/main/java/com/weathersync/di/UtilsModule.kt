@@ -7,7 +7,6 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.weather.LimitManager
-import com.weathersync.utils.weather.LimitManagerConfig
 import com.weathersync.utils.weather.WeatherUnitsManager
 import org.koin.dsl.module
 import java.util.Locale
@@ -15,7 +14,6 @@ import java.util.Locale
 val utilsModule = module {
     factory { AnalyticsManager(auth = Firebase.auth, crashlytics = Firebase.crashlytics, analytics = Firebase.analytics) }
     factory { LimitManager(
-        limitManagerConfig = LimitManagerConfig(6, 6),
         auth = Firebase.auth,
         firestore = Firebase.firestore,
         currentWeatherDAO = get(),

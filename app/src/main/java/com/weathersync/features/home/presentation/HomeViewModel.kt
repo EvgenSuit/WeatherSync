@@ -44,8 +44,9 @@ class HomeViewModel(
         if (currentResult.isInProgress()) return
         updateMethod(CustomResult.InProgress)
         viewModelScope.launch {
-            try {
-                val limit = homeRepository.calculateLimit()
+            //try {
+                val isSubscribed = homeRepository.isSubscribed()
+                val limit = homeRepository.calculateLimit(isSubscribed = isSubscribed)
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT,
                     "next_update_time" to (limit.formattedNextUpdateTime ?: ""))
                 _uiState.update { it.copy(limit = limit) }
@@ -56,11 +57,11 @@ class HomeViewModel(
 
                 updateMethod(CustomResult.Success)
                 if (weather != null) generateSuggestions(isLimitReached = limit.isReached, currentWeather = weather)
-            } catch (e: Exception) {
+            /*} catch (e: Exception) {
                 _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_fetch_current_weather)))
                 analyticsManager.recordException(e, "Is refreshing: $refresh")
                 updateMethod(CustomResult.Error)
-            }
+            } */
         }
     }
     private suspend fun generateSuggestions(

@@ -11,6 +11,7 @@ import java.util.Locale
 
 data class Forecast(
     val forecast: List<SingleForecast>,
+    val forecastDays: Int,
     val locality: String,
 )
 data class SingleForecast(
@@ -79,7 +80,7 @@ data class Hourly(
     val pressure: List<Double>
 )
 
-fun OpenMeteoForecast.toForecast(): Forecast {
+fun OpenMeteoForecast.toForecast(forecastDays: Int): Forecast {
     return Forecast(
         forecast = this.hourly.time.mapIndexed { index, time ->
             SingleForecast(
@@ -94,6 +95,7 @@ fun OpenMeteoForecast.toForecast(): Forecast {
                 pressure = ForecastValue(this.hourly.pressure[index], this.forecastUnits.pressure)
             )
         },
+        forecastDays = forecastDays,
         locality = this.locality
     )
 }

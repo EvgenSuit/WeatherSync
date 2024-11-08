@@ -62,6 +62,7 @@ fun ActivityPlanningScreenContent(
         PlanYourActivityComposable(
             textFieldState = uiState.activityTextFieldState,
             isInProgress = uiState.generationResult.isInProgress(),
+            forecastDays = uiState.forecastDays,
             output = output,
             onIntent = onIntent
         )

@@ -82,19 +82,22 @@ class SubscriptionManager(
             .setProductType(BillingClient.ProductType.SUBS)
             .build()
     )
-
-    suspend fun initBillingClient(): IsBillingSetupFinished = billingClientInitMutex.withLock {
-        val isBillingSetupFinished = if (!billingClient.isReady) {
+    // call this function before generation and weather fetch
+    suspend fun initBillingClient(): IsSubscribed = billingClientInitMutex.withLock {
+        if (!billingClient.isReady) {
             subscriptionInfoDatastore.setIsSubscribed(false)
             startConnection()
-        } else true
-        setIsSubscribed()
-        return isBillingSetupFinished
+        }
+        return setIsSubscribed()
     }
 
-    // call this function before generation and weather fetch
-    suspend fun setIsSubscribed() = isSubscribedMutex.withLock {
-        subscriptionInfoDatastore.setIsSubscribed(fetchUpToDateSubscriptionState())
+
+    private suspend fun setIsSubscribed(): IsSubscribed {
+        isSubscribedMutex.withLock {
+            val isSubscribed = fetchUpToDateSubscriptionState()
+            subscriptionInfoDatastore.setIsSubscribed(isSubscribed)
+            return isSubscribed
+        }
     }
 
     private suspend fun startConnection(): IsBillingSetupFinished = suspendCancellableCoroutine { continuation ->

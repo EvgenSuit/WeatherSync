@@ -22,6 +22,7 @@ val activityPlanningModule = module {
     }
     factory { ActivityPlanningRepository(
         limitManager = get(),
+        subscriptionManager = get(),
         forecastRepository = get(),
         activityPlanningGeminiRepository = get()
     ) }

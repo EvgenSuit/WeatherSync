@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
@@ -42,6 +43,7 @@ import com.weathersync.ui.theme.WeatherSyncTheme
 fun PlanYourActivityComposable(
     textFieldState: TextFieldState,
     isInProgress: Boolean,
+    forecastDays: Int?,
     output: String?,
     onIntent: (ActivityPlanningIntent) -> Unit
 ) {
@@ -103,28 +105,35 @@ fun PlanYourActivityComposable(
                     style = TextStyle(
                         fontSize = 15.sp
                     ))
+                if (forecastDays != null) RecommendationsWarning(forecastDays = forecastDays)
             }
             Spacer(modifier = Modifier.height(horizontalDividerPadding))
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                val infoIcon = Icons.Filled.Info
-                Icon(imageVector = infoIcon,
-                    tint = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.size(15.dp),
-                    contentDescription = infoIcon.name)
-                Text(text = stringResource(id = R.string.based_on_forecast, 5),
-                    style = TextStyle(
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onBackground.copy(0.5f)
-                    ))
-            }
+
         } else {
             Text(text = stringResource(id = R.string.planning_activities))
             Spacer(modifier = Modifier.height(12.dp))
             CustomCircularProgressIndicator(modifier = Modifier.testTag("ActivityPlannerProgress"))
         }
+    }
+}
+
+@Composable
+fun RecommendationsWarning(forecastDays: Int) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        modifier = Modifier.fillMaxWidth()
+            .padding(top = 10.dp)
+    ) {
+        val infoIcon = Icons.Filled.Info
+        Icon(imageVector = infoIcon,
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(15.dp),
+            contentDescription = infoIcon.name)
+        Text(text = stringResource(id = R.string.based_on_forecast, forecastDays),
+            style = TextStyle(
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(0.5f)
+            ))
     }
 }
 
@@ -139,6 +148,7 @@ fun PlanYourActivityComposablePreview() {
                 ),
                 isInProgress = false,
                 output = "Recommended times".repeat(30),
+                forecastDays = 12,
                 onIntent = {}
             )
         }

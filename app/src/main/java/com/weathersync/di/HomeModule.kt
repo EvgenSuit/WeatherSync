@@ -26,6 +26,7 @@ val homeModule = module {
     ) }
     factory { HomeRepository(
         limitManager = get(),
+        subscriptionManager = get(),
         currentWeatherRepository = get(),
         geminiRepository = get()
     ) }

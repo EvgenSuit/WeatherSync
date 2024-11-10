@@ -6,18 +6,16 @@ import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isNotEnabled
-import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import app.cash.turbine.test
 import com.weathersync.common.ui.assertSnackbarTextEquals
 import com.weathersync.common.ui.setContentWithSnackbar
-import com.weathersync.common.utils.MainDispatcherRule
-import com.weathersync.common.utils.fetchedWeatherUnits
+import com.weathersync.common.MainDispatcherRule
+import com.weathersync.common.weather.fetchedWeatherUnits
 import com.weathersync.features.settings.SettingsBaseRule
 import com.weathersync.features.settings.WeatherUnitTest
 import com.weathersync.features.settings.presentation.ui.SettingsScreen
@@ -30,7 +28,6 @@ import org.junit.runner.RunWith
 import com.weathersync.R
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.features.settings.data.WeatherUnit
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 
 @OptIn(ExperimentalCoroutinesApi::class)

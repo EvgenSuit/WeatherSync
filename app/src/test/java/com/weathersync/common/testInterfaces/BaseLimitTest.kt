@@ -1,10 +1,11 @@
-package com.weathersync.common.utils
+package com.weathersync.common.testInterfaces
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
 import com.weathersync.common.TestException
 import com.weathersync.common.auth.userId
+import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.weather.FirestoreLimitCollection
 import com.weathersync.utils.weather.Limit
 import com.weathersync.utils.weather.LimitManagerConfig
@@ -24,18 +25,22 @@ interface BaseLimitTest {
     fun deleteServerTimestamp_exception()
 
     @Test
-    fun limitReached_UKLocale_isLimitCorrect()
+    fun limitReached_notSubscribed_isLimitCorrect()
     @Test
-    fun limitReached_USLocale_isLimitCorrect()
+    fun limitReached_isSubscribed_isLimitCorrect()
 
     @Test
-    fun deleteOutdatedTimestamps_success()
+    fun deleteOutdatedTimestamps_notSubscribed_success()
+    @Test
+    fun deleteOutdatedTimestamps_isSubscribed_success()
 
     @Test
     fun recordTimestamp_success()
 
-    suspend fun calculateReachedLimit(timestamps: List<Timestamp>, locale: Locale): Limit
-    suspend fun calculateLimit(): Limit
+    suspend fun calculateReachedLimit(
+        isSubscribed: IsSubscribed,
+        timestamps: List<Timestamp>): Limit
+    suspend fun calculateLimit(isSubscribed: IsSubscribed): Limit
 
     /**
      * verifies that **all** timestamps are outdated and deleted

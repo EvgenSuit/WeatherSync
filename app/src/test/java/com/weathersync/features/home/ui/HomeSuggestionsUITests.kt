@@ -8,15 +8,15 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.firebase.Timestamp
 import com.weathersync.R
+import com.weathersync.common.MainDispatcherRule
 import com.weathersync.common.TestException
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.assertSnackbarTextEquals
 import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.setContentWithSnackbar
-import com.weathersync.common.utils.MainDispatcherRule
-import com.weathersync.common.utils.fetchedWeatherUnits
+import com.weathersync.common.utils.createDescendingTimestamps
+import com.weathersync.common.weather.fetchedWeatherUnits
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.getMockedWeather
@@ -24,8 +24,6 @@ import com.weathersync.features.home.presentation.ui.HomeScreen
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.features.home.toSuggestions
 import com.weathersync.utils.AtLeastOneGenerationTagMissing
-import com.weathersync.utils.weather.LimitManagerConfig
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -33,17 +31,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.Date
-import java.util.Locale
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class HomeSuggestionsUITests {
-    private val limitManagerConfig = LimitManagerConfig(2, 24)
-    @get: Rule(order = 0)
-    val dispatcherRule = MainDispatcherRule()
     @get: Rule(order = 1)
     val homeBaseRule = HomeBaseRule()
+    @get: Rule(order = 0)
+    val dispatcherRule = MainDispatcherRule(homeBaseRule.testDispatcher)
     @get: Rule
     val composeRule = createComposeRule()
     private val snackbarScope = TestScope()
@@ -52,7 +46,9 @@ class HomeSuggestionsUITests {
     @Test
     fun generateSuggestions_generationException_error() = runTest {
         homeBaseRule.manageLocationPermission(true)
-        homeBaseRule.setupHomeRepository(suggestionsGenerationException = homeBaseRule.exception)
+        homeBaseRule.setupHomeRepository(
+            isSubscribed = false,
+            suggestionsGenerationException = homeBaseRule.exception)
         homeBaseRule.setupViewModel()
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = { HomeScreen(viewModel = homeBaseRule.viewModel)} ) {
@@ -70,7 +66,9 @@ class HomeSuggestionsUITests {
     @Test
     fun generateSuggestions_atLeastOneTagMissing_error() = runTest {
         homeBaseRule.manageLocationPermission(true)
-        homeBaseRule.setupHomeRepository(generatedSuggestions = "Content with no tags")
+        homeBaseRule.setupHomeRepository(
+            isSubscribed = false,
+            generatedSuggestions = "Content with no tags")
         homeBaseRule.setupViewModel()
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = { HomeScreen(viewModel = homeBaseRule.viewModel)} ) {
@@ -133,16 +131,12 @@ class HomeSuggestionsUITests {
     @Test
     fun generateSuggestions_accountLimitReached_localSuggestionsAreNull() = runTest {
         homeBaseRule.manageLocationPermission(true)
-        val timestamps = List(limitManagerConfig.count+1) {
-            Timestamp(Date(homeBaseRule.testClock.millis() + 10L * it))
-        }
-        // use default locale since cases with different locales are tested inside of home current weather ui tests
-        homeBaseRule.setupLimitManager(
-            locale = Locale.US,
-            timestamps = timestamps,
-            limitManagerConfig = limitManagerConfig
+        val timestamps = createDescendingTimestamps(
+            limitManagerConfig = homeBaseRule.regularLimitManagerConfig,
+            currTimeMillis = homeBaseRule.testClock.millis()
         )
-        homeBaseRule.setupHomeRepository()
+        homeBaseRule.setupLimitManager(timestamps = timestamps)
+        homeBaseRule.setupHomeRepository(isSubscribed = false)
         homeBaseRule.setupViewModel()
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)
@@ -162,15 +156,12 @@ class HomeSuggestionsUITests {
             insertSuggestions(homeBaseRule.testSuggestions.toSuggestions())
         }
         homeBaseRule.manageLocationPermission(true)
-        val timestamps = List(limitManagerConfig.count+1) {
-            Timestamp(Date(homeBaseRule.testClock.millis() + 10L * it))
-        }
-        homeBaseRule.setupLimitManager(
-            locale = Locale.US,
-            timestamps = timestamps,
-            limitManagerConfig = limitManagerConfig
+        val timestamps = createDescendingTimestamps(
+            limitManagerConfig = homeBaseRule.regularLimitManagerConfig,
+            currTimeMillis = homeBaseRule.testClock.millis()
         )
-        homeBaseRule.setupHomeRepository()
+        homeBaseRule.setupLimitManager(timestamps = timestamps)
+        homeBaseRule.setupHomeRepository(isSubscribed = false)
         homeBaseRule.setupViewModel()
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)

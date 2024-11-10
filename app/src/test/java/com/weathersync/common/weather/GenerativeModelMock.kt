@@ -1,4 +1,4 @@
-package com.weathersync.common
+package com.weathersync.common.weather
 
 import com.google.ai.client.generativeai.GenerativeModel
 import io.mockk.coEvery

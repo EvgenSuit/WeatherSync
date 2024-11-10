@@ -52,11 +52,11 @@ fun ActivityPlanningScreenContent(
     uiState: ActivityPlanningUIState,
     onIntent: (ActivityPlanningIntent) -> Unit
 ) {
-    val nextUpdateTime = uiState.limit.formattedNextUpdateTime
+    val formattedNextGenerationTime = uiState.formattedNextGenerationTime
     val output = uiState.generatedText
     ConstrainedComponent {
         Box(modifier = Modifier.fillMaxWidth()) {
-            nextUpdateTime?.let { Text(text = stringResource(id = R.string.next_generation_available_at, it),
+            formattedNextGenerationTime?.let { Text(text = stringResource(id = R.string.next_generation_available_at, it),
                 modifier = Modifier.testTag("Next generation time")) }
         }
         PlanYourActivityComposable(
@@ -77,7 +77,7 @@ fun ActivityPlanningScreenContentPreview() {
             ActivityPlanningScreenContent(
                 uiState = ActivityPlanningUIState(
                     generatedText = "Generated suggestions".repeat(30),
-                    limit = Limit(isReached = true, formattedNextUpdateTime = Date.from(Instant.now().plusSeconds(24*60*60)).toString())
+                    limit = Limit(isReached = true, nextUpdateDateTime = Date.from(Instant.now().plusSeconds(24*60*60)))
                 ),
                 onIntent = {}
             )

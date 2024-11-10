@@ -14,14 +14,12 @@ import com.weathersync.common.auth.validPassword
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.setContentWithSnackbar
-import com.weathersync.common.utils.MainDispatcherRule
+import com.weathersync.common.MainDispatcherRule
 import com.weathersync.features.navigation.BaseNavRule
 import com.weathersync.features.navigation.presentation.ui.NavManager
 import com.weathersync.features.navigation.presentation.ui.Route
-import io.mockk.every
-import io.mockk.spyk
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -37,10 +35,10 @@ class NavAuthIntegrationTests {
     @get: Rule
     val composeRule = createComposeRule()
 
-    @get: Rule(order = 0)
-    val mainDispatcherRule = MainDispatcherRule()
     @get: Rule(order = 1)
     val baseNavRule = BaseNavRule()
+    @get: Rule(order = 0)
+    val mainDispatcherRule = MainDispatcherRule(baseNavRule.testDispatcher)
     @get: Rule(order = 2)
     val baseNavIntegrationRule = BaseNavIntegrationRule()
     private val snackbarScope = TestScope()
@@ -49,7 +47,8 @@ class NavAuthIntegrationTests {
     fun signOut_isInAuth() = runTest {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
+                NavManager(activity = mockk(),
+                    navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
             baseNavIntegrationRule.assertRouteEquals(Route.Home)
             signOut(testScope = this@runTest)
@@ -65,7 +64,8 @@ class NavAuthIntegrationTests {
         }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
+                NavManager(activity = mockk(),
+                    navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
             baseNavIntegrationRule.assertRouteEquals(Route.Auth)
             signIn(testScope = this@runTest)
@@ -77,7 +77,8 @@ class NavAuthIntegrationTests {
     fun signOutTwice_isInAuth() = runTest {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
+                NavManager(activity = mockk(),
+                    navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
             baseNavIntegrationRule.assertRouteEquals(Route.Home)
             signOut(testScope = this@runTest)

@@ -13,9 +13,11 @@ import com.weathersync.utils.CustomResult
 import com.weathersync.utils.subscription.data.SubscriptionDetails
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -28,10 +30,11 @@ class SubscriptionInfoViewModel(
 
     private val _uiState = MutableStateFlow(SubscriptionInfoUIState())
     val uiState = _uiState.asStateFlow()
+    val isSubscribedFlow = subscriptionInfoRepository.isSubscribedFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
     val purchasesUpdatedEvent = subscriptionInfoRepository.purchasesUpdatedEvent
 
     init {
-        fetchSubscriptionDetails()
         viewModelScope.launch {
             subscriptionInfoRepository.isSubscribedFlow().collectLatest {
                 if (it != null && it) _uiEvents.emit(SubscriptionUIEvent.NavigateUp)

@@ -23,22 +23,17 @@ import java.util.Date
 import java.util.Locale
 
 fun mockLimitManager(
-    limitManagerConfig: LimitManagerConfig,
     currentWeatherDAO: CurrentWeatherDAO,
     limitManagerFirestore: FirebaseFirestore,
-    weatherUpdater: WeatherUpdater,
-    locale: Locale
+    weatherUpdater: WeatherUpdater
 ) = LimitManager(
-    limitManagerConfig = limitManagerConfig,
     auth = mockAuth(),
     firestore = limitManagerFirestore,
     currentWeatherDAO = currentWeatherDAO,
-    weatherUpdater = weatherUpdater,
-    locale = locale
+    weatherUpdater = weatherUpdater
 )
 fun mockLimitManagerFirestore(
     testClock: Clock,
-    limitManagerConfig: LimitManagerConfig,
     timestamps: List<Timestamp>,
     serverTimestampGetException: Exception? = null,
     serverTimestampDeleteException: Exception? = null

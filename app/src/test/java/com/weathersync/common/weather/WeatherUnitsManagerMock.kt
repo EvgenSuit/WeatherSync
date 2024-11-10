@@ -1,4 +1,4 @@
-package com.weathersync.common.utils
+package com.weathersync.common.weather
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObject

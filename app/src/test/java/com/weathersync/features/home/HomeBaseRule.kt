@@ -9,14 +9,15 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
 import com.weathersync.common.TestException
 import com.weathersync.common.TestHelper
-import com.weathersync.common.mockEngine
-import com.weathersync.common.mockGenerativeModel
-import com.weathersync.common.utils.fetchedWeatherUnits
-import com.weathersync.common.utils.locationInfo
+import com.weathersync.common.weather.mockEngine
+import com.weathersync.common.weather.mockGenerativeModel
+import com.weathersync.common.weather.fetchedWeatherUnits
+import com.weathersync.common.weather.locationInfo
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
-import com.weathersync.common.utils.mockLocationClient
-import com.weathersync.common.utils.mockWeatherUnitsManager
+import com.weathersync.common.utils.mockSubscriptionManager
+import com.weathersync.common.weather.mockLocationClient
+import com.weathersync.common.weather.mockWeatherUnitsManager
 import com.weathersync.features.home.data.CurrWeather
 import com.weathersync.features.home.data.CurrentOpenMeteoWeather
 import com.weathersync.features.home.data.CurrentWeather
@@ -25,12 +26,16 @@ import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
 import com.weathersync.features.home.presentation.HomeViewModel
 import com.weathersync.features.settings.data.WeatherUnit
+import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.weather.FirestoreWeatherUnit
+import com.weathersync.utils.weather.GenerationType
 import com.weathersync.utils.weather.LimitManager
 import com.weathersync.utils.weather.LimitManagerConfig
+import com.weathersync.utils.weather.NextUpdateTimeFormatter
 import com.weathersync.utils.weather.WeatherUnitsManager
 import io.ktor.http.HttpStatusCode
 import io.mockk.spyk
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.rules.TestWatcher
@@ -41,9 +46,11 @@ import org.robolectric.Shadows
 import java.util.Locale
 
 class HomeBaseRule: TestWatcher() {
-    val limitManagerConfig = LimitManagerConfig(2, 24)
     val testHelper = TestHelper()
     val testClock = TestClock()
+    val testDispatcher = StandardTestDispatcher()
+    val premiumLimitManagerConfig = GenerationType.CurrentWeather.premiumLimitManagerConfig
+    val regularLimitManagerConfig = GenerationType.CurrentWeather.regularLimitManagerConfig
 
     val crashlyticsExceptionSlot = testHelper.exceptionSlot
     val exception = TestException("exception")
@@ -67,10 +74,14 @@ class HomeBaseRule: TestWatcher() {
         shadowApp.apply { if (grant) grantPermissions(permission) else denyPermissions(permission) }
     }
 
-    fun setupViewModel() {
+    fun setupViewModel(locale: Locale = Locale.US) {
         viewModel = HomeViewModel(
             homeRepository = homeRepository,
-            analyticsManager = crashlyticsManager
+            analyticsManager = crashlyticsManager,
+            nextUpdateTimeFormatter = NextUpdateTimeFormatter(
+                clock = testClock,
+                locale = locale
+            )
         )
     }
 
@@ -91,6 +102,7 @@ class HomeBaseRule: TestWatcher() {
         )
     }
     fun setupHomeRepository(
+        isSubscribed: IsSubscribed,
         generatedSuggestions: String? = null,
         suggestionsGenerationException: Exception? = null
     ) {
@@ -100,8 +112,10 @@ class HomeBaseRule: TestWatcher() {
         )
         homeRepository = spyk(HomeRepository(
             limitManager = limitManager,
+            subscriptionManager = mockSubscriptionManager(isSubscribed = isSubscribed),
             currentWeatherRepository = currentWeatherRepository,
-            geminiRepository = geminiRepository
+            geminiRepository = geminiRepository,
+            dispatcher = testDispatcher
         ))
     }
     fun setupWeatherUnitsManager(
@@ -116,25 +130,20 @@ class HomeBaseRule: TestWatcher() {
         )
     }
     fun setupLimitManager(
-        locale: Locale,
         timestamps: List<Timestamp> = listOf(),
-        limitManagerConfig: LimitManagerConfig,
         serverTimestampGetException: Exception? = null,
         serverTimestampDeleteException: Exception? = null) {
         limitManagerFirestore = mockLimitManagerFirestore(
             testClock = testClock,
-            limitManagerConfig = limitManagerConfig,
             timestamps = timestamps,
             serverTimestampGetException = serverTimestampGetException,
             serverTimestampDeleteException = serverTimestampDeleteException
         )
         weatherUpdater = spyk(WeatherUpdater(testClock, minutes = 60))
         limitManager = spyk(mockLimitManager(
-            limitManagerConfig = limitManagerConfig,
             limitManagerFirestore = limitManagerFirestore,
             currentWeatherDAO = currentWeatherLocalDB.currentWeatherDao(),
-            weatherUpdater = weatherUpdater,
-            locale = locale
+            weatherUpdater = weatherUpdater
         ))
     }
 
@@ -158,14 +167,13 @@ class HomeBaseRule: TestWatcher() {
         currentWeatherLocalDB = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(), CurrentWeatherLocalDB::class.java
         ).build()
-        setupLimitManager(
-            locale = Locale.US,
-            limitManagerConfig = LimitManagerConfig(6, 6)
-        )
+        setupLimitManager()
         setupWeatherUnitsManager()
         setupWeatherRepository()
-        setupHomeRepository(generatedSuggestions = generatedSuggestions)
-        setupViewModel()
+        setupHomeRepository(
+            isSubscribed = false,
+            generatedSuggestions = generatedSuggestions)
+        setupViewModel(locale = Locale.US)
     }
 
     override fun finished(description: Description?) {

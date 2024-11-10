@@ -2,8 +2,8 @@ package com.weathersync.features.settings.viewModel
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.weathersync.common.TestException
-import com.weathersync.common.utils.MainDispatcherRule
-import com.weathersync.common.utils.fetchedWeatherUnits
+import com.weathersync.common.MainDispatcherRule
+import com.weathersync.common.weather.fetchedWeatherUnits
 import com.weathersync.features.settings.SettingsBaseRule
 import com.weathersync.features.settings.WeatherUnitTest
 import com.weathersync.features.settings.data.SelectedWeatherUnits

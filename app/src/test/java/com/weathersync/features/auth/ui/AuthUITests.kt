@@ -2,7 +2,6 @@ package com.weathersync.features.auth.ui
 
 import android.content.Intent
 import android.net.Uri
-import androidx.annotation.StringRes
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -24,7 +23,7 @@ import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.assertSnackbarTextEquals
 import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.setContentWithSnackbar
-import com.weathersync.common.utils.MainDispatcherRule
+import com.weathersync.common.MainDispatcherRule
 import com.weathersync.features.auth.BaseAuthRule
 import com.weathersync.features.auth.presentation.ui.AuthScreen
 import io.mockk.verify
@@ -33,7 +32,6 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,7 +39,6 @@ import org.robolectric.annotation.GraphicsMode
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers
 import org.hamcrest.core.AllOf.allOf
-import org.junit.After
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)

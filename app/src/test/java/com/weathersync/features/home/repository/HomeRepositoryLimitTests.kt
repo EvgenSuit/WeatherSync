@@ -3,20 +3,21 @@ package com.weathersync.features.home.repository
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
+import com.weathersync.common.MainDispatcherRule
 import com.weathersync.common.TestException
 import com.weathersync.common.auth.userId
-import com.weathersync.common.utils.BaseLimitTest
+import com.weathersync.common.testInterfaces.BaseLimitTest
 import com.weathersync.common.utils.createDescendingTimestamps
-import com.weathersync.common.utils.fetchedWeatherUnits
+import com.weathersync.common.weather.fetchedWeatherUnits
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.toCurrentWeather
+import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.weather.FirestoreLimitCollection
 import com.weathersync.utils.weather.GenerationType
 import com.weathersync.utils.weather.Limit
 import io.mockk.coVerify
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -25,105 +26,73 @@ import org.junit.runner.RunWith
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 
 @RunWith(AndroidJUnit4::class)
 class HomeRepositoryLimitTests: BaseLimitTest {
-    @get: Rule
+    @get: Rule(order = 1)
     val homeBaseRule = HomeBaseRule()
+    @get: Rule(order = 0)
+    val dispatcherRule = MainDispatcherRule(homeBaseRule.testDispatcher)
 
     @Test(expected = TestException::class)
     override fun getServerTimestamp_exception() = runTest {
-        homeBaseRule.setupLimitManager(
-            locale = Locale.US,
-            limitManagerConfig = homeBaseRule.limitManagerConfig,
-            serverTimestampGetException = homeBaseRule.exception)
-        calculateLimit()
+        homeBaseRule.setupLimitManager(serverTimestampGetException = homeBaseRule.exception)
+        calculateLimit(isSubscribed = true)
     }
     @Test(expected = TestException::class)
     override fun deleteServerTimestamp_exception() = runTest {
-        homeBaseRule.setupLimitManager(
-            locale = Locale.US,
-            limitManagerConfig = homeBaseRule.limitManagerConfig,
-            serverTimestampDeleteException = homeBaseRule.exception)
-        calculateLimit()
+        homeBaseRule.setupLimitManager(serverTimestampDeleteException = homeBaseRule.exception)
+        calculateLimit(isSubscribed = true)
     }
 
     @Test
-    override fun limitReached_UKLocale_isLimitCorrect() = runTest {
+    override fun limitReached_notSubscribed_isLimitCorrect() = runTest {
         calculateReachedLimit(
+            isSubscribed = false,
             timestamps = createDescendingTimestamps(
-            limitManagerConfig = homeBaseRule.limitManagerConfig,
-            currTimeMillis = homeBaseRule.testClock.millis()),
-            locale = Locale.UK)
+                limitManagerConfig = homeBaseRule.regularLimitManagerConfig,
+                currTimeMillis = homeBaseRule.testClock.millis()))
     }
     @Test
-    override fun limitReached_USLocale_isLimitCorrect() = runTest {
+    override fun limitReached_isSubscribed_isLimitCorrect() = runTest {
         calculateReachedLimit(
+            isSubscribed = true,
             timestamps = createDescendingTimestamps(
-                limitManagerConfig = homeBaseRule.limitManagerConfig,
-                currTimeMillis = homeBaseRule.testClock.millis()),
-            locale = Locale.US)
+                limitManagerConfig = homeBaseRule.premiumLimitManagerConfig,
+                currTimeMillis = homeBaseRule.testClock.millis())
+        )
+    }
+    @Test
+    override fun deleteOutdatedTimestamps_isSubscribed_success() = runTest {
+        deleteOutdatedTimestampsUtil(isSubscribed = true)
     }
 
     @Test
-    override fun deleteOutdatedTimestamps_success() = runTest {
-        val locale = Locale.US
-        val timestamps = createDescendingTimestamps(
-            limitManagerConfig = homeBaseRule.limitManagerConfig,
-            currTimeMillis = homeBaseRule.testClock.millis())
-        homeBaseRule.setupLimitManager(
-            locale = locale,
-            timestamps = timestamps,
-            limitManagerConfig = homeBaseRule.limitManagerConfig
-        )
-        calculateLimit()
-
-        homeBaseRule.testClock.advanceLimitBy(limitManagerConfig = homeBaseRule.limitManagerConfig)
-        homeBaseRule.setupLimitManager(
-            locale = locale,
-            timestamps = timestamps,
-            limitManagerConfig = homeBaseRule.limitManagerConfig
-        )
-        calculateLimit()
-
-        verifyOutdatedTimestampsDeletion(
-            collection = FirestoreLimitCollection.CURRENT_WEATHER_LIMITS,
-            testClock = homeBaseRule.testClock,
-            timestamps = timestamps,
-            limitManagerFirestore = homeBaseRule.limitManagerFirestore,
-            limitManagerConfig = homeBaseRule.limitManagerConfig
-        )
+    override fun deleteOutdatedTimestamps_notSubscribed_success() = runTest {
+        deleteOutdatedTimestampsUtil(isSubscribed = false)
     }
     @Test
     fun localWeatherRecentlyInserted_localWeatherLimitReached() = runTest {
         val dao = homeBaseRule.currentWeatherLocalDB.currentWeatherDao()
-        val firstLimit = calculateLimit()
+        val firstLimit = calculateLimit(isSubscribed = true)
         // since weather is null, weather updater will not be called during limit calculations
         coVerify(inverse = true) { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
         assertFalse(firstLimit.isReached)
 
         dao.insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
-        val secondLimit = calculateLimit()
+        val secondLimit = calculateLimit(isSubscribed = true)
         coVerify { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
         assertTrue(secondLimit.isReached)
     }
 
     @Test
     fun localWeatherNotRecentlyInserted_localWeatherLimitNotReached() = runTest {
-        val dao = homeBaseRule.currentWeatherLocalDB.currentWeatherDao()
-        val firstLimit = calculateLimit()
-        // since weather is null, weather updater will not be called during limit calculations
-        coVerify(inverse = true) { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
-        assertFalse(firstLimit.isReached)
-
-        val currTime = LocalDateTime.ofInstant(homeBaseRule.testClock.instant(), ZoneId.systemDefault())
-        dao.insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather().copy(time = currTime.format(DateTimeFormatter.ISO_DATE_TIME)))
-        homeBaseRule.testClock.advanceBy((homeBaseRule.weatherUpdater.minutes*60*1000).toLong())
-        val secondLimit = calculateLimit()
-        coVerify { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
-        assertFalse(secondLimit.isReached)
+        localWeatherNotRecentlyInsertedUtility(isSubscribed = false)
+    }
+    @Test
+    fun localWeatherNotRecentlyInserted_isSubscribed_localWeatherLimitNotReached() = runTest {
+        localWeatherNotRecentlyInsertedUtility(isSubscribed = true)
     }
 
     @Test
@@ -136,30 +105,65 @@ class HomeRepositoryLimitTests: BaseLimitTest {
         }
     }
 
-    override suspend fun calculateReachedLimit(
-        timestamps: List<Timestamp>,
-        locale: Locale
-    ): Limit {
-        homeBaseRule.setupLimitManager(
-            locale = locale,
+    private suspend fun deleteOutdatedTimestampsUtil(isSubscribed: IsSubscribed) {
+        val limitManagerConfig = homeBaseRule.let {
+            if (isSubscribed) it.premiumLimitManagerConfig else it.regularLimitManagerConfig
+        }
+        val timestamps = createDescendingTimestamps(
+            limitManagerConfig = limitManagerConfig,
+            currTimeMillis = homeBaseRule.testClock.millis())
+        homeBaseRule.setupLimitManager(timestamps = timestamps)
+        calculateLimit(isSubscribed = isSubscribed)
+
+        homeBaseRule.testClock.advanceLimitBy(limitManagerConfig = limitManagerConfig)
+        // delete outdated timestamps after advancing current clock (which is used to get server timestamp in tests)
+        homeBaseRule.setupLimitManager(timestamps = timestamps)
+        calculateLimit(isSubscribed = isSubscribed)
+
+        verifyOutdatedTimestampsDeletion(
+            collection = FirestoreLimitCollection.CURRENT_WEATHER_LIMITS,
+            testClock = homeBaseRule.testClock,
             timestamps = timestamps,
-            limitManagerConfig = homeBaseRule.limitManagerConfig
+            limitManagerFirestore = homeBaseRule.limitManagerFirestore,
+            limitManagerConfig = limitManagerConfig
         )
-        val limit = calculateLimit()
-        val nextUpdateDate = homeBaseRule.testHelper.calculateNextUpdateDate(
-            receivedNextUpdateDateTime = limit.formattedNextUpdateTime,
-            limitManagerConfig = homeBaseRule.limitManagerConfig,
-            timestamps = timestamps,
-            locale = locale)
-        assertEquals(nextUpdateDate.expectedNextUpdateDate.time, nextUpdateDate.receivedNextUpdateDate.time)
+    }
+
+    private suspend fun localWeatherNotRecentlyInsertedUtility(isSubscribed: IsSubscribed) {
+        val dao = homeBaseRule.currentWeatherLocalDB.currentWeatherDao()
+        val firstLimit = calculateLimit(isSubscribed)
+        // since weather is null, weather updater will not be called during limit calculations
+        coVerify(inverse = true) { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
+        assertFalse(firstLimit.isReached)
+
+        val currTime = LocalDateTime.ofInstant(homeBaseRule.testClock.instant(), ZoneId.systemDefault())
+        dao.insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather().copy(time = currTime.format(DateTimeFormatter.ISO_DATE_TIME)))
+        homeBaseRule.testClock.advanceBy((homeBaseRule.weatherUpdater.minutes*60*1000).toLong())
+        val secondLimit = calculateLimit(isSubscribed)
+        coVerify { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
+        assertFalse(secondLimit.isReached)
+    }
+
+    override suspend fun calculateReachedLimit(
+        isSubscribed: IsSubscribed,
+        timestamps: List<Timestamp>
+    ): Limit {
+        homeBaseRule.setupLimitManager(timestamps = timestamps)
+        val limit = calculateLimit(isSubscribed = isSubscribed)
+        homeBaseRule.testHelper.assertNextUpdateTimeIsCorrect(
+            receivedNextUpdateDateTime = limit.nextUpdateDateTime,
+            limitManagerConfig = homeBaseRule.let { if (isSubscribed) it.premiumLimitManagerConfig else it.regularLimitManagerConfig },
+            timestamps = timestamps)
         assertTrue(limit.isReached)
         return limit
     }
 
-    override suspend fun calculateLimit(): Limit {
-        homeBaseRule.setupHomeRepository()
-        val limit = homeBaseRule.homeRepository.calculateLimit()
-        coVerify { homeBaseRule.limitManager.calculateLimit(GenerationType.CurrentWeather) }
+    override suspend fun calculateLimit(isSubscribed: IsSubscribed): Limit {
+        homeBaseRule.setupHomeRepository(isSubscribed = isSubscribed)
+        val limit = homeBaseRule.homeRepository.calculateLimit(isSubscribed)
+        coVerify { homeBaseRule.limitManager.calculateLimit(
+            isSubscribed = isSubscribed,
+            generationType = GenerationType.CurrentWeather) }
         return limit
     }
 }

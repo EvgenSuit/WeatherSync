@@ -8,7 +8,7 @@ import com.weathersync.common.auth.invalidPasswords
 import com.weathersync.common.auth.validEmail
 import com.weathersync.common.auth.validPassword
 import com.weathersync.common.ui.TextFieldState
-import com.weathersync.common.utils.MainDispatcherRule
+import com.weathersync.common.MainDispatcherRule
 import com.weathersync.features.auth.BaseAuthRule
 import com.weathersync.features.auth.presentation.AuthIntent
 import com.weathersync.features.auth.presentation.AuthType

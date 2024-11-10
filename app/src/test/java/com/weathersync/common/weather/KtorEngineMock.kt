@@ -1,6 +1,5 @@
-package com.weathersync.common
+package com.weathersync.common.weather
 
-import com.google.protobuf.Any
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond

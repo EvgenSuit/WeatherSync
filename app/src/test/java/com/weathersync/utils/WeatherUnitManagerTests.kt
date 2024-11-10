@@ -4,7 +4,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestException
 import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.auth.userId
-import com.weathersync.common.utils.mockWeatherUnitsManagerFirestore
+import com.weathersync.common.weather.mockWeatherUnitsManagerFirestore
 import com.weathersync.features.settings.data.SelectedWeatherUnits
 import com.weathersync.features.settings.data.WeatherUnit
 import com.weathersync.utils.weather.Country

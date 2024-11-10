@@ -5,22 +5,25 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
 import com.weathersync.common.TestHelper
-import com.weathersync.common.mockGenerativeModel
-import com.weathersync.common.utils.fetchedWeatherUnits
-import com.weathersync.common.utils.locationInfo
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
-import com.weathersync.common.utils.mockLocationClient
-import com.weathersync.common.utils.mockWeatherUnitsManager
+import com.weathersync.common.utils.mockSubscriptionManager
+import com.weathersync.common.weather.fetchedWeatherUnits
+import com.weathersync.common.weather.locationInfo
+import com.weathersync.common.weather.mockGenerativeModel
+import com.weathersync.common.weather.mockLocationClient
+import com.weathersync.common.weather.mockWeatherUnitsManager
 import com.weathersync.features.activityPlanning.data.ForecastUnits
 import com.weathersync.features.activityPlanning.data.Hourly
 import com.weathersync.features.activityPlanning.data.OpenMeteoForecast
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.features.settings.data.WeatherUnit
+import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.weather.FirestoreWeatherUnit
+import com.weathersync.utils.weather.GenerationType
 import com.weathersync.utils.weather.LimitManager
-import com.weathersync.utils.weather.LimitManagerConfig
+import com.weathersync.utils.weather.NextUpdateTimeFormatter
 import com.weathersync.utils.weather.WeatherUnitsManager
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
@@ -31,6 +34,7 @@ import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import io.mockk.mockk
 import io.mockk.spyk
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.serialization.encodeToString
@@ -46,9 +50,11 @@ import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 class ActivityPlanningBaseRule: TestWatcher() {
-    val limitManagerConfig = LimitManagerConfig(2, 24)
     val testHelper = TestHelper()
     val testClock = TestClock()
+    val testDispatcher = StandardTestDispatcher()
+    val premiumLimitManagerConfig = GenerationType.ActivityRecommendations.premiumLimitManagerConfig
+    val regularLimitManagerConfig = GenerationType.ActivityRecommendations.regularLimitManagerConfig
 
     lateinit var viewModel: ActivityPlanningViewModel
     lateinit var limitManager: LimitManager
@@ -63,13 +69,18 @@ class ActivityPlanningBaseRule: TestWatcher() {
     fun advance(testScope: TestScope) = repeat(9999999) { testScope.advanceUntilIdle() }
     private var capturedUrl = ""
 
-    fun setupViewModel() {
+    fun setupViewModel(locale: Locale = Locale.US) {
         viewModel = ActivityPlanningViewModel(
             activityPlanningRepository = activityPlanningRepository,
-            analyticsManager = testHelper.analyticsManager
+            analyticsManager = testHelper.analyticsManager,
+            nextUpdateTimeFormatter = NextUpdateTimeFormatter(
+                clock = testClock,
+                locale = locale
+            )
         )
     }
     fun setupActivityPlanningRepository(
+        isSubscribed: IsSubscribed,
         generatedSuggestions: String? = null,
         suggestionsGenerationException: Exception? = null
     ) {
@@ -79,8 +90,10 @@ class ActivityPlanningBaseRule: TestWatcher() {
         ))
         activityPlanningRepository = spyk(ActivityPlanningRepository(
             limitManager = limitManager,
+            subscriptionManager = mockSubscriptionManager(isSubscribed = isSubscribed),
             forecastRepository = forecastRepository,
-            activityPlanningGeminiRepository = geminiRepository
+            activityPlanningGeminiRepository = geminiRepository,
+            dispatcher = testDispatcher
         ))
     }
     fun setupForecastRepository(
@@ -89,14 +102,14 @@ class ActivityPlanningBaseRule: TestWatcher() {
         geocoderException: Exception? = null,
         lastLocationException: Exception? = null
     ) {
-        forecastRepository = ForecastRepository(
+        forecastRepository = spyk(ForecastRepository(
             engine = mockForecastEngine(status, units = units),
             locationClient = mockLocationClient(
                 geocoderException = geocoderException,
                 lastLocationException = lastLocationException
             ),
             weatherUnitsManager = weatherUnitsManager
-        )
+        ))
     }
     fun setupWeatherUnitsManager(
         units: List<WeatherUnit> = fetchedWeatherUnits,
@@ -110,24 +123,19 @@ class ActivityPlanningBaseRule: TestWatcher() {
         )
     }
     fun setupLimitManager(
-        locale: Locale,
         timestamps: List<Timestamp> = listOf(),
-        limitManagerConfig: LimitManagerConfig,
         serverTimestampGetException: Exception? = null,
         serverTimestampDeleteException: Exception? = null) {
         limitManagerFirestore = mockLimitManagerFirestore(
             testClock = testClock,
-            limitManagerConfig = limitManagerConfig,
             timestamps = timestamps,
             serverTimestampGetException = serverTimestampGetException,
             serverTimestampDeleteException = serverTimestampDeleteException
         )
         limitManager = spyk(mockLimitManager(
-            limitManagerConfig = limitManagerConfig,
             limitManagerFirestore = limitManagerFirestore,
             currentWeatherDAO = currentWeatherDAO,
-            weatherUpdater = mockk(),
-            locale = locale
+            weatherUpdater = mockk()
         ))
     }
 
@@ -182,25 +190,25 @@ class ActivityPlanningBaseRule: TestWatcher() {
     }
     override fun starting(description: Description?) {
         stopKoin()
-        setupLimitManager(
-            locale = Locale.US,
-            limitManagerConfig = limitManagerConfig)
+        setupLimitManager()
         setupWeatherUnitsManager()
         setupForecastRepository()
-        setupActivityPlanningRepository(generatedSuggestions = generatedSuggestions)
+        setupActivityPlanningRepository(
+            isSubscribed = false,
+            generatedSuggestions = generatedSuggestions)
         setupViewModel()
     }
     val activityPlanningSuggestions = "The best time to do that is October 3, 12:45, 2024"
-    private val generatedSuggestions = """
+    val generatedSuggestions = """
         $activitiesPlanningTag
         $activityPlanningSuggestions
         $activitiesPlanningTag
     """.trimIndent()
 
-    fun assertUrlIsCorrect() {
+    fun assertUrlAndDatesAreCorrect(isSubscribed: IsSubscribed = false) {
         assertTrue(capturedUrl.isNotEmpty())
         val extractedTimes = extractTimes(capturedUrl)
-        assertDateDifference(extractedTimes.first, extractedTimes.second)
+        assertDateDifference(isSubscribed, extractedTimes.first, extractedTimes.second)
     }
     private fun extractTimes(url: String): Pair<String, String> {
         val startHourRegex = "start_hour=([^&]+)".toRegex()
@@ -211,11 +219,13 @@ class ActivityPlanningBaseRule: TestWatcher() {
 
         return Pair(startHour, endHour)
     }
-    private fun assertDateDifference(start: String, end: String) {
+    private fun assertDateDifference(
+        isSubscribed: IsSubscribed,
+        start: String, end: String) {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
         val startDateTime = LocalDateTime.parse(start, formatter)
         val endDateTime = LocalDateTime.parse(end, formatter)
         val daysBetween = ChronoUnit.DAYS.between(startDateTime, endDateTime)
-        assertEquals(5, daysBetween)
+        assertEquals((if (isSubscribed) ForecastDays.PREMIUM else ForecastDays.REGULAR).days, daysBetween.toInt())
     }
 }

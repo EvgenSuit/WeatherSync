@@ -1,7 +1,5 @@
 package com.weathersync.features.navigation.presentation.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WorkspacePremium
@@ -22,15 +19,12 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,6 +34,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.weathersync.MainActivity
 import com.weathersync.clearFocusOnNonButtonClick
 import com.weathersync.common.ui.CustomSnackbar
 import com.weathersync.common.ui.LocalSnackbarController
@@ -70,11 +65,13 @@ val topLevelRoutes = listOf(
 @Composable
 fun NavManager(
     navController: NavHostController = rememberNavController(),
+    activity: MainActivity,
     navManagerViewModel: NavManagerViewModel = koinViewModel()
 ) {
     val snackbarController = LocalSnackbarController.current
     val isSubscribed by navManagerViewModel.isUserSubscribedFlow.collectAsStateWithLifecycle()
     NavManagerContent(
+        activity = activity,
         navController = navController,
         isUserNullInit = navManagerViewModel.isUserNullInit,
         isSubscribed = isSubscribed,
@@ -84,6 +81,7 @@ fun NavManager(
 
 @Composable
 fun NavManagerContent(
+    activity: MainActivity,
     navController: NavHostController,
     isUserNullInit: Boolean,
     isSubscribed: IsSubscribed?,
@@ -162,6 +160,7 @@ fun NavManagerContent(
                 }
                 composable(Route.Premium.route) {
                     SubscriptionInfoScreen(
+                        activity = activity,
                         onBackClick = { navController.navigateUp() }
                     )
                 }

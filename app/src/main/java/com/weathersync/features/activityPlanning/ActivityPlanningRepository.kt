@@ -7,6 +7,9 @@ import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.SubscriptionManager
 import com.weathersync.utils.weather.GenerationType
 import com.weathersync.utils.weather.LimitManager
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -15,7 +18,8 @@ class ActivityPlanningRepository(
     private val limitManager: LimitManager,
     private val subscriptionManager: SubscriptionManager,
     private val forecastRepository: ForecastRepository,
-    private val activityPlanningGeminiRepository: ActivityPlanningGeminiRepository
+    private val activityPlanningGeminiRepository: ActivityPlanningGeminiRepository,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     suspend fun isSubscribed() = subscriptionManager.initBillingClient()
     suspend fun calculateLimit(isSubscribed: IsSubscribed) =
@@ -25,11 +29,11 @@ class ActivityPlanningRepository(
 
     suspend fun recordTimestamp() = limitManager.recordTimestamp(GenerationType.ActivityRecommendations)
 
-    suspend fun getForecast(isSubscribed: IsSubscribed): Forecast {
+    suspend fun getForecast(isSubscribed: IsSubscribed): Forecast = withContext(dispatcher) {
         val forecastDays = calculateForecastDays(isSubscribed = isSubscribed)
         val openMeteoForecast = forecastRepository.getForecast(
             forecastDates = forecastDays)
-        return openMeteoForecast.toForecast(forecastDays = forecastDays.days)
+        openMeteoForecast.toForecast(forecastDays = forecastDays.days)
     }
     suspend fun generateRecommendations(activity: String, forecast: Forecast) =
         activityPlanningGeminiRepository.generateRecommendations(
@@ -42,7 +46,7 @@ class ActivityPlanningRepository(
         val calendar = Calendar.getInstance()
         calendar.time = currDate!!
 
-        val days = if (isSubscribed) 15 else 5
+        val days = (if (isSubscribed) ForecastDays.PREMIUM else ForecastDays.REGULAR).days
         calendar.add(Calendar.DAY_OF_MONTH, days)
         val newDate = calendar.time
         return ForecastDates(

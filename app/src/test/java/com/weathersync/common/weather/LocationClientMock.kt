@@ -1,4 +1,4 @@
-package com.weathersync.common.utils
+package com.weathersync.common.weather
 
 import android.location.Address
 import android.location.Location
@@ -49,7 +49,9 @@ fun mockLocationClient(
     return LocationClient(
         fusedLocationProviderClient = fusedLocationProviderClient,
         geocoder = mockk {
-            every { getFromLocation(getMockedWeather(fetchedWeatherUnits).latitude, getMockedWeather(fetchedWeatherUnits).longitude, 1) } answers {
+            every { getFromLocation(getMockedWeather(fetchedWeatherUnits).latitude, getMockedWeather(
+                fetchedWeatherUnits
+            ).longitude, 1) } answers {
                 if (geocoderException != null) throw geocoderException
                 addresses
             }

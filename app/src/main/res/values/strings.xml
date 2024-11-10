@@ -56,7 +56,7 @@
     <string name="temp_unit">Temperature unit</string>
     <string name="visibility_unit">Visibility unit</string>
     <string name="wind_speed_unit">Wind speed unit</string>
-    <string name="subscriptions_url">https://play.google.com/store/account/subscriptions</string>
+    <string name="manage_subcriptions_link">https://play.google.com/store/account/subscriptions</string>
     <string name="manage_subscriptions">Manage subscriptions</string>
     <string name="sign_out">Sign out</string>
 

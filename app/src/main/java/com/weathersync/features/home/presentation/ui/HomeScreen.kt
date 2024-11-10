@@ -62,7 +62,7 @@ fun HomeScreenContent(
     uiState: HomeUIState,
     onIntent: (HomeIntent) -> Unit
 ) {
-    val nextUpdateTime = uiState.limit.formattedNextUpdateTime
+    val formattedNextUpdateTime = uiState.formattedNextUpdateTime
     val suggestions = uiState.suggestions
     PullToRefreshBox(
         isRefreshing = uiState.currentWeatherRefreshResult.isInProgress(),
@@ -74,7 +74,8 @@ fun HomeScreenContent(
             Box(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                nextUpdateTime?.let { Text(text = stringResource(id = R.string.next_update_time, it)) }
+                formattedNextUpdateTime?.let { Text(text =
+                stringResource(id = R.string.next_update_time, it)) }
             }
             CurrentWeatherComposable(
                 weather = uiState.currentWeather,
@@ -99,7 +100,7 @@ fun HomeScreenPreview() {
         Surface {
             HomeScreenContent(
                 uiState = HomeUIState(
-                    limit = Limit(isReached = true, formattedNextUpdateTime = Date.from(Instant.now().plusSeconds(24*60*60)).toString())
+                    limit = Limit(isReached = true, nextUpdateDateTime = Date.from(Instant.now().plusSeconds(24*60*60)))
                 ),
                 onIntent = {}
             )

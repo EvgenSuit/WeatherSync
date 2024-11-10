@@ -11,6 +11,7 @@ import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.weather.Limit
+import com.weathersync.utils.weather.NextUpdateTimeFormatter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -21,7 +22,8 @@ import kotlinx.coroutines.launch
 const val maxActivityInputLength = 200
 class ActivityPlanningViewModel(
     private val activityPlanningRepository: ActivityPlanningRepository,
-    private val analyticsManager: AnalyticsManager
+    private val analyticsManager: AnalyticsManager,
+    private val nextUpdateTimeFormatter: NextUpdateTimeFormatter
 ): ViewModel() {
     private val _uiState = MutableStateFlow(ActivityPlanningUIState())
     val uiState = _uiState.asStateFlow()
@@ -43,8 +45,10 @@ class ActivityPlanningViewModel(
                 val isSubscribed = activityPlanningRepository.isSubscribed()
                 val limit = activityPlanningRepository.calculateLimit(isSubscribed = isSubscribed)
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.ACTIVITY_PLANNING_LIMIT,
-                    "next_generation_time" to (limit.formattedNextUpdateTime ?: ""))
-                _uiState.update { it.copy(limit = limit) }
+                    "next_generation_time" to (limit.nextUpdateDateTime?.toString() ?: ""))
+                val formattedNextUpdateTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.formatNextUpdateDateTime(it) }
+                _uiState.update { it.copy(limit = limit,
+                    formattedNextGenerationTime = formattedNextUpdateTime) }
 
                 if (!limit.isReached) {
                     val forecast = activityPlanningRepository.getForecast(isSubscribed = isSubscribed)
@@ -74,6 +78,7 @@ class ActivityPlanningViewModel(
 data class ActivityPlanningUIState(
     val activityTextFieldState: TextFieldState = TextFieldState(),
     val limit: Limit = Limit(isReached = true),
+    val formattedNextGenerationTime: String? = null,
     val generatedText: String? = null,
     val forecastDays: Int? = null,
     val generationResult: CustomResult = CustomResult.None

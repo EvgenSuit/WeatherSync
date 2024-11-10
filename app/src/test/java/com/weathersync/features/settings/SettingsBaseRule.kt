@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.weathersync.common.TestHelper
 import com.weathersync.common.auth.mockAuth
-import com.weathersync.common.utils.mockWeatherUnitsManager
+import com.weathersync.common.weather.mockWeatherUnitsManager
 import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.features.settings.data.themeDatastore
 import com.weathersync.features.settings.presentation.SettingsViewModel

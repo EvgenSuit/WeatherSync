@@ -18,7 +18,6 @@ import com.android.billingclient.api.queryProductDetails
 import com.weathersync.R
 import com.weathersync.common.ui.UIText
 import com.weathersync.ui.SubscriptionUIEvent
-import com.weathersync.ui.UIEvent
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.BillingServiceDisconnected
 import com.weathersync.utils.BillingServiceInitException
@@ -100,15 +99,24 @@ class SubscriptionManager(
         }
     }
 
+    // use resume variable since onBillingServiceDisconnected and onBillingSetupFinished could be called at the same time
+    // when switching/removing accounts on the device
     private suspend fun startConnection(): IsBillingSetupFinished = suspendCancellableCoroutine { continuation ->
+        var resumed = false
         billingClient.startConnection(object: BillingClientStateListener {
             override fun onBillingServiceDisconnected() {
-                continuation.resumeWithException(BillingServiceDisconnected())
+                if (!resumed) {
+                    resumed = true
+                    continuation.resumeWithException(BillingServiceDisconnected("Is billing client ready: ${billingClient.isReady}"))
+                }
             }
             override fun onBillingSetupFinished(billingResult: BillingResult) {
-                if (billingResult.responseCode == BillingResponseCode.OK) {
-                    continuation.resume(true)
-                } else continuation.resumeWithException(BillingServiceInitException(billingResult.debugMessage))
+                if (!resumed) {
+                    resumed = true
+                    if (billingResult.responseCode == BillingResponseCode.OK) {
+                        continuation.resume(true)
+                    } else continuation.resumeWithException(BillingServiceInitException(billingResult.debugMessage))
+                }
             }
         })
     }

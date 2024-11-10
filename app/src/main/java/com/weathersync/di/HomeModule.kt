@@ -22,7 +22,8 @@ import java.util.Locale
 val homeModule = module {
     factory { HomeViewModel(
         homeRepository = get(),
-        analyticsManager = get()
+        analyticsManager = get(),
+        nextUpdateTimeFormatter = get()
     ) }
     factory { HomeRepository(
         limitManager = get(),

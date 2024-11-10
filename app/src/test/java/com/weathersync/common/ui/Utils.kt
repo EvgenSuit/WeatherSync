@@ -9,10 +9,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.printToString
 import androidx.test.core.app.ApplicationProvider
-import java.text.DateFormat
-import java.text.DateFormatSymbols
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 fun getString(@StringRes resId: Int,
@@ -27,10 +23,7 @@ fun SemanticsNodeInteraction.printToLog(
 }
 fun ComposeContentTestRule.assertDisplayedLimitIsCorrect(
     @StringRes resId: Int,
-    expectedNextUpdateDate: Date?,
-    locale: Locale) {
-    val timePattern = (DateFormat.getTimeInstance(DateFormat.SHORT, locale) as SimpleDateFormat).toPattern()
-    onNodeWithText(
-        getString(resId, SimpleDateFormat("$timePattern, dd MMM", locale).format(expectedNextUpdateDate)),
+    formattedNextUpdateDate: String?) {
+    onNodeWithText(getString(resId, formattedNextUpdateDate!!),
         useUnmergedTree = true).performScrollTo().assertIsDisplayed()
 }

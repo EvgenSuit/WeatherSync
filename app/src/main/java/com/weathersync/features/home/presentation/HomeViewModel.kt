@@ -13,6 +13,7 @@ import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.weather.Limit
 import com.weathersync.utils.isInProgress
+import com.weathersync.utils.weather.NextUpdateTimeFormatter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val homeRepository: HomeRepository,
     private val analyticsManager: AnalyticsManager,
+    private val nextUpdateTimeFormatter: NextUpdateTimeFormatter
 ): ViewModel() {
     private val _uiState = MutableStateFlow(HomeUIState())
     val uiState = _uiState.asStateFlow()
@@ -44,12 +46,15 @@ class HomeViewModel(
         if (currentResult.isInProgress()) return
         updateMethod(CustomResult.InProgress)
         viewModelScope.launch {
-            //try {
+            try {
                 val isSubscribed = homeRepository.isSubscribed()
                 val limit = homeRepository.calculateLimit(isSubscribed = isSubscribed)
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT,
-                    "next_update_time" to (limit.formattedNextUpdateTime ?: ""))
-                _uiState.update { it.copy(limit = limit) }
+                    "next_update_time" to (limit.nextUpdateDateTime?.toString() ?: ""))
+                val formattedNextUpdateTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.formatNextUpdateDateTime(it) }
+                _uiState.update { it.copy(
+                    limit = limit,
+                    formattedNextUpdateTime = formattedNextUpdateTime) }
 
                 val weather = homeRepository.getCurrentWeather(isLimitReached = limit.isReached)
                 analyticsManager.logEvent(FirebaseEvent.FETCH_CURRENT_WEATHER)
@@ -57,11 +62,11 @@ class HomeViewModel(
 
                 updateMethod(CustomResult.Success)
                 if (weather != null) generateSuggestions(isLimitReached = limit.isReached, currentWeather = weather)
-            /*} catch (e: Exception) {
+            } catch (e: Exception) {
                 _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_fetch_current_weather)))
                 analyticsManager.recordException(e, "Is refreshing: $refresh")
                 updateMethod(CustomResult.Error)
-            } */
+            }
         }
     }
     private suspend fun generateSuggestions(
@@ -93,6 +98,7 @@ data class HomeUIState(
     val currentWeather: CurrentWeather? = null,
     val suggestions: Suggestions? = null,
     val limit: Limit = Limit(isReached = true),
+    val formattedNextUpdateTime: String? = null,
     val currentWeatherRefreshResult: CustomResult = CustomResult.None,
     val currentWeatherFetchResult: CustomResult = CustomResult.None,
     val suggestionsGenerationResult: CustomResult = CustomResult.None

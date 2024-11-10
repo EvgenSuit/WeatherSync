@@ -24,35 +24,47 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class SettingsPrivacyTermsUITest {
+class SettingsLinksTests {
     @get: Rule
     val composeRule = createComposeRule()
     @get: Rule
     val settingsBaseRule = SettingsBaseRule()
     private val snackbarScope = TestScope()
+    private sealed class LinkType {
+        data object PrivacyPolicy: LinkType()
+        data object TermsOfService: LinkType()
+        data object ManageSubscriptions: LinkType()
+    }
 
     @Test
-    fun collectDefaultTheme_isCorrect() = runTest {
+    fun goToLinks_isIntentCorrect() = runTest {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 SettingsScreen(viewModel = settingsBaseRule.viewModel, onSignOut = {})
             }) {
-            performLinkCheck(privacyPolicy = true)
-            performLinkCheck(privacyPolicy = false)
+            performLinkCheck(linkType = LinkType.PrivacyPolicy)
+            performLinkCheck(linkType = LinkType.TermsOfService)
+            performLinkCheck(linkType = LinkType.ManageSubscriptions)
         }
     }
 
-    private fun ComposeContentTestRule.performLinkCheck(privacyPolicy: Boolean) {
-        val text = getString(if (privacyPolicy) R.string.privacy_policy else R.string.terms_of_service)
-        val link = getString(if (privacyPolicy) R.string.privacy_policy_link else R.string.terms_of_service_link)
+    private fun ComposeContentTestRule.performLinkCheck(linkType: LinkType) {
+        val text = getString(when (linkType) {
+            is LinkType.PrivacyPolicy -> R.string.privacy_policy
+            is LinkType.TermsOfService -> R.string.terms_of_service
+            is LinkType.ManageSubscriptions -> R.string.manage_subscriptions
+        })
+
+        val link = getString(when (linkType) {
+            is LinkType.PrivacyPolicy -> R.string.privacy_policy_link
+            is LinkType.TermsOfService -> R.string.terms_of_service_link
+            is LinkType.ManageSubscriptions -> R.string.manage_subcriptions_link
+        })
         Intents.init()
         onNodeWithText(text, useUnmergedTree = true).performScrollTo().assertIsDisplayed().performClick()
         Intents.intended(
-            allOf(
-            IntentMatchers.hasAction(Intent.ACTION_VIEW),
-            IntentMatchers.hasData(Uri.parse(link)))
+            allOf(IntentMatchers.hasAction(Intent.ACTION_VIEW), IntentMatchers.hasData(Uri.parse(link)))
         )
-
         Intents.release()
     }
 }

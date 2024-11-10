@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -29,19 +28,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.weathersync.MainActivity
 import com.weathersync.R
 import com.weathersync.common.ui.ConstrainedComponent
 import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.common.ui.PrivacyTermsLinks
-import com.weathersync.common.ui.shimmerBrush
 import com.weathersync.features.subscription.presentation.SubscriptionInfoUIState
 import com.weathersync.features.subscription.presentation.SubscriptionInfoViewModel
 import com.weathersync.features.subscription.presentation.ui.components.BenefitsComponent
@@ -49,6 +48,7 @@ import com.weathersync.features.subscription.presentation.ui.components.LoadingS
 import com.weathersync.features.subscription.presentation.ui.components.SubscriptionOptions
 import com.weathersync.ui.SubscriptionUIEvent
 import com.weathersync.ui.theme.WeatherSyncTheme
+import com.weathersync.utils.isInProgress
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.data.OfferDetails
 import com.weathersync.utils.subscription.data.PricingPhaseDetails
@@ -58,10 +58,14 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SubscriptionInfoScreen(viewModel: SubscriptionInfoViewModel = koinViewModel(),
+                           activity: MainActivity,
                            onBackClick: () -> Unit) {
-    val activity = LocalContext.current as MainActivity
     val snackbarController = LocalSnackbarController.current
     val uiState by viewModel.uiState.collectAsState()
+    val isSubscribed by viewModel.isSubscribedFlow.collectAsState()
+    LifecycleEventEffect(event = Lifecycle.Event.ON_RESUME) {
+        viewModel.handleIntent(SubscriptionScreenIntent.FetchSubscriptionDetails)
+    }
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collectLatest { event ->
             when (event) {
@@ -78,6 +82,9 @@ fun SubscriptionInfoScreen(viewModel: SubscriptionInfoViewModel = koinViewModel(
             }
         }
     }
+    LaunchedEffect(isSubscribed) {
+        if (isSubscribed != null && isSubscribed as IsSubscribed) onBackClick()
+    }
     SubscriptionInfoContent(
         activity = activity,
         uiState = uiState,
@@ -93,6 +100,7 @@ fun SubscriptionInfoContent(
     onIntent: (SubscriptionScreenIntent) -> Unit
 ) {
     val subscriptionDetails = uiState.subscriptionDetails
+    val isFetchInProgress = uiState.infoFetchResult.isInProgress()
     val backgroundGradient = Brush.linearGradient(
         listOf(MaterialTheme.colorScheme.background,
         MaterialTheme.colorScheme.primary))
@@ -121,7 +129,6 @@ fun SubscriptionInfoContent(
                 style = MaterialTheme.typography.labelMedium
                     .copy(fontSize = 19.sp)
             )
-
             Spacer(modifier = Modifier.height(100.dp))
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -131,7 +138,7 @@ fun SubscriptionInfoContent(
                     .background(MaterialTheme.colorScheme.background)
             ) {
                 ConstrainedComponent(modifier = Modifier.padding(20.dp)) {
-                    if (subscriptionDetails == null) {
+                    if (subscriptionDetails == null || isFetchInProgress) {
                         LoadingSubscription()
                     } else {
                         BenefitsComponent()
@@ -161,7 +168,7 @@ fun SubscriptionInfoContent(
     }
 }
 
-@Preview//(device = "spec:id=reference_phone,shape=Normal,width=411,height=891,unit=dp,dpi=420")
+@Preview(device = "spec:id=reference_phone,shape=Normal,width=511,height=891,unit=dp,dpi=420")
 @Composable
 fun NullSubscriptionInfoContentPreview() {
     WeatherSyncTheme(darkTheme = true) {

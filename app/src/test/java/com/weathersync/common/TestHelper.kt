@@ -18,12 +18,14 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class TestException(message: String) : Exception(message)
 
+// firebase timestamp is generated from this clock
 class TestClock : Clock() {
     private var currInstant = Instant.ofEpochSecond(12 * 24 * 60 * 60)
 
@@ -42,7 +44,7 @@ class TestClock : Clock() {
     fun setInstant(instant: Instant) {
         currInstant = instant
     }
-    // advance by durationInHours. test clock is used to calculate current server timestamp during mocking
+    // advance by durationInHours to test outdated timestamps deletion. test clock is used to calculate current server timestamp during mocking
     // (add 1 millisecond since whereLessThan query is used, at least for now)
     fun advanceLimitBy(limitManagerConfig: LimitManagerConfig) = advanceBy(Duration.ofHours(limitManagerConfig.durationInHours.toLong()+1).toMillis())
 }
@@ -73,21 +75,15 @@ class TestHelper {
         }
     }
 
-    fun calculateNextUpdateDate(receivedNextUpdateDateTime: String?,
-                                limitManagerConfig: LimitManagerConfig,
-                                timestamps: List<Timestamp>,
-                                locale: Locale): NextUpdateDate {
-        val expectedNextUpdateDate = Date(timestamps.first().toDate().time + TimeUnit.HOURS.toMillis(limitManagerConfig.durationInHours.toLong()))
-
-        // adjust time format (24-hour or AM/PM) based on locale
-        val timeFormatter = DateFormat.getTimeInstance(DateFormat.SHORT, locale) as SimpleDateFormat
-        val timePattern = timeFormatter.toPattern()
-        val combinedPattern = "$timePattern, dd MMM"
-
-        val combinedFormatter = SimpleDateFormat(combinedPattern, locale)
-        val receivedNextUpdateDate = combinedFormatter.parse(receivedNextUpdateDateTime)
-
-        return NextUpdateDate(expectedNextUpdateDate = expectedNextUpdateDate, receivedNextUpdateDate = receivedNextUpdateDate!!)
+    fun assertNextUpdateTimeIsCorrect(
+        receivedNextUpdateDateTime: Date?,
+        limitManagerConfig: LimitManagerConfig,
+        timestamps: List<Timestamp>): NextUpdateDate {
+        val expectedNextUpdateDate = Date.from(timestamps.first().toDate().toInstant().plus(
+            Duration.ofHours(limitManagerConfig.durationInHours.toLong())
+        ))
+        assertEquals(expectedNextUpdateDate, receivedNextUpdateDateTime)
+        return NextUpdateDate(expectedNextUpdateDate = expectedNextUpdateDate, receivedNextUpdateDate = receivedNextUpdateDateTime!!)
     }
 
     data class NextUpdateDate(val expectedNextUpdateDate: Date, val receivedNextUpdateDate: Date)

@@ -45,8 +45,9 @@ class MainActivity : ComponentActivity() {
             subscriptionManager.initBillingClient()
         } catch (e: Exception) {
             analyticsManager.recordException(e)
+        } finally {
+            didCallBillingInitMethod.value = true
         }
-        didCallBillingInitMethod.value = true
     }
 
     override fun onResume() {
@@ -75,7 +76,9 @@ class MainActivity : ComponentActivity() {
             }
             WeatherSyncTheme(isThemeDark) {
                 CompositionLocalProvider(LocalSnackbarController provides snackbarController) {
-                    NavManager()
+                    NavManager(
+                        activity = this
+                    )
                 }
             }
         }

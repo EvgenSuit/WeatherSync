@@ -7,12 +7,16 @@ import com.weathersync.utils.subscription.SubscriptionManager
 import com.weathersync.utils.weather.GenerationType
 import com.weathersync.utils.weather.Limit
 import com.weathersync.utils.weather.LimitManager
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class HomeRepository(
     private val limitManager: LimitManager,
     private val subscriptionManager: SubscriptionManager,
     private val currentWeatherRepository: CurrentWeatherRepository,
-    private val geminiRepository: GeminiRepository
+    private val geminiRepository: GeminiRepository,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     suspend fun isSubscribed() = subscriptionManager.initBillingClient()
     suspend fun calculateLimit(isSubscribed: IsSubscribed): Limit =
@@ -21,7 +25,10 @@ class HomeRepository(
             generationType = GenerationType.CurrentWeather)
     suspend fun recordTimestamp() = limitManager.recordTimestamp(GenerationType.CurrentWeather)
 
-    suspend fun getCurrentWeather(isLimitReached: Boolean) = currentWeatherRepository.getCurrentWeather(isLimitReached)
+    suspend fun getCurrentWeather(isLimitReached: Boolean) =
+        withContext(dispatcher) {
+            currentWeatherRepository.getCurrentWeather(isLimitReached)
+        }
     suspend fun generateSuggestions(
         isLimitReached: Boolean,
         currentWeather: CurrentWeather): Suggestions? =

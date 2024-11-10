@@ -10,6 +10,12 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.request.get
 
+
+enum class ForecastDays(val days: Int) {
+    PREMIUM(15),
+    REGULAR(5)
+}
+
 class ForecastRepository(
     engine: HttpClientEngine,
     private val locationClient: LocationClient,

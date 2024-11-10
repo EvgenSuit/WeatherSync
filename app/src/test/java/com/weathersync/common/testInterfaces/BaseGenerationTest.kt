@@ -1,4 +1,4 @@
-package com.weathersync.common.utils
+package com.weathersync.common.testInterfaces
 
 import com.weathersync.common.TestException
 import com.weathersync.utils.AtLeastOneGenerationTagMissing
@@ -16,5 +16,7 @@ interface BaseGenerationTest {
     fun generateSuggestions_limitNotReached_atLeastOneTagMissing()
 
     @Test
-    fun generateSuggestions_limitNotReached()
+    fun generateSuggestions_notSubscribed_limitNotReached()
+    @Test
+    fun generateSuggestions_isSubscribed_limitNotReached()
 }

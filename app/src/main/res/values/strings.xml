@@ -24,7 +24,7 @@
     <string name="password_long">Password cannot be more than 30 symbols long</string>
 
     <string name="auth_error">Authentication error</string>
-    <string name="google_sign_in_error">Google sign in error, make sure you are signed in to this account on this device</string>
+    <string name="google_sign_in_error">Sign in error, make sure you are signed in to Google on this device</string>
 
     <string name="location_permission_required">WeatherSync requires location permission for accurate weather information</string>
     <string name="request_permission">Request permission</string>

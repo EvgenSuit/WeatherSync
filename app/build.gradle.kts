@@ -33,6 +33,9 @@ android {
         }
         buildConfigField("String", "WEB_CLIENT_ID", "\"${localProperties.getProperty("WEB_CLIENT_ID")}\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY")}\"")
+        buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"${localProperties.getProperty("INTERSTITIAL_AD_UNIT_ID")}\"")
+        buildConfigField("String", "HOME_PROMO_AD_UNIT_ID", "\"${localProperties.getProperty("HOME_PROMO_AD_UNIT_ID")}\"")
+        buildConfigField("String", "ACTIVITY_PLANNING_PROMO_AD_UNIT_ID", "\"${localProperties.getProperty("ACTIVITY_PLANNING_PROMO_AD_UNIT_ID")}\"")
     }
     buildFeatures.buildConfig = true
     testOptions {
@@ -143,6 +146,9 @@ dependencies {
     // Billing
     implementation(libs.billing.client)
 
+    // Ads
+    implementation(libs.play.services.ads)
+
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.robolectric)
@@ -155,6 +161,7 @@ dependencies {
     // A small testing library for kotlinx.coroutines Flow
     testImplementation(libs.turbine)
     testImplementation(libs.navigation.testing)
+
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

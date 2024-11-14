@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.weathersync.common.TestHelper
 import com.weathersync.common.auth.mockAuth
+import com.weathersync.common.data.createInMemoryDataStore
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
 import com.weathersync.features.auth.RegularAuthRepository
 import com.weathersync.features.auth.presentation.AuthViewModel
@@ -16,6 +17,8 @@ import com.weathersync.features.settings.data.themeDatastore
 import com.weathersync.features.settings.presentation.SettingsViewModel
 import com.weathersync.features.subscription.SubscriptionInfoRepository
 import com.weathersync.features.subscription.presentation.SubscriptionInfoViewModel
+import com.weathersync.utils.ads.AdsDatastoreManager
+import com.weathersync.utils.ads.adsDataStore
 import com.weathersync.utils.subscription.SubscriptionManager
 import com.weathersync.utils.subscription.data.OfferDetails
 import com.weathersync.utils.subscription.data.PricingPhaseDetails
@@ -27,7 +30,13 @@ import com.weathersync.utils.weather.WeatherUnitsManager
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.spyk
+import io.mockk.unmockkAll
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.koin.android.ext.koin.androidContext
@@ -37,12 +46,9 @@ import org.koin.dsl.module
 
 class BaseNavRule: TestWatcher() {
     val testHelper = TestHelper()
-    val testDispatcher = StandardTestDispatcher()
     lateinit var auth: FirebaseAuth
     lateinit var viewModel: NavManagerViewModel
-    val subscriptionInfoDatastore = SubscriptionInfoDatastore(
-        dataStore = ApplicationProvider.getApplicationContext<Context>().subscriptionInfoDatastore
-    )
+    lateinit var subscriptionInfoDatastore: SubscriptionInfoDatastore
 
     fun setupKoin(
         inputAuth: FirebaseAuth = mockAuth()
@@ -54,7 +60,8 @@ class BaseNavRule: TestWatcher() {
                     subscriptionManager = SubscriptionManager(
                         billingClientBuilder = mockk(relaxed = true),
                         subscriptionInfoDatastore = subscriptionInfoDatastore,
-                        analyticsManager = mockk()
+                        analyticsManager = mockk(),
+                        adsDatastoreManager = mockk()
                     )
                 )) {
                     coEvery { isBillingSetupFinished() } returns true
@@ -63,6 +70,9 @@ class BaseNavRule: TestWatcher() {
                     )
                 },
                 analyticsManager = mockk()
+            ) }
+            single { AdsDatastoreManager(
+                dataStore = ApplicationProvider.getApplicationContext<Context>().adsDataStore
             ) }
         }
         val authModule = module {
@@ -76,7 +86,8 @@ class BaseNavRule: TestWatcher() {
             factory { HomeViewModel(
                 homeRepository = mockk(relaxed = true),
                 analyticsManager = mockk(relaxed = true),
-                nextUpdateTimeFormatter = mockk(relaxed = true)
+                nextUpdateTimeFormatter = mockk(relaxed = true),
+                subscriptionInfoDatastore = mockk(relaxed = true)
             ) }
         }
         val utilsModule = module {
@@ -87,7 +98,8 @@ class BaseNavRule: TestWatcher() {
             factory { ActivityPlanningViewModel(
                 activityPlanningRepository = mockk(relaxed = true),
                 analyticsManager = mockk(relaxed = true),
-                nextUpdateTimeFormatter = mockk(relaxed = true)
+                nextUpdateTimeFormatter = mockk(relaxed = true),
+                subscriptionInfoDatastore = mockk(relaxed = true)
             ) }
         }
         val settingsModule = module {
@@ -121,6 +133,10 @@ class BaseNavRule: TestWatcher() {
 
     override fun starting(description: Description?) {
         stopKoin()
+        unmockkAll()
+        subscriptionInfoDatastore = SubscriptionInfoDatastore(
+            dataStore = createInMemoryDataStore()
+        )
         setupKoin()
         setupViewModel()
     }

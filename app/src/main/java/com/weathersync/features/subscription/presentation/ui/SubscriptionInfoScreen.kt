@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.weathersync.MainActivity
 import com.weathersync.R
 import com.weathersync.common.ui.ConstrainedComponent
@@ -49,7 +48,6 @@ import com.weathersync.features.subscription.presentation.ui.components.Subscrip
 import com.weathersync.ui.SubscriptionUIEvent
 import com.weathersync.ui.theme.WeatherSyncTheme
 import com.weathersync.utils.isInProgress
-import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.data.OfferDetails
 import com.weathersync.utils.subscription.data.PricingPhaseDetails
 import com.weathersync.utils.subscription.data.SubscriptionDetails
@@ -62,7 +60,6 @@ fun SubscriptionInfoScreen(viewModel: SubscriptionInfoViewModel = koinViewModel(
                            onBackClick: () -> Unit) {
     val snackbarController = LocalSnackbarController.current
     val uiState by viewModel.uiState.collectAsState()
-    val isSubscribed by viewModel.isSubscribedFlow.collectAsState()
     LifecycleEventEffect(event = Lifecycle.Event.ON_RESUME) {
         viewModel.handleIntent(SubscriptionScreenIntent.FetchSubscriptionDetails)
     }
@@ -81,9 +78,6 @@ fun SubscriptionInfoScreen(viewModel: SubscriptionInfoViewModel = koinViewModel(
                 else -> {}
             }
         }
-    }
-    LaunchedEffect(isSubscribed) {
-        if (isSubscribed != null && isSubscribed as IsSubscribed) onBackClick()
     }
     SubscriptionInfoContent(
         activity = activity,

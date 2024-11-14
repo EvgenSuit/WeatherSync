@@ -23,7 +23,8 @@ val homeModule = module {
     factory { HomeViewModel(
         homeRepository = get(),
         analyticsManager = get(),
-        nextUpdateTimeFormatter = get()
+        nextUpdateTimeFormatter = get(),
+        subscriptionInfoDatastore = get()
     ) }
     factory { HomeRepository(
         limitManager = get(),

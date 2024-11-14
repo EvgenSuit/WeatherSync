@@ -6,6 +6,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.weathersync.common.auth.userId
 import com.weathersync.common.utils.mockAnalyticsManager
 import com.weathersync.utils.FirebaseEvent
+import com.weathersync.utils.ads.AdsDatastoreManager
 import com.weathersync.utils.weather.LimitManagerConfig
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -57,9 +58,13 @@ class TestHelper {
     }
 
     val analytics: FirebaseAnalytics = mockk(relaxed = true)
-    val analyticsManager = mockAnalyticsManager(
-        exceptionSlot = exceptionSlot,
-        analytics = analytics)
+
+    fun getAnalyticsManager(adsDatastoreManager: AdsDatastoreManager) =
+        mockAnalyticsManager(
+            exceptionSlot = exceptionSlot,
+            analytics = analytics,
+            adsDatastoreManager = adsDatastoreManager
+        )
 
     fun verifyAnalyticsEvent(event: FirebaseEvent, inverse: Boolean, vararg params: Pair<String, String>) {
         // the list will always contain a single captured bundle, which is what i need. https://github.com/mockk/mockk/issues/352

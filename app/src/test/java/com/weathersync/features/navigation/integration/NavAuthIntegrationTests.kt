@@ -38,7 +38,7 @@ class NavAuthIntegrationTests {
     @get: Rule(order = 1)
     val baseNavRule = BaseNavRule()
     @get: Rule(order = 0)
-    val mainDispatcherRule = MainDispatcherRule(baseNavRule.testDispatcher)
+    val mainDispatcherRule = MainDispatcherRule()
     @get: Rule(order = 2)
     val baseNavIntegrationRule = BaseNavIntegrationRule()
     private val snackbarScope = TestScope()

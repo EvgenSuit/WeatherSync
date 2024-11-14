@@ -1,10 +1,13 @@
 package com.weathersync.features.activityPlanning
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
 import com.weathersync.common.TestHelper
+import com.weathersync.common.data.createInMemoryDataStore
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
 import com.weathersync.common.utils.mockSubscriptionManager
@@ -19,7 +22,11 @@ import com.weathersync.features.activityPlanning.data.OpenMeteoForecast
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.features.settings.data.WeatherUnit
+import com.weathersync.utils.ads.AdsDatastoreManager
+import com.weathersync.utils.ads.adsDataStore
 import com.weathersync.utils.subscription.IsSubscribed
+import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
+import com.weathersync.utils.subscription.data.subscriptionInfoDatastore
 import com.weathersync.utils.weather.FirestoreWeatherUnit
 import com.weathersync.utils.weather.GenerationType
 import com.weathersync.utils.weather.LimitManager
@@ -34,6 +41,7 @@ import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import io.mockk.mockk
 import io.mockk.spyk
+import io.mockk.unmockkAll
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -65,6 +73,7 @@ class ActivityPlanningBaseRule: TestWatcher() {
     lateinit var activityPlanningRepository: ActivityPlanningRepository
     lateinit var forecastRepository: ForecastRepository
     lateinit var weatherUnitsManager: WeatherUnitsManager
+    lateinit var subscriptionInfoDatastore: SubscriptionInfoDatastore
 
     fun advance(testScope: TestScope) = repeat(9999999) { testScope.advanceUntilIdle() }
     private var capturedUrl = ""
@@ -72,11 +81,16 @@ class ActivityPlanningBaseRule: TestWatcher() {
     fun setupViewModel(locale: Locale = Locale.US) {
         viewModel = ActivityPlanningViewModel(
             activityPlanningRepository = activityPlanningRepository,
-            analyticsManager = testHelper.analyticsManager,
+            analyticsManager = testHelper.getAnalyticsManager(
+                AdsDatastoreManager(
+                    ApplicationProvider.getApplicationContext<Context>().adsDataStore
+                )
+            ),
             nextUpdateTimeFormatter = NextUpdateTimeFormatter(
                 clock = testClock,
                 locale = locale
-            )
+            ),
+            subscriptionInfoDatastore = subscriptionInfoDatastore
         )
     }
     fun setupActivityPlanningRepository(
@@ -190,6 +204,10 @@ class ActivityPlanningBaseRule: TestWatcher() {
     }
     override fun starting(description: Description?) {
         stopKoin()
+        unmockkAll()
+        subscriptionInfoDatastore = SubscriptionInfoDatastore(
+            dataStore = createInMemoryDataStore()
+        )
         setupLimitManager()
         setupWeatherUnitsManager()
         setupForecastRepository()

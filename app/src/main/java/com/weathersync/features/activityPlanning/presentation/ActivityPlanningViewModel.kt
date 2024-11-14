@@ -10,12 +10,16 @@ import com.weathersync.features.activityPlanning.ActivityPlanningRepository
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
+import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
 import com.weathersync.utils.weather.Limit
 import com.weathersync.utils.weather.NextUpdateTimeFormatter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -23,10 +27,15 @@ const val maxActivityInputLength = 200
 class ActivityPlanningViewModel(
     private val activityPlanningRepository: ActivityPlanningRepository,
     private val analyticsManager: AnalyticsManager,
-    private val nextUpdateTimeFormatter: NextUpdateTimeFormatter
+    private val nextUpdateTimeFormatter: NextUpdateTimeFormatter,
+    subscriptionInfoDatastore: SubscriptionInfoDatastore
 ): ViewModel() {
     private val _uiState = MutableStateFlow(ActivityPlanningUIState())
     val uiState = _uiState.asStateFlow()
+
+    val showBannerAds = subscriptionInfoDatastore.isSubscribedFlow()
+        .map { it?.not() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     private val _uiEvent = MutableSharedFlow<UIEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
@@ -45,17 +54,22 @@ class ActivityPlanningViewModel(
                 val isSubscribed = activityPlanningRepository.isSubscribed()
                 val limit = activityPlanningRepository.calculateLimit(isSubscribed = isSubscribed)
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.ACTIVITY_PLANNING_LIMIT,
+                    isSubscribed = isSubscribed,
                     "next_generation_time" to (limit.nextUpdateDateTime?.toString() ?: ""))
-                val formattedNextUpdateTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.formatNextUpdateDateTime(it) }
+                val formattedNextGenerationTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.formatNextUpdateDateTime(it) }
                 _uiState.update { it.copy(limit = limit,
-                    formattedNextGenerationTime = formattedNextUpdateTime) }
+                    formattedNextGenerationTime = formattedNextGenerationTime) }
 
                 if (!limit.isReached) {
                     val forecast = activityPlanningRepository.getForecast(isSubscribed = isSubscribed)
                     val suggestions = activityPlanningRepository.generateRecommendations(activity = input, forecast = forecast)
                     activityPlanningRepository.recordTimestamp()
-                    analyticsManager.logEvent(FirebaseEvent.PLAN_ACTIVITIES)
-                    _uiState.update { it.copy(generatedText = suggestions, forecastDays = forecast.forecastDays) }
+                    analyticsManager.logEvent(
+                        event = FirebaseEvent.PLAN_ACTIVITIES,
+                        isSubscribed = isSubscribed)
+                    _uiState.update { it.copy(
+                        generatedText = suggestions,
+                        forecastDays = forecast.forecastDays) }
                 }
                 updateGenerationResult(CustomResult.Success)
             } catch (e: Exception) {

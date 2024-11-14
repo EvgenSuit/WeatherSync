@@ -1,6 +1,7 @@
 package com.weathersync.features.home
 
 import android.Manifest
+import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.ai.client.generativeai.GenerativeModel
@@ -9,6 +10,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
 import com.weathersync.common.TestException
 import com.weathersync.common.TestHelper
+import com.weathersync.common.data.createInMemoryDataStore
+import com.weathersync.common.utils.mockAnalyticsManager
 import com.weathersync.common.weather.mockEngine
 import com.weathersync.common.weather.mockGenerativeModel
 import com.weathersync.common.weather.fetchedWeatherUnits
@@ -26,15 +29,20 @@ import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
 import com.weathersync.features.home.presentation.HomeViewModel
 import com.weathersync.features.settings.data.WeatherUnit
+import com.weathersync.utils.AnalyticsManager
+import com.weathersync.utils.ads.AdsDatastoreManager
+import com.weathersync.utils.ads.adsDataStore
 import com.weathersync.utils.subscription.IsSubscribed
+import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
+import com.weathersync.utils.subscription.data.subscriptionInfoDatastore
 import com.weathersync.utils.weather.FirestoreWeatherUnit
 import com.weathersync.utils.weather.GenerationType
 import com.weathersync.utils.weather.LimitManager
-import com.weathersync.utils.weather.LimitManagerConfig
 import com.weathersync.utils.weather.NextUpdateTimeFormatter
 import com.weathersync.utils.weather.WeatherUnitsManager
 import io.ktor.http.HttpStatusCode
 import io.mockk.spyk
+import io.mockk.unmockkAll
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -54,19 +62,20 @@ class HomeBaseRule: TestWatcher() {
 
     val crashlyticsExceptionSlot = testHelper.exceptionSlot
     val exception = TestException("exception")
-    val crashlyticsManager = testHelper.analyticsManager
+    lateinit var analyticsManager: AnalyticsManager
     lateinit var viewModel: HomeViewModel
     fun advance(testScope: TestScope) = repeat(99999999) { testScope.advanceUntilIdle() }
 
     lateinit var weatherUpdater: WeatherUpdater
-    lateinit var currentWeatherRepository: CurrentWeatherRepository
+    private lateinit var currentWeatherRepository: CurrentWeatherRepository
     lateinit var limitManager: LimitManager
     lateinit var currentWeatherLocalDB: CurrentWeatherLocalDB
     lateinit var homeRepository: HomeRepository
     lateinit var limitManagerFirestore: FirebaseFirestore
     lateinit var generativeModel: GenerativeModel
-    lateinit var geminiRepository: GeminiRepository
+    private lateinit var geminiRepository: GeminiRepository
     lateinit var weatherUnitsManager: WeatherUnitsManager
+    lateinit var subscriptionInfoDatastore: SubscriptionInfoDatastore
 
     fun manageLocationPermission(grant: Boolean) {
         val permission = Manifest.permission.ACCESS_COARSE_LOCATION
@@ -77,11 +86,12 @@ class HomeBaseRule: TestWatcher() {
     fun setupViewModel(locale: Locale = Locale.US) {
         viewModel = HomeViewModel(
             homeRepository = homeRepository,
-            analyticsManager = crashlyticsManager,
+            analyticsManager = analyticsManager,
             nextUpdateTimeFormatter = NextUpdateTimeFormatter(
                 clock = testClock,
                 locale = locale
-            )
+            ),
+            subscriptionInfoDatastore = subscriptionInfoDatastore
         )
     }
 
@@ -164,6 +174,15 @@ class HomeBaseRule: TestWatcher() {
 
     override fun starting(description: Description?) {
         stopKoin()
+        unmockkAll()
+        analyticsManager = testHelper.getAnalyticsManager(
+            AdsDatastoreManager(
+                dataStore = createInMemoryDataStore()
+            )
+        )
+        subscriptionInfoDatastore = SubscriptionInfoDatastore(
+            dataStore = createInMemoryDataStore()
+        )
         currentWeatherLocalDB = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(), CurrentWeatherLocalDB::class.java
         ).build()

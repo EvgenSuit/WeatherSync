@@ -15,9 +15,10 @@ private val isSubscribedKey = booleanPreferencesKey("is_subscribed")
 class SubscriptionInfoDatastore(
     private val dataStore: DataStore<Preferences>
 ) {
-    suspend fun setIsSubscribed(isSubscribed: IsSubscribed) =
+    suspend fun setIsSubscribed(isSubscribed: IsSubscribed?) =
         dataStore.edit {
-            it[isSubscribedKey] = isSubscribed
+            if (isSubscribed != null) it[isSubscribedKey] = isSubscribed
+            else it.remove(isSubscribedKey)
         }
     fun isSubscribedFlow(): Flow<IsSubscribed?> =
         dataStore.data.map { it[isSubscribedKey] }

@@ -88,6 +88,7 @@ splashscreen = { module = "androidx.core:core-splashscreen", version = "1.0.1" }
 
 billing-client = { module = "com.android.billingclient:billing-ktx", version = "7.1.1" }
 
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version = "23.3.0" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

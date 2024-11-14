@@ -5,6 +5,7 @@ import com.weathersync.common.TestHelper
 import com.weathersync.common.auth.mockAuth
 import com.weathersync.features.auth.presentation.AuthViewModel
 import io.mockk.mockk
+import io.mockk.unmockkAll
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 
@@ -22,10 +23,11 @@ class BaseAuthRule: TestWatcher() {
         viewModel = AuthViewModel(
             regularAuthRepository = regularAuthRepository,
             googleAuthRepository = googleAuthRepository,
-            analyticsManager = testHelper.analyticsManager
+            analyticsManager = testHelper.getAnalyticsManager(mockk(relaxed = true))
         )
     }
     override fun starting(description: Description?) {
+        unmockkAll()
         setup()
     }
 }

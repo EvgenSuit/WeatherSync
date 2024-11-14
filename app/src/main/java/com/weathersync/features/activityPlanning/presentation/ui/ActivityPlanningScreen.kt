@@ -21,6 +21,8 @@ import com.weathersync.features.activityPlanning.presentation.ActivityPlanningUI
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
 import com.weathersync.features.activityPlanning.presentation.ui.components.PlanYourActivityComposable
 import com.weathersync.ui.theme.WeatherSyncTheme
+import com.weathersync.utils.ads.AdBannerType
+import com.weathersync.utils.ads.BannerAdView
 import com.weathersync.utils.weather.Limit
 import com.weathersync.utils.isInProgress
 import kotlinx.coroutines.flow.collectLatest
@@ -34,6 +36,7 @@ fun ActivityPlanningScreen(
 ) {
     val snackbarController = LocalSnackbarController.current
     val uiState by viewModel.uiState.collectAsState()
+    val showBannerAds by viewModel.showBannerAds.collectAsState()
     LaunchedEffect(viewModel) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
@@ -43,6 +46,7 @@ fun ActivityPlanningScreen(
     }
     ActivityPlanningScreenContent(
         uiState = uiState,
+        showBannerAds = showBannerAds,
         onIntent = viewModel::handleIntent
     )
 }
@@ -50,6 +54,7 @@ fun ActivityPlanningScreen(
 @Composable
 fun ActivityPlanningScreenContent(
     uiState: ActivityPlanningUIState,
+    showBannerAds: Boolean?,
     onIntent: (ActivityPlanningIntent) -> Unit
 ) {
     val formattedNextGenerationTime = uiState.formattedNextGenerationTime
@@ -66,6 +71,7 @@ fun ActivityPlanningScreenContent(
             output = output,
             onIntent = onIntent
         )
+        if (showBannerAds == true) BannerAdView(adBannerType = AdBannerType.ActivityPlanning)
     }
 }
 
@@ -75,6 +81,7 @@ fun ActivityPlanningScreenContentPreview() {
     WeatherSyncTheme {
         Surface {
             ActivityPlanningScreenContent(
+                showBannerAds = true,
                 uiState = ActivityPlanningUIState(
                     generatedText = "Generated suggestions".repeat(30),
                     limit = Limit(isReached = true, nextUpdateDateTime = Date.from(Instant.now().plusSeconds(24*60*60)))

@@ -11,23 +11,34 @@ import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
+import com.weathersync.utils.ads.AdsDatastoreManager
 import com.weathersync.utils.weather.Limit
 import com.weathersync.utils.isInProgress
+import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
 import com.weathersync.utils.weather.NextUpdateTimeFormatter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val homeRepository: HomeRepository,
     private val analyticsManager: AnalyticsManager,
-    private val nextUpdateTimeFormatter: NextUpdateTimeFormatter
+    private val nextUpdateTimeFormatter: NextUpdateTimeFormatter,
+    subscriptionInfoDatastore: SubscriptionInfoDatastore
 ): ViewModel() {
     private val _uiState = MutableStateFlow(HomeUIState())
     val uiState = _uiState.asStateFlow()
+
+    val showBannerAds = subscriptionInfoDatastore.isSubscribedFlow()
+        .map { it?.not() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     private val _uiEvent = MutableSharedFlow<UIEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
@@ -50,14 +61,15 @@ class HomeViewModel(
                 val isSubscribed = homeRepository.isSubscribed()
                 val limit = homeRepository.calculateLimit(isSubscribed = isSubscribed)
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT,
+                    isSubscribed = isSubscribed,
                     "next_update_time" to (limit.nextUpdateDateTime?.toString() ?: ""))
                 val formattedNextUpdateTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.formatNextUpdateDateTime(it) }
                 _uiState.update { it.copy(
                     limit = limit,
                     formattedNextUpdateTime = formattedNextUpdateTime) }
-
                 val weather = homeRepository.getCurrentWeather(isLimitReached = limit.isReached)
-                analyticsManager.logEvent(FirebaseEvent.FETCH_CURRENT_WEATHER)
+                analyticsManager.logEvent(event = FirebaseEvent.FETCH_CURRENT_WEATHER,
+                    isSubscribed = isSubscribed)
                 _uiState.update { it.copy(currentWeather = weather) }
 
                 updateMethod(CustomResult.Success)

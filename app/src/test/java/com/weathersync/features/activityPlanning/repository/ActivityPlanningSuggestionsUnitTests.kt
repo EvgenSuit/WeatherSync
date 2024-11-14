@@ -1,5 +1,6 @@
 package com.weathersync.features.activityPlanning.repository
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.weathersync.common.MainDispatcherRule
 import com.weathersync.common.TestException
 import com.weathersync.common.testInterfaces.BaseGenerationTest
@@ -19,7 +20,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class ActivityPlanningSuggestionsUnitTests: BaseGenerationTest {
     @get: Rule(order = 1)
     val activityPlanningBaseRule = ActivityPlanningBaseRule()

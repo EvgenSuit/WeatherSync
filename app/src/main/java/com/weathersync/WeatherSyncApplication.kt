@@ -28,10 +28,10 @@ class WeatherSyncApplication: Application() {
             androidLogger(Level.DEBUG)
             androidContext(this@WeatherSyncApplication)
             modules(
+                utilsModule,
                 subscriptionModule,
                 navModule,
                 authModule,
-                utilsModule,
                 homeModule,
                 activityPlanningModule,
                 settingsModule

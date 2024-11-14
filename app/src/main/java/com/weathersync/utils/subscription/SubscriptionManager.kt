@@ -21,8 +21,11 @@ import com.weathersync.ui.SubscriptionUIEvent
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.BillingServiceDisconnected
 import com.weathersync.utils.BillingServiceInitException
+import com.weathersync.utils.FirebaseEvent
+import com.weathersync.utils.PurchaseException
 import com.weathersync.utils.PurchasesUpdatedException
 import com.weathersync.utils.SubscriptionCheckException
+import com.weathersync.utils.ads.AdsDatastoreManager
 import com.weathersync.utils.subscription.data.OfferDetails
 import com.weathersync.utils.subscription.data.PricingPhaseDetails
 import com.weathersync.utils.subscription.data.SubscriptionDetails
@@ -45,7 +48,8 @@ typealias IsSubscribed = Boolean
 class SubscriptionManager(
     billingClientBuilder: BillingClient.Builder,
     private val subscriptionInfoDatastore: SubscriptionInfoDatastore,
-    private val analyticsManager: AnalyticsManager
+    private val analyticsManager: AnalyticsManager,
+    private val adsDatastoreManager: AdsDatastoreManager
 ) {
     private val billingClientInitMutex = Mutex()
     private val isSubscribedMutex = Mutex()
@@ -59,8 +63,7 @@ class SubscriptionManager(
                 for (purchase in purchases) {
                     try {
                         handlePurchase(purchase)
-                        val isSubscribed = fetchUpToDateSubscriptionState()
-                        subscriptionInfoDatastore.setIsSubscribed(isSubscribed)
+                        setIsSubscribed(inputPurchase = purchase)
                     } catch (e: Exception) {
                         _purchasesUpdatedEvent.emit(SubscriptionUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_update_purchases)))
                         analyticsManager.recordException(e)
@@ -84,17 +87,21 @@ class SubscriptionManager(
     // call this function before generation and weather fetch
     suspend fun initBillingClient(): IsSubscribed = billingClientInitMutex.withLock {
         if (!billingClient.isReady) {
-            subscriptionInfoDatastore.setIsSubscribed(false)
+            // set to null to avoid showing ads if the billing client is not initialized yet
+            subscriptionInfoDatastore.setIsSubscribed(null)
+            adsDatastoreManager.setShowInterstitialAd()
             startConnection()
         }
         return setIsSubscribed()
     }
 
-
-    private suspend fun setIsSubscribed(): IsSubscribed {
+    private suspend fun setIsSubscribed(inputPurchase: Purchase? = null): IsSubscribed {
         isSubscribedMutex.withLock {
-            val isSubscribed = fetchUpToDateSubscriptionState()
+            val isSubscribed = fetchUpToDateSubscriptionState(inputPurchase = inputPurchase)
             subscriptionInfoDatastore.setIsSubscribed(isSubscribed)
+            adsDatastoreManager.setShowInterstitialAd(
+                event = FirebaseEvent.NONE,
+                isSubscribed = isSubscribed)
             return isSubscribed
         }
     }
@@ -121,19 +128,18 @@ class SubscriptionManager(
         })
     }
 
-    fun isSubscribedFlow() = subscriptionInfoDatastore.isSubscribedFlow()
-
-    private suspend fun fetchUpToDateSubscriptionState(): IsSubscribed = suspendCancellableCoroutine { continuation ->
-        val params = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.SUBS)
-            .build()
-        billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
-            if (billingResult.responseCode == BillingResponseCode.OK) {
-                continuation.resume(
-                    purchases.any { purchase ->
-                        purchase.purchaseState == PurchaseState.PURCHASED
-                    })
-            } else continuation.resumeWithException(SubscriptionCheckException(billingResult.debugMessage))
+    private suspend fun fetchUpToDateSubscriptionState(inputPurchase: Purchase? = null): IsSubscribed = suspendCancellableCoroutine { continuation ->
+        if (inputPurchase != null) {
+            continuation.resume(inputPurchase.purchaseState == PurchaseState.PURCHASED)
+        } else {
+            val params = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.SUBS)
+                .build()
+            billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
+                if (billingResult.responseCode == BillingResponseCode.OK) {
+                    continuation.resume(purchases.any { it.purchaseState == PurchaseState.PURCHASED })
+                } else continuation.resumeWithException(SubscriptionCheckException(billingResult.debugMessage))
+            }
         }
     }
 
@@ -150,14 +156,14 @@ class SubscriptionManager(
         getProductDetails()?.map { it.toSubscriptionDetails() }
 
     suspend fun purchase(activity: Activity) {
-        val productDetails = getProductDetails() ?: return
-        // selects a product with free trial offer first, if its unavailable fallback to the first available product
+        val productDetails = getProductDetails() ?: throw PurchaseException("Product details are null")
+        // selects a product with free trial offer first, if it's unavailable fallback to the first available product
         val selectedProductDetails = productDetails.firstOrNull { product ->
             product.subscriptionOfferDetails?.any { offer -> offer.containsFreeTrial() } == true
-        } ?: productDetails.firstOrNull() ?: return
+        } ?: productDetails.firstOrNull() ?: throw PurchaseException("Could not select product details")
         val selectedOfferToken = selectedProductDetails.subscriptionOfferDetails
             ?.firstOrNull { offer -> offer.containsFreeTrial() }?.offerToken
-            ?: selectedProductDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken ?: return
+            ?: selectedProductDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken ?: throw PurchaseException("Offer token is null")
         val productDetailsParamsList = listOf(
             BillingFlowParams.ProductDetailsParams.newBuilder()
                 .setProductDetails(selectedProductDetails)
@@ -181,6 +187,8 @@ class SubscriptionManager(
             }
         }
     }
+
+    fun isSubscribedFlow() = subscriptionInfoDatastore.isSubscribedFlow()
 
     private fun ProductDetails.SubscriptionOfferDetails.containsFreeTrial() =
         this.pricingPhases.pricingPhaseList.any { phase ->

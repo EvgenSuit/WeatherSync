@@ -1,5 +1,6 @@
 package com.weathersync.features.activityPlanning.repository
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
 import com.weathersync.common.MainDispatcherRule
@@ -17,7 +18,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class ActivityPlanningLimitTests: BaseLimitTest {
     @get: Rule(order = 1)
     val activityPlanningBaseRule = ActivityPlanningBaseRule()

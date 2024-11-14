@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.rules.TestWatcher
@@ -19,6 +20,9 @@ class MainDispatcherRule(
         Dispatchers.setMain(testDispatcher)
     }
     override fun finished(description: Description) {
+        // Forces completion of any pending coroutines
+        testDispatcher.scheduler.advanceUntilIdle()
+        // might return "Dispatchers.Main is used concurrently with setting" exception
         Dispatchers.resetMain()
     }
 }

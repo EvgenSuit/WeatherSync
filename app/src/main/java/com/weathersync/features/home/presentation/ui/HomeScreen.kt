@@ -27,6 +27,8 @@ import com.weathersync.features.home.presentation.ui.components.CurrentWeatherCo
 import com.weathersync.features.home.presentation.ui.components.RecommendedActivitiesComposable
 import com.weathersync.features.home.presentation.ui.components.WhatToWearComposable
 import com.weathersync.ui.theme.WeatherSyncTheme
+import com.weathersync.utils.ads.AdBannerType
+import com.weathersync.utils.ads.BannerAdView
 import com.weathersync.utils.weather.Limit
 import com.weathersync.utils.isInProgress
 import com.weathersync.utils.isNone
@@ -41,6 +43,7 @@ fun HomeScreen(
 ) {
     val snackbarController = LocalSnackbarController.current
     val uiState by viewModel.uiState.collectAsState()
+    val showBannerAds by viewModel.showBannerAds.collectAsState()
     LaunchedEffect(viewModel) {
         viewModel.uiEvent.collect { event ->
             when (event) {
@@ -53,6 +56,7 @@ fun HomeScreen(
     })
     HomeScreenContent(
         uiState = uiState,
+        showBannerAds = showBannerAds,
         onIntent = viewModel::handleIntent
         )
 }
@@ -60,6 +64,7 @@ fun HomeScreen(
 @Composable
 fun HomeScreenContent(
     uiState: HomeUIState,
+    showBannerAds: Boolean?,
     onIntent: (HomeIntent) -> Unit
 ) {
     val formattedNextUpdateTime = uiState.formattedNextUpdateTime
@@ -80,6 +85,7 @@ fun HomeScreenContent(
             CurrentWeatherComposable(
                 weather = uiState.currentWeather,
                 isFetchInProgress = listOf(uiState.currentWeatherFetchResult, uiState.currentWeatherRefreshResult).any { it.isInProgress() })
+            if (showBannerAds == true) BannerAdView(adBannerType = AdBannerType.Home)
             RecommendedActivitiesComposable(
                 recommendedActivities = suggestions?.recommendedActivities,
                 unrecommendedActivities = suggestions?.unrecommendedActivities,
@@ -93,7 +99,7 @@ fun HomeScreenContent(
     }
 }
 
-@Preview(device = "spec:id=reference_tablet,shape=Normal,width=1280,height=800,unit=dp,dpi=240")
+@Preview//(device = "spec:id=reference_tablet,shape=Normal,width=1280,height=800,unit=dp,dpi=240")
 @Composable
 fun HomeScreenPreview() {
     WeatherSyncTheme {
@@ -102,6 +108,7 @@ fun HomeScreenPreview() {
                 uiState = HomeUIState(
                     limit = Limit(isReached = true, nextUpdateDateTime = Date.from(Instant.now().plusSeconds(24*60*60)))
                 ),
+                showBannerAds = true,
                 onIntent = {}
             )
         }

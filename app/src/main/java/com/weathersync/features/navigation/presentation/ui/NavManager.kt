@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -69,7 +70,7 @@ fun NavManager(
     navManagerViewModel: NavManagerViewModel = koinViewModel()
 ) {
     val snackbarController = LocalSnackbarController.current
-    val isSubscribed by navManagerViewModel.isUserSubscribedFlow.collectAsStateWithLifecycle()
+    val isSubscribed by navManagerViewModel.isUserSubscribedFlow.collectAsState()
     NavManagerContent(
         activity = activity,
         navController = navController,

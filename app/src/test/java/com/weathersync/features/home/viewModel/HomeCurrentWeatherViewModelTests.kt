@@ -8,6 +8,7 @@ import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.HomeIntent
 import com.weathersync.features.home.toCurrentWeather
+import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
@@ -44,6 +45,7 @@ class HomeCurrentWeatherViewModelTests {
             if (isCaptured) println(captured)
             assertFalse(isCaptured)
         }
+        assertEquals(CustomResult.Success, homeBaseRule.viewModel.uiState.value.currentWeatherFetchResult)
         assertEquals(getMockedWeather(fetchedWeatherUnits).toCurrentWeather(), homeBaseRule.viewModel.uiState.value.currentWeather)
         coVerifyAll {
             homeBaseRule.homeRepository.apply {

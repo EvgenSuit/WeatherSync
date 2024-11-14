@@ -22,6 +22,7 @@ import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.ui.HomeScreen
 import com.weathersync.features.home.toCurrentWeather
+import com.weathersync.utils.ads.AdBannerType
 import com.weathersync.utils.weather.NextUpdateTimeFormatter
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.TestScope
@@ -46,7 +47,8 @@ class HomeCurrentWeatherUITests {
     private val snackbarScope = TestScope()
 
     @Test
-    fun fetchCurrentWeather_success() = runTest {
+    fun fetchCurrentWeather_notSubscribed_successAdsShown() = runTest {
+        homeBaseRule.subscriptionInfoDatastore.setIsSubscribed(false)
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
             HomeScreen(viewModel = homeBaseRule.viewModel)
         }) {
@@ -61,6 +63,28 @@ class HomeCurrentWeatherUITests {
             assertEquals(currentWeather, homeBaseRule.viewModel.uiState.value.currentWeather)
             assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
 
+            onNodeWithTag(AdBannerType.Home.name).assertExists()
+            assertCorrectCurrentWeatherUI(currentWeather)
+        }
+    }
+    @Test
+    fun fetchCurrentWeather_subscribed_successAdsNotShown() = runTest {
+        homeBaseRule.subscriptionInfoDatastore.setIsSubscribed(true)
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope, uiContent = {
+            HomeScreen(viewModel = homeBaseRule.viewModel)
+        }) {
+            onNodeWithTag("CurrentWeatherProgress").assertIsDisplayed()
+            homeBaseRule.manageLocationPermission(grant = true)
+            onNodeWithText(getString(R.string.request_permission)).assertIsDisplayed().performClick()
+
+            waitForIdle()
+            onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
+            homeBaseRule.advance(this@runTest)
+            val currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather()
+            assertEquals(currentWeather, homeBaseRule.viewModel.uiState.value.currentWeather)
+            assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
+
+            onNodeWithTag(AdBannerType.Home.name).assertDoesNotExist()
             assertCorrectCurrentWeatherUI(currentWeather)
         }
     }

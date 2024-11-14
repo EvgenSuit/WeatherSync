@@ -18,7 +18,8 @@ val activityPlanningModule = module {
         ActivityPlanningViewModel(
             activityPlanningRepository = get(),
             analyticsManager = get(),
-            nextUpdateTimeFormatter = get()
+            nextUpdateTimeFormatter = get(),
+            subscriptionInfoDatastore = get()
         )
     }
     factory { ActivityPlanningRepository(

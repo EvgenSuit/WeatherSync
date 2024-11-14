@@ -10,7 +10,9 @@ import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.features.settings.data.themeDatastore
 import com.weathersync.features.settings.presentation.SettingsViewModel
 import com.weathersync.utils.weather.WeatherUnitsManager
+import io.mockk.mockk
 import io.mockk.spyk
+import io.mockk.unmockkAll
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.koin.core.context.stopKoin
@@ -25,7 +27,7 @@ class SettingsBaseRule: TestWatcher() {
     fun setupViewModel() {
         viewModel = SettingsViewModel(
             settingsRepository = settingsRepository,
-            analyticsManager = testHelper.analyticsManager
+            analyticsManager = testHelper.getAnalyticsManager(mockk(relaxed = true))
         )
     }
     fun setupRepository(
@@ -52,6 +54,7 @@ class SettingsBaseRule: TestWatcher() {
 
     override fun starting(description: Description) {
         stopKoin()
+        unmockkAll()
         setupWeatherUnitsManager()
         setupRepository()
         setupViewModel()

@@ -5,6 +5,8 @@ import com.google.firebase.analytics.logEvent
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.setCustomKeys
+import com.weathersync.utils.ads.AdsDatastoreManager
+import com.weathersync.utils.subscription.IsSubscribed
 import kotlin.coroutines.cancellation.CancellationException
 
 enum class FirebaseEvent {
@@ -21,14 +23,16 @@ enum class FirebaseEvent {
     FETCH_WEATHER_UNITS,
     CHANGE_WEATHER_UNITS,
 
-    SIGN_OUT
+    SIGN_OUT,
 
+    NONE
 }
 
 class AnalyticsManager(
     private val auth: FirebaseAuth,
     private val crashlytics: FirebaseCrashlytics,
     private val analytics: FirebaseAnalytics,
+    private val adsDatastoreManager: AdsDatastoreManager
 ) {
     init {
         crashlytics.isCrashlyticsCollectionEnabled = true
@@ -43,9 +47,14 @@ class AnalyticsManager(
         crashlytics.log(infoString)
     }
 
-    fun logEvent(event: FirebaseEvent, vararg params: Pair<String, String>) = analytics.logEvent(event.name.lowercase()) {
-        param("user_id", auth.currentUser?.uid.toString())
-        params.forEach { param(it.first, it.second) }
+    suspend fun logEvent(event: FirebaseEvent,
+                         isSubscribed: IsSubscribed?,
+                         vararg params: Pair<String, String>) {
+        adsDatastoreManager.setShowInterstitialAd(event = event, isSubscribed = isSubscribed)
+        analytics.logEvent(event.name.lowercase()) {
+            param("user_id", auth.currentUser?.uid.toString())
+            params.forEach { param(it.first, it.second) }
+        }
     }
 
     fun recordException(e: Exception, vararg info: Any) {

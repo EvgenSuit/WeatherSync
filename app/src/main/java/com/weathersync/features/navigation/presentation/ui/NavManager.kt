@@ -135,7 +135,6 @@ fun NavManagerContent(
                     .padding(innerPadding)
                     .fillMaxSize()
                     .consumeWindowInsets(innerPadding)
-                    .windowInsetsPadding(WindowInsets.ime)
                     .clearFocusOnNonButtonClick(LocalFocusManager.current)
             ) {
                 composable(Route.Auth.route) {

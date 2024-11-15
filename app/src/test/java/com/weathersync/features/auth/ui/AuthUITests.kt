@@ -74,9 +74,9 @@ class AuthUITests {
             val passwordVisibleIcon = onNodeWithContentDescription("Password visible")
             val passwordNotVisibleIcon = onNodeWithContentDescription("Password not visible")
 
-            // assert visibility toggle is not displayed when the password text field is blank
+            // assert visibility toggle is displayed when the password text field is blank
+            passwordNotVisibleIcon.assertIsDisplayed()
             passwordVisibleIcon.assertDoesNotExist()
-            passwordNotVisibleIcon.assertDoesNotExist()
 
             passwordField.performTextReplacement(validPassword)
             passwordNotVisibleIcon.assertIsDisplayed()

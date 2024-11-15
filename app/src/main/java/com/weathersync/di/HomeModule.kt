@@ -8,7 +8,7 @@ import com.google.android.gms.location.LocationServices
 import com.weathersync.BuildConfig
 import com.weathersync.features.home.GeminiRepository
 import com.weathersync.features.home.HomeRepository
-import com.weathersync.features.home.LocationClient
+import com.weathersync.utils.weather.LocationClient
 import com.weathersync.features.home.WeatherUpdater
 import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
 import com.weathersync.features.home.presentation.HomeViewModel

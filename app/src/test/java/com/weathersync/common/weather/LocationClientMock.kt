@@ -6,7 +6,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
-import com.weathersync.features.home.LocationClient
+import com.weathersync.utils.weather.LocationClient
 import com.weathersync.features.home.getMockedWeather
 import io.mockk.every
 import io.mockk.mockk

@@ -2,7 +2,7 @@ package com.weathersync.features.activityPlanning
 
 import com.weathersync.features.activityPlanning.data.ForecastDates
 import com.weathersync.features.activityPlanning.data.OpenMeteoForecast
-import com.weathersync.features.home.LocationClient
+import com.weathersync.utils.weather.LocationClient
 import com.weathersync.features.settings.data.WeatherUnit
 import com.weathersync.utils.weather.WeatherUnitsManager
 import com.weathersync.utils.weather.WeatherRepository

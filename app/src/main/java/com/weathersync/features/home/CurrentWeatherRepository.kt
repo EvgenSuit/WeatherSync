@@ -4,6 +4,7 @@ import com.weathersync.features.home.data.CurrentOpenMeteoWeather
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.features.settings.data.WeatherUnit
+import com.weathersync.utils.weather.LocationClient
 import com.weathersync.utils.weather.WeatherUnitsManager
 import com.weathersync.utils.weather.WeatherRepository
 import io.ktor.client.call.body

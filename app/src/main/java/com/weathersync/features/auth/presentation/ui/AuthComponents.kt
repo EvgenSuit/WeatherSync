@@ -1,6 +1,7 @@
 package com.weathersync.features.auth.presentation.ui
 
 import android.content.IntentSender
+import android.graphics.drawable.Icon
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -66,6 +67,7 @@ fun AuthFields(
     fieldsState: AuthTextFieldsState,
     onInput: (AuthIntent) -> Unit
 ) {
+    var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(5.dp),
@@ -78,6 +80,14 @@ fun AuthFields(
         AuthTextField(
             enabled = enabled,
             fieldState = fieldsState.password,
+            visualTransformation = if (!isPasswordVisible) PasswordVisualTransformation() else VisualTransformation.None,
+            trailingIcon = {
+                val icon = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val description = if (isPasswordVisible) "Password visible" else "Password not visible"
+                IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                    Icon(imageVector = icon, contentDescription = description)
+                }
+            },
             onInput = onInput)
     }
 }
@@ -86,11 +96,12 @@ fun AuthFields(
 fun AuthTextField(
     enabled: Boolean,
     fieldState: AuthTextFieldState,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    trailingIcon: @Composable () -> Unit = {},
     onInput: (AuthIntent) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
-    var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
     val type = fieldState.type
     val state = fieldState.state
     val error = state.error?.asString(context) ?: ""
@@ -112,16 +123,8 @@ fun AuthTextField(
             onValueChange = {
                 onInput(AuthIntent.AuthInput(fieldState.copy(state = fieldState.state.copy(value = it))))
             },
-            visualTransformation = if (!isPasswordVisible) PasswordVisualTransformation() else VisualTransformation.None,
-            trailingIcon = {
-                if (type == AuthFieldType.Password && state.value.isNotBlank()) {
-                    val icon = if (isPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
-                    val description = if (isPasswordVisible) "Password visible" else "Password not visible"
-                    IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                        Icon(imageVector = icon, contentDescription = description)
-                    }
-                }
-            },
+            visualTransformation = visualTransformation,
+            trailingIcon = { trailingIcon() },
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(placeholderText))

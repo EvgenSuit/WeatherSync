@@ -134,7 +134,6 @@ dependencies {
 
     // DI
     implementation(libs.koin)
-    implementation(libs.androidx.junit.ktx)
 
     // Gemini
     implementation(libs.generative.ai)
@@ -149,6 +148,7 @@ dependencies {
     // Ads
     implementation(libs.play.services.ads)
 
+    implementation(libs.androidx.junit.ktx)
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.robolectric)

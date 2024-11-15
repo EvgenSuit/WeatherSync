@@ -1,5 +1,7 @@
 package com.weathersync.utils
 
+class LocationRequestException(message: String): Exception(message)
+
 class EmptyGeminiResponse(message: String): Exception(message)
 class AtLeastOneGenerationTagMissing(message: String) : Exception(message)
 

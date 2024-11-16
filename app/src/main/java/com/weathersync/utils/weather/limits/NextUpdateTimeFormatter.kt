@@ -1,4 +1,4 @@
-package com.weathersync.utils.weather
+package com.weathersync.utils.weather.limits
 
 import java.text.DateFormat
 import java.text.SimpleDateFormat

@@ -29,7 +29,7 @@ import com.weathersync.features.home.presentation.ui.components.WhatToWearCompos
 import com.weathersync.ui.theme.WeatherSyncTheme
 import com.weathersync.utils.ads.AdBannerType
 import com.weathersync.utils.ads.BannerAdView
-import com.weathersync.utils.weather.Limit
+import com.weathersync.utils.weather.limits.Limit
 import com.weathersync.utils.isInProgress
 import com.weathersync.utils.isNone
 import com.weathersync.utils.isSuccess

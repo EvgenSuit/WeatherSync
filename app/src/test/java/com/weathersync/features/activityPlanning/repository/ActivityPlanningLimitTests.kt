@@ -10,9 +10,11 @@ import com.weathersync.common.testInterfaces.BaseLimitTest
 import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.features.activityPlanning.ActivityPlanningBaseRule
 import com.weathersync.utils.subscription.IsSubscribed
-import com.weathersync.utils.weather.FirestoreLimitCollection
-import com.weathersync.utils.weather.GenerationType
-import com.weathersync.utils.weather.Limit
+import com.weathersync.utils.weather.limits.FirestoreLimitCollection
+import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.Limit
+import io.ktor.client.plugins.ResponseException
+import io.ktor.http.HttpStatusCode
 import io.mockk.coVerify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
@@ -27,17 +29,14 @@ class ActivityPlanningLimitTests: BaseLimitTest {
     @get: Rule(order = 0)
     val dispatcherRule = MainDispatcherRule(activityPlanningBaseRule.testDispatcher)
 
-    @Test(expected = TestException::class)
-    override fun getServerTimestamp_exception() = runTest {
-        activityPlanningBaseRule.setupLimitManager(
-            serverTimestampGetException = activityPlanningBaseRule.testHelper.testException)
+    @Test(expected = ResponseException::class)
+    override fun calculateLimit_timeApiException() = runTest {
+        activityPlanningBaseRule.setupLimitManager(timeApiStatusCode = HttpStatusCode.Forbidden)
         calculateLimit(isSubscribed = false)
     }
-
     @Test(expected = TestException::class)
-    override fun deleteServerTimestamp_exception() = runTest {
-        activityPlanningBaseRule.setupLimitManager(
-            serverTimestampDeleteException = activityPlanningBaseRule.testHelper.testException)
+    override fun calculateLimit_firestoreException() = runTest {
+        activityPlanningBaseRule.setupLimitManager(exception = TestException("exception"))
         calculateLimit(isSubscribed = false)
     }
 

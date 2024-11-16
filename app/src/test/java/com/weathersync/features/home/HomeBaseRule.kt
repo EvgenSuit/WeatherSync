@@ -1,7 +1,6 @@
 package com.weathersync.features.home
 
 import android.Manifest
-import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.ai.client.generativeai.GenerativeModel
@@ -11,7 +10,6 @@ import com.weathersync.common.TestClock
 import com.weathersync.common.TestException
 import com.weathersync.common.TestHelper
 import com.weathersync.common.data.createInMemoryDataStore
-import com.weathersync.common.utils.mockAnalyticsManager
 import com.weathersync.common.weather.mockEngine
 import com.weathersync.common.weather.mockGenerativeModel
 import com.weathersync.common.weather.fetchedWeatherUnits
@@ -19,6 +17,7 @@ import com.weathersync.common.weather.locationInfo
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
 import com.weathersync.common.utils.mockSubscriptionManager
+import com.weathersync.common.utils.mockTimeAPI
 import com.weathersync.common.weather.mockLocationClient
 import com.weathersync.common.weather.mockWeatherUnitsManager
 import com.weathersync.features.home.data.CurrWeather
@@ -31,14 +30,12 @@ import com.weathersync.features.home.presentation.HomeViewModel
 import com.weathersync.features.settings.data.WeatherUnit
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.ads.AdsDatastoreManager
-import com.weathersync.utils.ads.adsDataStore
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
-import com.weathersync.utils.subscription.data.subscriptionInfoDatastore
 import com.weathersync.utils.weather.FirestoreWeatherUnit
-import com.weathersync.utils.weather.GenerationType
-import com.weathersync.utils.weather.LimitManager
-import com.weathersync.utils.weather.NextUpdateTimeFormatter
+import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.LimitManager
+import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import com.weathersync.utils.weather.WeatherUnitsManager
 import io.ktor.http.HttpStatusCode
 import io.mockk.spyk
@@ -141,19 +138,18 @@ class HomeBaseRule: TestWatcher() {
     }
     fun setupLimitManager(
         timestamps: List<Timestamp> = listOf(),
-        serverTimestampGetException: Exception? = null,
-        serverTimestampDeleteException: Exception? = null) {
+        timeApiStatusCode: HttpStatusCode = HttpStatusCode.OK,
+        exception: Exception? = null) {
         limitManagerFirestore = mockLimitManagerFirestore(
-            testClock = testClock,
             timestamps = timestamps,
-            serverTimestampGetException = serverTimestampGetException,
-            serverTimestampDeleteException = serverTimestampDeleteException
+            exception = exception
         )
         weatherUpdater = spyk(WeatherUpdater(testClock, minutes = 60))
         limitManager = spyk(mockLimitManager(
             limitManagerFirestore = limitManagerFirestore,
             currentWeatherDAO = currentWeatherLocalDB.currentWeatherDao(),
-            weatherUpdater = weatherUpdater
+            weatherUpdater = weatherUpdater,
+            timeAPI = mockTimeAPI(statusCode = timeApiStatusCode, currTimeMillis = testClock.millis() )
         ))
     }
 

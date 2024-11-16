@@ -11,6 +11,7 @@ import com.weathersync.common.data.createInMemoryDataStore
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
 import com.weathersync.common.utils.mockSubscriptionManager
+import com.weathersync.common.utils.mockTimeAPI
 import com.weathersync.common.weather.fetchedWeatherUnits
 import com.weathersync.common.weather.locationInfo
 import com.weathersync.common.weather.mockGenerativeModel
@@ -26,12 +27,12 @@ import com.weathersync.utils.ads.AdsDatastoreManager
 import com.weathersync.utils.ads.adsDataStore
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
-import com.weathersync.utils.subscription.data.subscriptionInfoDatastore
 import com.weathersync.utils.weather.FirestoreWeatherUnit
-import com.weathersync.utils.weather.GenerationType
-import com.weathersync.utils.weather.LimitManager
-import com.weathersync.utils.weather.NextUpdateTimeFormatter
+import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.LimitManager
+import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import com.weathersync.utils.weather.WeatherUnitsManager
+import com.weathersync.utils.weather.limits.TimeAPIResponse
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -138,18 +139,17 @@ class ActivityPlanningBaseRule: TestWatcher() {
     }
     fun setupLimitManager(
         timestamps: List<Timestamp> = listOf(),
-        serverTimestampGetException: Exception? = null,
-        serverTimestampDeleteException: Exception? = null) {
+        timeApiStatusCode: HttpStatusCode = HttpStatusCode.OK,
+        exception: Exception? = null) {
         limitManagerFirestore = mockLimitManagerFirestore(
-            testClock = testClock,
             timestamps = timestamps,
-            serverTimestampGetException = serverTimestampGetException,
-            serverTimestampDeleteException = serverTimestampDeleteException
+            exception = exception
         )
         limitManager = spyk(mockLimitManager(
             limitManagerFirestore = limitManagerFirestore,
             currentWeatherDAO = currentWeatherDAO,
-            weatherUpdater = mockk()
+            weatherUpdater = mockk(),
+            timeAPI = mockTimeAPI(statusCode = timeApiStatusCode, currTimeMillis = testClock.millis())
         ))
     }
 

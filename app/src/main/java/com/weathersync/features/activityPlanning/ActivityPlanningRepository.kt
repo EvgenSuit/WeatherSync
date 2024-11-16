@@ -5,8 +5,8 @@ import com.weathersync.features.activityPlanning.data.ForecastDates
 import com.weathersync.features.activityPlanning.data.toForecast
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.SubscriptionManager
-import com.weathersync.utils.weather.GenerationType
-import com.weathersync.utils.weather.LimitManager
+import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.LimitManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

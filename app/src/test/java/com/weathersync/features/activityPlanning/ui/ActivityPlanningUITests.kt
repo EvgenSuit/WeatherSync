@@ -23,7 +23,7 @@ import com.weathersync.features.activityPlanning.ActivityPlanningBaseRule
 import com.weathersync.features.activityPlanning.presentation.ui.ActivityPlanningScreen
 import com.weathersync.utils.AtLeastOneGenerationTagMissing
 import com.weathersync.utils.ads.AdBannerType
-import com.weathersync.utils.weather.NextUpdateTimeFormatter
+import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.TestScope

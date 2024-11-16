@@ -4,22 +4,27 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.data.Suggestions
 
 class Converters {
+    private val gson = Gson()
+
     @TypeConverter
-    fun fromList(list: List<String>?): String {
-        return list?.joinToString(",") ?: ""
+    fun fromStringList(list: List<String>?): String {
+        return gson.toJson(list)
     }
 
     @TypeConverter
-    fun toList(data: String?): List<String> {
-        return data?.split(",")?.map { it.trim() } ?: emptyList()
+    fun toStringList(data: String?): List<String> {
+        val listType = object: TypeToken<List<String>>() {}.type
+        return gson.fromJson(data, listType)
     }
 }
 
-@Database(entities = [CurrentWeather::class, Suggestions::class], version = 2, exportSchema = true)
+@Database(entities = [CurrentWeather::class, Suggestions::class], version = 3, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class CurrentWeatherLocalDB: RoomDatabase() {
     abstract fun currentWeatherDao(): CurrentWeatherDAO

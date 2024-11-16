@@ -58,8 +58,11 @@ class HomeCurrentWeatherViewModelTests {
                 recordTimestamp()
             }
         }
-        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT, true)
-        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.FETCH_CURRENT_WEATHER, false)
+        homeBaseRule.testHelper.apply {
+            verifyAnalyticsEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT, true)
+            verifyAnalyticsEvent(FirebaseEvent.FETCH_CURRENT_WEATHER, false)
+            verifyAnalyticsEvent(FirebaseEvent.GENERATE_SUGGESTIONS, false)
+        }
     }
     @Test
     fun getCurrentWeather_limitReached_localWeatherIsNull() = runTest {
@@ -90,9 +93,12 @@ class HomeCurrentWeatherViewModelTests {
                 ).toCurrentWeather())
             }
         }
-        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT, false,
-            "next_update_time" to homeBaseRule.viewModel.uiState.value.limit.nextUpdateDateTime!!.toString())
-        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.FETCH_CURRENT_WEATHER, false)
+        homeBaseRule.testHelper.apply {
+            verifyAnalyticsEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT, false,
+                "next_update_time" to homeBaseRule.viewModel.uiState.value.limit.nextUpdateDateTime!!.toString())
+            verifyAnalyticsEvent(FirebaseEvent.FETCH_CURRENT_WEATHER, false)
+            verifyAnalyticsEvent(FirebaseEvent.GENERATE_SUGGESTIONS, true)
+        }
     }
 
     @Test
@@ -105,9 +111,13 @@ class HomeCurrentWeatherViewModelTests {
         homeBaseRule.advance(this)
         val localWeather = homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getWeather()
         assertTrue(listOf(homeBaseRule.viewModel.uiState.value.currentWeather, localWeather).all { it != null })
-        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT, false,
-            "next_update_time" to "")
-        homeBaseRule.testHelper.verifyAnalyticsEvent(FirebaseEvent.FETCH_CURRENT_WEATHER, false)
+
+        homeBaseRule.testHelper.apply {
+            verifyAnalyticsEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT, false,
+                "next_update_time" to "")
+            verifyAnalyticsEvent(FirebaseEvent.FETCH_CURRENT_WEATHER, false)
+            verifyAnalyticsEvent(FirebaseEvent.GENERATE_SUGGESTIONS, false)
+        }
     }
     @Test
     fun fetchCurrentWeather_geocoderError_error() = runTest {

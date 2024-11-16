@@ -60,6 +60,13 @@ class LimitManager(
     suspend fun calculateLimit(isSubscribed: IsSubscribed,
                                generationType: GenerationType
     ): Limit {
+        if (generationType == GenerationType.CurrentWeather) {
+            val savedWeather = currentWeatherDAO.getWeather()
+            val isLocalWeatherFresh = savedWeather?.time?.let { time ->
+                weatherUpdater.isLocalWeatherFresh(time)
+            } ?: false
+            if (isLocalWeatherFresh) return Limit(isReached = true)
+        }
         val realDateTime = timeAPI.getRealDateTime()
         val currentTime = Timestamp(realDateTime)
         val ref = when (generationType) {
@@ -93,13 +100,6 @@ class LimitManager(
             // add "durationInHours" hours to the last timestamp
             val nextUpdateDateTime = Date(lastTimestamp.toDate().time + duration)
             return Limit(isReached = true, nextUpdateDateTime = nextUpdateDateTime)
-        } else if (generationType == GenerationType.CurrentWeather) {
-            // if account limit is not yet reached, but the local instance of current weather is fresh, consider the limit reached
-            val savedWeather = currentWeatherDAO.getWeather()
-            val isLocalWeatherFresh = savedWeather?.time?.let { time ->
-                weatherUpdater.isLocalWeatherFresh(time)
-            } ?: false
-            return Limit(isReached = isLocalWeatherFresh)
         } else return Limit(isReached = false)
     }
 

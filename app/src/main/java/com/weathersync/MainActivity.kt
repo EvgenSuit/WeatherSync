@@ -117,7 +117,7 @@ class MainActivity : ComponentActivity() {
                         interstitialAd = mInterstitialAd,
                         onDismissed = {
                             // navigate to premium after interstitial ad dismissal
-                            navController.navigate(Route.Premium.route)
+                            //navController.navigate(Route.Premium.route)
                         })
                     adsDatastoreManager.setShowInterstitialAd(FirebaseEvent.NONE)
                 }

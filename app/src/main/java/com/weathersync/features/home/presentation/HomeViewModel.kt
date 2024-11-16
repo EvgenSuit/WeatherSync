@@ -13,6 +13,7 @@ import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.weather.limits.Limit
 import com.weathersync.utils.isInProgress
+import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -69,11 +70,20 @@ class HomeViewModel(
 
                 val weather = homeRepository.getCurrentWeather(isLimitReached = limit.isReached)
                 analyticsManager.logEvent(event = FirebaseEvent.FETCH_CURRENT_WEATHER,
-                    isSubscribed = isSubscribed)
+                    isSubscribed = isSubscribed,
+                    "is_limit_reached" to limit.isReached.toString(),
+                    "locality" to weather?.locality.orEmpty(),
+                    "temp" to weather?.temp.toString(),
+                    "wind_speed" to weather?.windSpeed.toString(),
+                    "weather_code" to weather?.weatherCode.toString(),
+                    "time" to weather?.time.orEmpty())
                 _uiState.update { it.copy(currentWeather = weather) }
 
                 updateMethod(CustomResult.Success)
-                if (weather != null) generateSuggestions(isLimitReached = limit.isReached, currentWeather = weather)
+                if (weather != null) generateSuggestions(
+                    isLimitReached = limit.isReached,
+                    isSubscribed = isSubscribed,
+                    currentWeather = weather)
             } catch (e: Exception) {
                 _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_fetch_current_weather)))
                 analyticsManager.recordException(e, "Is refreshing: $refresh")
@@ -83,12 +93,20 @@ class HomeViewModel(
     }
     private suspend fun generateSuggestions(
         isLimitReached: Boolean,
+        isSubscribed: IsSubscribed,
         currentWeather: CurrentWeather) {
         updateSuggestionsGenerationResult(CustomResult.InProgress)
         try {
             val recommendations = homeRepository.generateSuggestions(isLimitReached = isLimitReached, currentWeather = currentWeather)
             // add timestamp only if current weather fetch and suggestions generation are successful
             if (!isLimitReached) homeRepository.recordTimestamp()
+            analyticsManager.logEvent(event = FirebaseEvent.GENERATE_SUGGESTIONS,
+                isSubscribed = isSubscribed,
+                "is_limit_reached" to isLimitReached.toString(),
+                "recommended_activities" to recommendations?.recommendedActivities?.joinToString(", ").orEmpty(),
+                "unrecommended_activities" to recommendations?.unrecommendedActivities?.joinToString(", ").orEmpty(),
+                "what_to_wear_bring" to recommendations?.whatToBring?.joinToString(", ").orEmpty()
+                )
             _uiState.update { it.copy(suggestions = recommendations ?: Suggestions()) }
             updateSuggestionsGenerationResult(CustomResult.Success)
         } catch (e: Exception) {

@@ -127,7 +127,7 @@ dependencies {
     annotationProcessor(libs.room.compiler)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
-    testImplementation(libs.room.testing)
+    implementation(libs.gson)
 
     // datastore
     implementation(libs.datastore.preferences)
@@ -149,6 +149,7 @@ dependencies {
     implementation(libs.play.services.ads)
 
     implementation(libs.androidx.junit.ktx)
+    testImplementation(libs.room.testing)
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.robolectric)

@@ -67,6 +67,7 @@ room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
+gson = { module = "com.google.code.gson:gson", version = "2.11.0" }
 
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version = "1.1.1" }
 

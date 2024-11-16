@@ -2,6 +2,7 @@ package com.weathersync.features.home.repository
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.FieldValue
 import com.weathersync.common.MainDispatcherRule
 import com.weathersync.common.TestException
@@ -19,6 +20,7 @@ import com.weathersync.utils.weather.limits.Limit
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
 import io.mockk.coVerify
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -86,6 +88,8 @@ class HomeRepositoryLimitTests: BaseLimitTest {
         dao.insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
         val secondLimit = calculateLimit(isSubscribed = true)
         coVerify { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
+        // verify that the remote limits check was not performed if local weather is fresh
+        coVerify(inverse = true) { homeBaseRule.limitManagerFirestore.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName) }
         assertTrue(secondLimit.isReached)
     }
 

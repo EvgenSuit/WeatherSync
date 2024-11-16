@@ -1,5 +1,6 @@
 package com.weathersync.features.activityPlanning
 
+import android.util.Log
 import com.google.ai.client.generativeai.GenerativeModel
 import com.weathersync.features.activityPlanning.data.Forecast
 import com.weathersync.utils.EmptyGeminiResponse
@@ -7,7 +8,7 @@ import com.weathersync.utils.weather.GeminiRepository
 import com.weathersync.utils.weather.weatherCodeToDescription
 import java.time.ZoneId
 
-val activitiesPlanningTag = "[ACTIVITIES_PLANNING]"
+const val activitiesPlanningTag = "[ACTIVITIES_PLANNING]"
 class ActivityPlanningGeminiRepository(
     private val generativeModel: GenerativeModel,
     private val is24HourFormat: Boolean
@@ -63,15 +64,14 @@ class ActivityPlanningGeminiRepository(
 
     private fun constructForecastText(forecast: Forecast): String =
         forecast.forecast.mapIndexed { i, singleForecast ->
-            """$i. Time: ${singleForecast.time.value},
-                temperature: ${singleForecast.temp.value} ${singleForecast.temp.unit},
-                humidity: ${singleForecast.humidity.value} ${singleForecast.humidity.unit},
-                wind speed: ${singleForecast.windSpeed.value} ${singleForecast.windSpeed.unit},
-                precipitation probability: ${singleForecast.precipProb.value} ${singleForecast.precipProb.unit},
-                weather description: ${weatherCodeToDescription(singleForecast.weatherCode.value as Int)},
-                visibility: ${singleForecast.visibility.value} ${singleForecast.visibility.unit},
-                pressure: ${singleForecast.pressure.value} ${singleForecast.pressure.unit}.
-            """.trimMargin()
+            "$i. Time: ${singleForecast.time.value}, " +
+            "temperature: ${singleForecast.temp.value} ${singleForecast.temp.unit}, " +
+            "humidity: ${singleForecast.humidity.value} ${singleForecast.humidity.unit}, " +
+            "wind speed: ${singleForecast.windSpeed.value} ${singleForecast.windSpeed.unit}, " +
+            "precipitation probability: ${singleForecast.precipProb.value} ${singleForecast.precipProb.unit}, " +
+            "weather description: ${weatherCodeToDescription(singleForecast.weatherCode.value as Int)}, " +
+            "visibility: ${singleForecast.visibility.value} ${singleForecast.visibility.unit}, " +
+            "pressure: ${singleForecast.pressure.value} ${singleForecast.pressure.unit}."
         }.joinToString("\n")
 
 

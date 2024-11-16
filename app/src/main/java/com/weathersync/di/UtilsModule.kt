@@ -13,9 +13,11 @@ import com.weathersync.utils.ads.adsDataStore
 import com.weathersync.utils.subscription.SubscriptionManager
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
 import com.weathersync.utils.subscription.data.subscriptionInfoDatastore
-import com.weathersync.utils.weather.LimitManager
-import com.weathersync.utils.weather.NextUpdateTimeFormatter
+import com.weathersync.utils.weather.limits.LimitManager
+import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import com.weathersync.utils.weather.WeatherUnitsManager
+import com.weathersync.utils.weather.limits.TimeAPI
+import io.ktor.client.engine.cio.CIO
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 import java.time.Clock
@@ -29,11 +31,13 @@ val utilsModule = module {
         analytics = Firebase.analytics,
         adsDatastoreManager = get()
         ) }
+    single { TimeAPI(engine = CIO.create()) }
     factory { LimitManager(
         auth = Firebase.auth,
         firestore = Firebase.firestore,
         currentWeatherDAO = get(),
-        weatherUpdater = get()) }
+        weatherUpdater = get(),
+        timeAPI = get()) }
     factory { WeatherUnitsManager(
         country = Locale.getDefault().country,
         auth = Firebase.auth,

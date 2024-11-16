@@ -11,18 +11,16 @@ import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
-import com.weathersync.utils.ads.AdsDatastoreManager
-import com.weathersync.utils.weather.Limit
+import com.weathersync.utils.weather.limits.Limit
 import com.weathersync.utils.isInProgress
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
-import com.weathersync.utils.weather.NextUpdateTimeFormatter
+import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -59,6 +57,7 @@ class HomeViewModel(
         viewModelScope.launch {
             try {
                 val isSubscribed = homeRepository.isSubscribed()
+
                 val limit = homeRepository.calculateLimit(isSubscribed = isSubscribed)
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT,
                     isSubscribed = isSubscribed,
@@ -67,6 +66,7 @@ class HomeViewModel(
                 _uiState.update { it.copy(
                     limit = limit,
                     formattedNextUpdateTime = formattedNextUpdateTime) }
+
                 val weather = homeRepository.getCurrentWeather(isLimitReached = limit.isReached)
                 analyticsManager.logEvent(event = FirebaseEvent.FETCH_CURRENT_WEATHER,
                     isSubscribed = isSubscribed)

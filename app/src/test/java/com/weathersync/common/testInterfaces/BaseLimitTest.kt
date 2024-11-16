@@ -6,23 +6,22 @@ import com.weathersync.common.TestClock
 import com.weathersync.common.TestException
 import com.weathersync.common.auth.userId
 import com.weathersync.utils.subscription.IsSubscribed
-import com.weathersync.utils.weather.FirestoreLimitCollection
-import com.weathersync.utils.weather.Limit
-import com.weathersync.utils.weather.LimitManagerConfig
+import com.weathersync.utils.weather.limits.FirestoreLimitCollection
+import com.weathersync.utils.weather.limits.Limit
+import com.weathersync.utils.weather.limits.LimitManagerConfig
+import io.ktor.client.plugins.ResponseException
 import io.mockk.verify
 import kotlinx.coroutines.tasks.await
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.Date
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 interface BaseLimitTest {
+    @Test(expected = ResponseException::class)
+    fun calculateLimit_timeApiException()
     @Test(expected = TestException::class)
-    fun getServerTimestamp_exception()
-
-    @Test(expected = TestException::class)
-    fun deleteServerTimestamp_exception()
+    fun calculateLimit_firestoreException()
 
     @Test
     fun limitReached_notSubscribed_isLimitCorrect()

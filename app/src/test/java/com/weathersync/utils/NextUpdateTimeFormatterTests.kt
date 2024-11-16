@@ -1,7 +1,7 @@
 package com.weathersync.utils
 
 import com.weathersync.common.TestClock
-import com.weathersync.utils.weather.NextUpdateTimeFormatter
+import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

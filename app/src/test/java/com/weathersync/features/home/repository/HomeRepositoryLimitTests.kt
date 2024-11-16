@@ -13,9 +13,11 @@ import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.utils.subscription.IsSubscribed
-import com.weathersync.utils.weather.FirestoreLimitCollection
-import com.weathersync.utils.weather.GenerationType
-import com.weathersync.utils.weather.Limit
+import com.weathersync.utils.weather.limits.FirestoreLimitCollection
+import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.Limit
+import io.ktor.client.plugins.ResponseException
+import io.ktor.http.HttpStatusCode
 import io.mockk.coVerify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
@@ -35,15 +37,16 @@ class HomeRepositoryLimitTests: BaseLimitTest {
     @get: Rule(order = 0)
     val dispatcherRule = MainDispatcherRule(homeBaseRule.testDispatcher)
 
-    @Test(expected = TestException::class)
-    override fun getServerTimestamp_exception() = runTest {
-        homeBaseRule.setupLimitManager(serverTimestampGetException = homeBaseRule.exception)
-        calculateLimit(isSubscribed = true)
+    @Test(expected = ResponseException::class)
+    override fun calculateLimit_timeApiException() = runTest {
+        homeBaseRule.setupLimitManager(timeApiStatusCode = HttpStatusCode.Forbidden)
+        calculateLimit(isSubscribed = false)
     }
+
     @Test(expected = TestException::class)
-    override fun deleteServerTimestamp_exception() = runTest {
-        homeBaseRule.setupLimitManager(serverTimestampDeleteException = homeBaseRule.exception)
-        calculateLimit(isSubscribed = true)
+    override fun calculateLimit_firestoreException() = runTest {
+        homeBaseRule.setupLimitManager(exception = TestException("exception"))
+        calculateLimit(isSubscribed = false)
     }
 
     @Test
@@ -98,7 +101,7 @@ class HomeRepositoryLimitTests: BaseLimitTest {
     @Test
     override fun recordTimestamp_success() = runTest {
         homeBaseRule.homeRepository.recordTimestamp()
-        val ref = homeBaseRule.limitManagerFirestore.collection(userId).document("limits").collection("currentWeatherLimits")
+        val ref = homeBaseRule.limitManagerFirestore.collection(userId).document("limits").collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
         coVerify {
             homeBaseRule.limitManager.recordTimestamp(GenerationType.CurrentWeather)
             ref.add(any<Map<String, FieldValue>>())

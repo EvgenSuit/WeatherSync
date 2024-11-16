@@ -23,7 +23,7 @@ import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.ui.HomeScreen
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.utils.ads.AdBannerType
-import com.weathersync.utils.weather.NextUpdateTimeFormatter
+import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest

@@ -23,7 +23,7 @@ import com.weathersync.features.activityPlanning.presentation.ui.components.Plan
 import com.weathersync.ui.theme.WeatherSyncTheme
 import com.weathersync.utils.ads.AdBannerType
 import com.weathersync.utils.ads.BannerAdView
-import com.weathersync.utils.weather.Limit
+import com.weathersync.utils.weather.limits.Limit
 import com.weathersync.utils.isInProgress
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel

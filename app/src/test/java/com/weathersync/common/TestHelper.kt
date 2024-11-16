@@ -7,22 +7,17 @@ import com.weathersync.common.auth.userId
 import com.weathersync.common.utils.mockAnalyticsManager
 import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.ads.AdsDatastoreManager
-import com.weathersync.utils.weather.LimitManagerConfig
+import com.weathersync.utils.weather.limits.LimitManagerConfig
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
 import org.junit.Assert.assertEquals
-import java.text.DateFormat
-import java.text.SimpleDateFormat
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
-import java.util.Calendar
 import java.util.Date
-import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 class TestException(message: String) : Exception(message)
 

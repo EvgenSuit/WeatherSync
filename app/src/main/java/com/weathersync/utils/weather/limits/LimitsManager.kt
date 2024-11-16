@@ -1,4 +1,4 @@
-package com.weathersync.utils.weather
+package com.weathersync.utils.weather.limits
 
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -12,7 +12,6 @@ import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.utils.subscription.IsSubscribed
 import kotlinx.coroutines.tasks.await
 import java.util.Date
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 sealed class GenerationType(
@@ -51,15 +50,18 @@ class LimitManager(
     auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val currentWeatherDAO: CurrentWeatherDAO,
-    private val weatherUpdater: WeatherUpdater
+    private val weatherUpdater: WeatherUpdater,
+    private val timeAPI: TimeAPI
 ) {
     private val limitsDoc = firestore.collection(auth.currentUser!!.uid).document("limits")
     private val currentWeatherLimitsRef = limitsDoc.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
     private val activityRecommendationsLimitsRef = limitsDoc.collection(FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName)
 
     suspend fun calculateLimit(isSubscribed: IsSubscribed,
-                               generationType: GenerationType): Limit {
-        val currentTime = getServerTimestamp()
+                               generationType: GenerationType
+    ): Limit {
+        val realDateTime = timeAPI.getRealDateTime()
+        val currentTime = Timestamp(realDateTime)
         val ref = when (generationType) {
             is GenerationType.CurrentWeather -> currentWeatherLimitsRef
             is GenerationType.ActivityRecommendations -> activityRecommendationsLimitsRef
@@ -102,11 +104,14 @@ class LimitManager(
     }
 
     private suspend fun deleteDocs(query: Query) {
-        val batch = firestore.batch()
-        query.get().await().documents.forEach { doc ->
-            batch.delete(doc.reference)
+        val docs = query.get().await().documents
+        if (docs.isNotEmpty()) {
+            val batch = firestore.batch()
+            docs.forEach { doc ->
+                batch.delete(doc.reference)
+            }
+            batch.commit().await()
         }
-        batch.commit().await()
     }
 
     suspend fun recordTimestamp(generationType: GenerationType) {
@@ -118,13 +123,5 @@ class LimitManager(
 
     private suspend fun CollectionReference.addTimestamp() {
         this.add(mapOf("timestamp" to FieldValue.serverTimestamp())).await()
-    }
-
-    private suspend fun getServerTimestamp(): Timestamp {
-        val timestampRef = firestore.collection("serverTimestamp").document()
-        timestampRef.set(mapOf("timestamp" to FieldValue.serverTimestamp())).await()
-        val timestamp = timestampRef.get().await().getTimestamp("timestamp")
-        timestampRef.delete().await()
-        return timestamp!!
     }
 }

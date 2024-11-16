@@ -11,8 +11,8 @@ import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
-import com.weathersync.utils.weather.Limit
-import com.weathersync.utils.weather.NextUpdateTimeFormatter
+import com.weathersync.utils.weather.limits.Limit
+import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -66,7 +66,8 @@ class ActivityPlanningViewModel(
                     activityPlanningRepository.recordTimestamp()
                     analyticsManager.logEvent(
                         event = FirebaseEvent.PLAN_ACTIVITIES,
-                        isSubscribed = isSubscribed)
+                        isSubscribed = isSubscribed,
+                        "suggestions" to suggestions)
                     _uiState.update { it.copy(
                         generatedText = suggestions,
                         forecastDays = forecast.forecastDays) }

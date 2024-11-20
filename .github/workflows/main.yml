@@ -37,7 +37,8 @@ jobs:
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest --stacktrace
 
-      - name: Archive Test Reports
+      - name: Upload Test Reports
+        if: always()
         uses: actions/upload-artifact@v3
         with:
             name: junit-test-report

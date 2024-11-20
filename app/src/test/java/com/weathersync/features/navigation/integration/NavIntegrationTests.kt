@@ -85,6 +85,8 @@ class NavIntegrationTests {
                     assertEquals(3, navController.backStack.size)
 
                     onNodeWithContentDescription(Icons.AutoMirrored.Default.ArrowBack.name).performClick()
+                    waitForIdle()
+                    advanceUntilIdle()
                     assertRouteEquals(Route.Home)
 
                     // 2 since back stack contains of graph and current route

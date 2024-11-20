@@ -7,7 +7,7 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.weathersync.features.home.WeatherUpdater
+import com.weathersync.features.home.domain.WeatherUpdater
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.utils.subscription.IsSubscribed
 import kotlinx.coroutines.tasks.await
@@ -18,7 +18,7 @@ sealed class GenerationType(
     val regularLimitManagerConfig: LimitManagerConfig,
     val premiumLimitManagerConfig: LimitManagerConfig
 ) {
-    data object CurrentWeather: GenerationType(
+    data class CurrentWeather(val refresh: Boolean?): GenerationType(
         regularLimitManagerConfig = LimitManagerConfig(6, 6),
         premiumLimitManagerConfig = LimitManagerConfig(9, 6)
     )
@@ -54,13 +54,13 @@ class LimitManager(
     private val timeAPI: TimeAPI
 ) {
     private val limitsDoc = firestore.collection(auth.currentUser!!.uid).document("limits")
-    private val currentWeatherLimitsRef = limitsDoc.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
-    private val activityRecommendationsLimitsRef = limitsDoc.collection(FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName)
 
     suspend fun calculateLimit(isSubscribed: IsSubscribed,
                                generationType: GenerationType
     ): Limit {
-        if (generationType == GenerationType.CurrentWeather) {
+        // ignore local weather limits and fetch remote ones on refresh
+        if (generationType is GenerationType.CurrentWeather && generationType.refresh != null
+            && !generationType.refresh) {
             val savedWeather = currentWeatherDAO.getWeather()
             val isLocalWeatherFresh = savedWeather?.time?.let { time ->
                 weatherUpdater.isLocalWeatherFresh(time)
@@ -70,8 +70,8 @@ class LimitManager(
         val realDateTime = timeAPI.getRealDateTime()
         val currentTime = Timestamp(realDateTime)
         val ref = when (generationType) {
-            is GenerationType.CurrentWeather -> currentWeatherLimitsRef
-            is GenerationType.ActivityRecommendations -> activityRecommendationsLimitsRef
+            is GenerationType.CurrentWeather -> limitsDoc.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
+            is GenerationType.ActivityRecommendations -> limitsDoc.collection(FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName)
         }
         return ref.manageLimits(isSubscribed = isSubscribed,
             currentTime = currentTime,
@@ -116,8 +116,8 @@ class LimitManager(
 
     suspend fun recordTimestamp(generationType: GenerationType) {
         when (generationType) {
-            is GenerationType.CurrentWeather -> currentWeatherLimitsRef.addTimestamp()
-            is GenerationType.ActivityRecommendations -> activityRecommendationsLimitsRef.addTimestamp()
+            is GenerationType.CurrentWeather -> limitsDoc.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName).addTimestamp()
+            is GenerationType.ActivityRecommendations -> limitsDoc.collection(FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName).addTimestamp()
         }
     }
 

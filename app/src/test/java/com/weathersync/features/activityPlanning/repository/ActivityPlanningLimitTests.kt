@@ -102,7 +102,7 @@ class ActivityPlanningLimitTests: BaseLimitTest {
         )
     }
 
-    override suspend fun calculateReachedLimit(
+    suspend fun calculateReachedLimit(
         isSubscribed: IsSubscribed,
         timestamps: List<Timestamp>
     ): Limit {
@@ -121,7 +121,7 @@ class ActivityPlanningLimitTests: BaseLimitTest {
         return limit
     }
 
-    override suspend fun calculateLimit(isSubscribed: IsSubscribed): Limit {
+    suspend fun calculateLimit(isSubscribed: IsSubscribed): Limit {
         activityPlanningBaseRule.setupActivityPlanningRepository(isSubscribed = isSubscribed)
         val limit = activityPlanningBaseRule.activityPlanningRepository.calculateLimit(isSubscribed)
         return limit

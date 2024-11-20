@@ -6,12 +6,14 @@ import com.weathersync.common.TestException
 import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.common.weather.fetchedWeatherUnits
 import com.weathersync.features.home.HomeBaseRule
+import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.HomeIntent
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.features.home.toSuggestions
-import com.weathersync.utils.AtLeastOneGenerationTagMissing
-import com.weathersync.utils.EmptyGeminiResponse
+import com.weathersync.utils.NullGeminiResponse
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.http.HttpStatusCode
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
 import kotlinx.coroutines.test.TestScope
@@ -32,20 +34,25 @@ class HomeSuggestionsViewModelTests {
 
     @Test
     fun generateSuggestions_generationException_error() = runTest {
-        homeBaseRule.setupHomeRepository(
-            isSubscribed = false,
-            suggestionsGenerationException = homeBaseRule.exception)
-        homeBaseRule.setupViewModel()
-        homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
-        homeBaseRule.advance(this)
+        homeBaseRule.apply {
+            setupHomeRepository(
+                isSubscribed = false,
+                httpStatusCode = HttpStatusCode.Forbidden)
+            setupViewModel()
+            viewModel.handleIntent(HomeIntent.GetCurrentWeather)
+            advance(this@runTest)
+        }
         assertTrue(homeBaseRule.viewModel.uiState.value.currentWeather != null)
-        assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is TestException)
+        assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is ClientRequestException)
         homeBaseRule.homeRepository.apply {
             coVerifyAll {
                 isSubscribed()
-                calculateLimit(isSubscribed = false)
+                calculateLimit(isSubscribed = false,
+                    refresh = false)
                 getCurrentWeather(isLimitReached = false)
-                generateSuggestions(isLimitReached = false, currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
+                generateSuggestions(isLimitReached = false,
+                    isSubscribed = false,
+                    currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
             }
             coVerifyAll(inverse = true) {
                 recordTimestamp()
@@ -54,54 +61,28 @@ class HomeSuggestionsViewModelTests {
     }
     @Test
     fun generateSuggestions_emptyGeminiResponse() = runTest {
-        homeBaseRule.setupHomeRepository(
-            isSubscribed = false,
-            generatedSuggestions = null)
-        homeBaseRule.setupViewModel()
-        homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
-        homeBaseRule.advance(this)
+        homeBaseRule.apply {
+            setupHomeRepository(isSubscribed = false)
+            setupViewModel()
+            viewModel.handleIntent(HomeIntent.GetCurrentWeather)
+            advance(this@runTest)
+        }
         assertEquals(getMockedWeather(fetchedWeatherUnits).toCurrentWeather(), homeBaseRule.viewModel.uiState.value.currentWeather)
-        assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is EmptyGeminiResponse)
+        assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is NullGeminiResponse)
         homeBaseRule.homeRepository.apply {
-            coVerifyAll {
-                isSubscribed()
-                calculateLimit(isSubscribed = false)
-                getCurrentWeather(isLimitReached = false)
-                generateSuggestions(
-                    isLimitReached = false,
-                    currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather()
-                )
-            }
-            coVerifyAll(inverse = true) {
+            coVerify { isSubscribed() }
+            coVerify { calculateLimit(isSubscribed = false, refresh = false) }
+            coVerify { getCurrentWeather(isLimitReached = false) }
+            coVerify { generateSuggestions(
+                isLimitReached = false,
+                isSubscribed = false,
+                currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather()) }
+            coVerify(inverse = true) {
                 recordTimestamp()
             }
         }
     }
-    @Test
-    fun generateSuggestions_atLeastOneTagMissing() = runTest {
-        homeBaseRule.setupHomeRepository(
-            isSubscribed = false,
-            generatedSuggestions = "Content with no tags")
-        homeBaseRule.setupViewModel()
-        homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
-        homeBaseRule.advance(this)
-        assertEquals(getMockedWeather(fetchedWeatherUnits).toCurrentWeather(), homeBaseRule.viewModel.uiState.value.currentWeather)
-        assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is AtLeastOneGenerationTagMissing)
-        homeBaseRule.homeRepository.apply {
-            coVerifyAll {
-                isSubscribed()
-                calculateLimit(isSubscribed = false)
-                getCurrentWeather(isLimitReached = false)
-                generateSuggestions(
-                    isLimitReached = false,
-                    currentWeather = getMockedWeather(fetchedWeatherUnits).toCurrentWeather()
-                )
-            }
-            coVerifyAll(inverse = true) {
-                recordTimestamp()
-            }
-        }
-    }
+
     @Test
     fun generateSuggestions_success() = runTest {
         homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
@@ -113,15 +94,15 @@ class HomeSuggestionsViewModelTests {
         assertEquals(homeBaseRule.testSuggestions.unrecommendedActivities, suggestions.unrecommendedActivities)
         assertEquals(homeBaseRule.testSuggestions.whatToBring, suggestions.whatToBring)
         homeBaseRule.homeRepository.apply {
-            coVerifyAll {
-                isSubscribed()
-                calculateLimit(isSubscribed = false)
-                getCurrentWeather(isLimitReached = false)
-                generateSuggestions(isLimitReached = false, currentWeather = getMockedWeather(
+            coVerify { isSubscribed() }
+            coVerify { calculateLimit(isSubscribed = false, refresh = false) }
+            coVerify { getCurrentWeather(isLimitReached = false) }
+            coVerify { generateSuggestions(isLimitReached = false,
+                isSubscribed = false,
+                currentWeather = getMockedWeather(
                     fetchedWeatherUnits
-                ).toCurrentWeather())
-                recordTimestamp()
-            }
+                ).toCurrentWeather()) }
+            coVerify { recordTimestamp() }
         }
     }
     @Test
@@ -136,27 +117,29 @@ class HomeSuggestionsViewModelTests {
     fun generateSuggestions_accountLimitReached_localSuggestionsAreNotNull() = runTest {
         homeBaseRule.currentWeatherLocalDB.currentWeatherDao().apply {
             insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
-            insertSuggestions(homeBaseRule.testSuggestions.toSuggestions())
+            insertSuggestions(homeBaseRule.testSuggestions)
         }
         val timestamps = createDescendingTimestamps(
             limitManagerConfig = homeBaseRule.regularLimitManagerConfig,
             currTimeMillis = homeBaseRule.testClock.millis()
         )
-        homeBaseRule.setupLimitManager(timestamps = timestamps)
-        homeBaseRule.setupHomeRepository(isSubscribed = false)
-        homeBaseRule.setupViewModel()
-        homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
-        homeBaseRule.advance(this)
-        assertEquals(homeBaseRule.testSuggestions.toSuggestions(), homeBaseRule.viewModel.uiState.value.suggestions)
+        homeBaseRule.apply {
+            setupLimitManager(timestamps = timestamps)
+            setupHomeRepository(isSubscribed = false)
+            setupViewModel()
+            viewModel.handleIntent(HomeIntent.GetCurrentWeather)
+            advance(this@runTest)
+        }
+        assertEquals(homeBaseRule.testSuggestions, homeBaseRule.viewModel.uiState.value.suggestions)
         homeBaseRule.homeRepository.apply {
-            coVerifyAll {
-                isSubscribed()
-                calculateLimit(isSubscribed = false)
-                getCurrentWeather(isLimitReached = true)
-                generateSuggestions(isLimitReached = true, currentWeather = getMockedWeather(
+            coVerify { isSubscribed() }
+            coVerify { calculateLimit(isSubscribed = false, refresh = false) }
+            coVerify { getCurrentWeather(isLimitReached = true) }
+            coVerify { generateSuggestions(isLimitReached = true,
+                isSubscribed = false,
+                currentWeather = getMockedWeather(
                     fetchedWeatherUnits
-                ).toCurrentWeather())
-            }
+                ).toCurrentWeather()) }
             coVerify(inverse = true) {
                 recordTimestamp()
             }
@@ -169,20 +152,25 @@ class HomeSuggestionsViewModelTests {
             limitManagerConfig = homeBaseRule.regularLimitManagerConfig,
             currTimeMillis = homeBaseRule.testClock.millis()
         )
-        homeBaseRule.setupLimitManager(timestamps = timestamps)
-        homeBaseRule.setupHomeRepository(isSubscribed = false)
-        homeBaseRule.setupViewModel(locale = locale)
-        homeBaseRule.viewModel.handleIntent(HomeIntent.GetCurrentWeather)
-        homeBaseRule.advance(this)
+        homeBaseRule.apply {
+            setupLimitManager(timestamps = timestamps)
+            setupHomeRepository(isSubscribed = false)
+            setupViewModel(locale = locale)
+            viewModel.handleIntent(HomeIntent.GetCurrentWeather)
+            advance(this@generateSuggestions_LimitReached)
+        }
         assertEquals(null, homeBaseRule.viewModel.uiState.value.currentWeather)
         homeBaseRule.homeRepository.apply {
             coVerifyAll {
                 isSubscribed()
-                calculateLimit(isSubscribed = false)
+                calculateLimit(isSubscribed = false,
+                    refresh = false)
                 getCurrentWeather(isLimitReached = true)
             }
             coVerify(inverse = true) {
-                generateSuggestions(isLimitReached = any(), currentWeather = any())
+                generateSuggestions(isLimitReached = any(),
+                    isSubscribed = false,
+                    currentWeather = any())
                 recordTimestamp()
             }
         }

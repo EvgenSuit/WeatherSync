@@ -22,6 +22,7 @@ import io.ktor.http.HttpStatusCode
 import io.mockk.coVerify
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -78,19 +79,32 @@ class HomeRepositoryLimitTests: BaseLimitTest {
         deleteOutdatedTimestampsUtil(isSubscribed = false)
     }
     @Test
-    fun localWeatherRecentlyInserted_localWeatherLimitReached() = runTest {
+    fun weatherRecentlyInserted_notRefresh_localWeatherLimitReached() = runTest {
         val dao = homeBaseRule.currentWeatherLocalDB.currentWeatherDao()
-        val firstLimit = calculateLimit(isSubscribed = true)
-        // since weather is null, weather updater will not be called during limit calculations
-        coVerify(inverse = true) { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
-        assertFalse(firstLimit.isReached)
+        assertEquals(null, dao.getWeather())
 
         dao.insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
         val secondLimit = calculateLimit(isSubscribed = true)
         coVerify { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
         // verify that the remote limits check was not performed if local weather is fresh
-        coVerify(inverse = true) { homeBaseRule.limitManagerFirestore.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName) }
+        val ref = homeBaseRule.limitManagerFirestore.collection(userId).document("limits")
+        coVerify(inverse = true) { ref.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName) }
         assertTrue(secondLimit.isReached)
+    }
+    @Test
+    fun weatherRecentlyInserted_refresh_localWeatherLimitNotReached() = runTest {
+        val dao = homeBaseRule.currentWeatherLocalDB.currentWeatherDao()
+        assertEquals(null, dao.getWeather())
+
+        dao.insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
+        val secondLimit = calculateLimit(isSubscribed = true,
+            refresh = true)
+        // verify that local limits check was not performed
+        coVerify(inverse = true) { homeBaseRule.weatherUpdater.isLocalWeatherFresh(any()) }
+        // verify that the remote limits check was not performed if local weather is fresh
+        coVerify { homeBaseRule.limitManagerFirestore.collection(userId).document("limits")
+            .collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)}
+        assertFalse(secondLimit.isReached)
     }
 
     @Test
@@ -107,7 +121,7 @@ class HomeRepositoryLimitTests: BaseLimitTest {
         homeBaseRule.homeRepository.recordTimestamp()
         val ref = homeBaseRule.limitManagerFirestore.collection(userId).document("limits").collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
         coVerify {
-            homeBaseRule.limitManager.recordTimestamp(GenerationType.CurrentWeather)
+            homeBaseRule.limitManager.recordTimestamp(GenerationType.CurrentWeather(null))
             ref.add(any<Map<String, FieldValue>>())
         }
     }
@@ -151,12 +165,15 @@ class HomeRepositoryLimitTests: BaseLimitTest {
         assertFalse(secondLimit.isReached)
     }
 
-    override suspend fun calculateReachedLimit(
+    suspend fun calculateReachedLimit(
         isSubscribed: IsSubscribed,
-        timestamps: List<Timestamp>
+        timestamps: List<Timestamp>,
+        refresh: Boolean = false
     ): Limit {
         homeBaseRule.setupLimitManager(timestamps = timestamps)
-        val limit = calculateLimit(isSubscribed = isSubscribed)
+        val limit = calculateLimit(
+            isSubscribed = isSubscribed,
+            refresh = refresh)
         homeBaseRule.testHelper.assertNextUpdateTimeIsCorrect(
             receivedNextUpdateDateTime = limit.nextUpdateDateTime,
             limitManagerConfig = homeBaseRule.let { if (isSubscribed) it.premiumLimitManagerConfig else it.regularLimitManagerConfig },
@@ -165,12 +182,16 @@ class HomeRepositoryLimitTests: BaseLimitTest {
         return limit
     }
 
-    override suspend fun calculateLimit(isSubscribed: IsSubscribed): Limit {
+    suspend fun calculateLimit(
+        isSubscribed: IsSubscribed,
+        refresh: Boolean = false): Limit {
         homeBaseRule.setupHomeRepository(isSubscribed = isSubscribed)
-        val limit = homeBaseRule.homeRepository.calculateLimit(isSubscribed)
+        val limit = homeBaseRule.homeRepository.calculateLimit(
+            isSubscribed = isSubscribed,
+            refresh = refresh)
         coVerify { homeBaseRule.limitManager.calculateLimit(
             isSubscribed = isSubscribed,
-            generationType = GenerationType.CurrentWeather) }
+            generationType = GenerationType.CurrentWeather(refresh)) }
         return limit
     }
 }

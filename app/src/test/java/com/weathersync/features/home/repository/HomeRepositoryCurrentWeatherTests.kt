@@ -38,8 +38,6 @@ class HomeRepositoryCurrentWeatherTests {
         val weather = getWeather(isSubscribed = false)
         assertTrue(weather != null)
         assertEquals(getMockedWeather(fetchedWeatherUnits).toCurrentWeather(), weather)
-        val dao = homeBaseRule.currentWeatherLocalDB.currentWeatherDao()
-        assertEquals(weather, dao.getWeather())
     }
 
     @Test

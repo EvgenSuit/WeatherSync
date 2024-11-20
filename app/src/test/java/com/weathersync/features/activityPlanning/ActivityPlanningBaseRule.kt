@@ -8,13 +8,13 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
 import com.weathersync.common.TestHelper
 import com.weathersync.common.data.createInMemoryDataStore
+import com.weathersync.common.utils.ai.mockAIClientProvider
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
 import com.weathersync.common.utils.mockSubscriptionManager
 import com.weathersync.common.utils.mockTimeAPI
 import com.weathersync.common.weather.fetchedWeatherUnits
 import com.weathersync.common.weather.locationInfo
-import com.weathersync.common.weather.mockGenerativeModel
 import com.weathersync.common.weather.mockLocationClient
 import com.weathersync.common.weather.mockWeatherUnitsManager
 import com.weathersync.features.activityPlanning.data.ForecastUnits
@@ -25,6 +25,7 @@ import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.features.settings.data.WeatherUnit
 import com.weathersync.utils.ads.AdsDatastoreManager
 import com.weathersync.utils.ads.adsDataStore
+import com.weathersync.utils.ai.AIClientProvider
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
 import com.weathersync.utils.weather.FirestoreWeatherUnit
@@ -32,7 +33,6 @@ import com.weathersync.utils.weather.limits.GenerationType
 import com.weathersync.utils.weather.limits.LimitManager
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import com.weathersync.utils.weather.WeatherUnitsManager
-import com.weathersync.utils.weather.limits.TimeAPIResponse
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -69,8 +69,8 @@ class ActivityPlanningBaseRule: TestWatcher() {
     lateinit var limitManager: LimitManager
     val currentWeatherDAO: CurrentWeatherDAO = mockk()
     lateinit var limitManagerFirestore: FirebaseFirestore
-    lateinit var generativeModel: GenerativeModel
-    lateinit var geminiRepository: ActivityPlanningGeminiRepository
+    lateinit var aiClientProvider: AIClientProvider
+    lateinit var geminiRepository: ActivityPlanningAIRepository
     lateinit var activityPlanningRepository: ActivityPlanningRepository
     lateinit var forecastRepository: ForecastRepository
     lateinit var weatherUnitsManager: WeatherUnitsManager
@@ -95,21 +95,35 @@ class ActivityPlanningBaseRule: TestWatcher() {
         )
     }
     fun setupActivityPlanningRepository(
-        isSubscribed: IsSubscribed,
+        isSubscribed: IsSubscribed? = null,
         generatedSuggestions: String? = null,
-        suggestionsGenerationException: Exception? = null
+        generationHttpStatusCode: HttpStatusCode = HttpStatusCode.OK
     ) {
-        geminiRepository = spyk(mockGeminiRepository(
+        geminiRepository = spyk(mockAIRepository(
             generatedContent = generatedSuggestions,
-            suggestionsGenerationException = suggestionsGenerationException
+            httpStatusCode = generationHttpStatusCode
         ))
         activityPlanningRepository = spyk(ActivityPlanningRepository(
             limitManager = limitManager,
-            subscriptionManager = mockSubscriptionManager(isSubscribed = isSubscribed),
+            subscriptionManager = if (isSubscribed != null) mockSubscriptionManager(isSubscribed = isSubscribed)
+            else mockk(),
             forecastRepository = forecastRepository,
             activityPlanningGeminiRepository = geminiRepository,
             dispatcher = testDispatcher
         ))
+    }
+    private fun mockAIRepository(
+        generatedContent: String? = null,
+        httpStatusCode: HttpStatusCode = HttpStatusCode.OK
+    ): ActivityPlanningAIRepository {
+        aiClientProvider = mockAIClientProvider(
+            statusCode = httpStatusCode,
+            responseValue = generatedContent ?: ""
+        )
+        return ActivityPlanningAIRepository(
+            aiClientProvider = aiClientProvider,
+            is24HourFormat = true
+        )
     }
     fun setupForecastRepository(
         units: List<WeatherUnit> = fetchedWeatherUnits,
@@ -192,16 +206,6 @@ class ActivityPlanningBaseRule: TestWatcher() {
         )
     }
 
-    private fun mockGeminiRepository(
-        generatedContent: String? = null,
-        suggestionsGenerationException: Exception? = null
-    ): ActivityPlanningGeminiRepository {
-        generativeModel = mockGenerativeModel(generatedContent, generationException = suggestionsGenerationException)
-        return ActivityPlanningGeminiRepository(
-            generativeModel = generativeModel,
-            is24HourFormat = true
-        )
-    }
     override fun starting(description: Description?) {
         stopKoin()
         unmockkAll()
@@ -213,15 +217,10 @@ class ActivityPlanningBaseRule: TestWatcher() {
         setupForecastRepository()
         setupActivityPlanningRepository(
             isSubscribed = false,
-            generatedSuggestions = generatedSuggestions)
+            generatedSuggestions = activityPlanningSuggestions)
         setupViewModel()
     }
     val activityPlanningSuggestions = "The best time to do that is October 3, 12:45, 2024"
-    val generatedSuggestions = """
-        $activitiesPlanningTag
-        $activityPlanningSuggestions
-        $activitiesPlanningTag
-    """.trimIndent()
 
     fun assertUrlAndDatesAreCorrect(isSubscribed: IsSubscribed = false) {
         assertTrue(capturedUrl.isNotEmpty())

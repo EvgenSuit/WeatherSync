@@ -10,6 +10,9 @@ import com.google.firebase.ktx.Firebase
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.ads.AdsDatastoreManager
 import com.weathersync.utils.ads.adsDataStore
+import com.weathersync.utils.ai.AIClientProvider
+import com.weathersync.utils.ai.gemini.GeminiClient
+import com.weathersync.utils.ai.openai.OpenAIClient
 import com.weathersync.utils.subscription.SubscriptionManager
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
 import com.weathersync.utils.subscription.data.subscriptionInfoDatastore
@@ -62,5 +65,9 @@ val utilsModule = module {
     ) }
     single { AdsDatastoreManager(
         dataStore = androidContext().adsDataStore
+    ) }
+    single { AIClientProvider(
+        openAIClient = OpenAIClient(CIO.create()),
+        geminiClient = GeminiClient(CIO.create())
     ) }
 }

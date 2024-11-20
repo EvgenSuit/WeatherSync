@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
@@ -60,8 +62,13 @@ fun WhatToWearComposable(recommendations: List<String>?,
         if (isGenerationSuccessful && !recommendations.isNullOrEmpty()) {
             recommendations.forEach { recommendation ->
                 Text(text = "\u2022 $recommendation",
-                    style = MaterialTheme.typography.labelMedium
+                    style = MaterialTheme.typography.displayMedium
                         .copy(fontSize = 21.sp))
+                Box(Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center) {
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth(0.7f)
+                        .padding(15.dp))
+                }
             }
         } else CustomCircularProgressIndicator(modifier = Modifier.testTag("WhatToBringProgress"))
     }

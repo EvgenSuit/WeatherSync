@@ -7,17 +7,22 @@ import com.weathersync.common.auth.userId
 import com.weathersync.common.utils.mockAnalyticsManager
 import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.ads.AdsDatastoreManager
+import com.weathersync.utils.ai.AIClient
+import com.weathersync.utils.ai.openai.OpenAIClient
 import com.weathersync.utils.weather.limits.LimitManagerConfig
+import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Date
+import kotlin.reflect.KClass
 
 class TestException(message: String) : Exception(message)
 
@@ -73,6 +78,11 @@ class TestHelper {
                 assertEquals(param.second, bundles.last().getString(param.first))
             }
         }
+    }
+
+    fun verifyAIClientCall(aiClient: AIClient, expectedType: KClass<out AIClient>) {
+        assertTrue("Expected ${expectedType.simpleName}, but was ${aiClient::class.simpleName}", expectedType.isInstance(aiClient))
+        coVerify { aiClient.generate(any()) }
     }
 
     fun assertNextUpdateTimeIsCorrect(

@@ -22,8 +22,8 @@ import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.ui.HomeScreen
 import com.weathersync.features.home.toCurrentWeather
-import com.weathersync.features.home.toSuggestions
-import com.weathersync.utils.AtLeastOneGenerationTagMissing
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -48,7 +48,7 @@ class HomeSuggestionsUITests {
         homeBaseRule.manageLocationPermission(true)
         homeBaseRule.setupHomeRepository(
             isSubscribed = false,
-            suggestionsGenerationException = homeBaseRule.exception)
+            httpStatusCode = HttpStatusCode.Forbidden)
         homeBaseRule.setupViewModel()
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = { HomeScreen(viewModel = homeBaseRule.viewModel)} ) {
@@ -56,32 +56,14 @@ class HomeSuggestionsUITests {
             // advance permission check
             waitForIdle()
             homeBaseRule.advance(this@runTest)
-            assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is TestException)
+            assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is ClientRequestException)
 
             assertSuggestionsUI(homeBaseRule.viewModel.uiState.value.suggestions, displayed = false)
             assertSnackbarTextEquals(R.string.could_not_generate_suggestions, snackbarScope)
             onNodeWithTag("SuggestionsProgress").assertIsDisplayed()
         }
     }
-    @Test
-    fun generateSuggestions_atLeastOneTagMissing_error() = runTest {
-        homeBaseRule.manageLocationPermission(true)
-        homeBaseRule.setupHomeRepository(
-            isSubscribed = false,
-            generatedSuggestions = "Content with no tags")
-        homeBaseRule.setupViewModel()
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
-            uiContent = { HomeScreen(viewModel = homeBaseRule.viewModel)} ) {
-            onNodeWithTag("SuggestionsProgress", useUnmergedTree = true).assertIsDisplayed()
-            waitForIdle()
-            homeBaseRule.advance(this@runTest)
 
-            assertTrue(homeBaseRule.crashlyticsExceptionSlot.captured is AtLeastOneGenerationTagMissing)
-            assertSuggestionsUI(homeBaseRule.viewModel.uiState.value.suggestions, displayed = false)
-            assertSnackbarTextEquals(R.string.could_not_generate_suggestions, snackbarScope)
-            onNodeWithTag("SuggestionsProgress").assertIsDisplayed()
-        }
-    }
     @Test
     fun generateSuggestions_success() = runTest {
         homeBaseRule.manageLocationPermission(true)
@@ -153,7 +135,7 @@ class HomeSuggestionsUITests {
     fun generateSuggestions_accountLimitReached_localSuggestionsAreNotNull() = runTest {
         homeBaseRule.currentWeatherLocalDB.currentWeatherDao().apply {
             insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
-            insertSuggestions(homeBaseRule.testSuggestions.toSuggestions())
+            insertSuggestions(homeBaseRule.testSuggestions)
         }
         homeBaseRule.manageLocationPermission(true)
         val timestamps = createDescendingTimestamps(
@@ -171,7 +153,7 @@ class HomeSuggestionsUITests {
             onNodeWithText(getString(R.string.request_permission)).assertIsNotDisplayed()
             homeBaseRule.advance(this@runTest)
             assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
-            assertSuggestionsUI(homeBaseRule.testSuggestions.toSuggestions(), displayed = true)
+            assertSuggestionsUI(homeBaseRule.testSuggestions, displayed = true)
         }
     }
     private fun ComposeContentTestRule.assertSuggestionsUI(suggestions: Suggestions?,

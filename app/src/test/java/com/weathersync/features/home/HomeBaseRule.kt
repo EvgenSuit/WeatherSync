@@ -3,15 +3,14 @@ package com.weathersync.features.home
 import android.Manifest
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import com.google.ai.client.generativeai.GenerativeModel
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
 import com.weathersync.common.TestException
 import com.weathersync.common.TestHelper
 import com.weathersync.common.data.createInMemoryDataStore
+import com.weathersync.common.utils.ai.mockAIClientProvider
 import com.weathersync.common.weather.mockEngine
-import com.weathersync.common.weather.mockGenerativeModel
 import com.weathersync.common.weather.fetchedWeatherUnits
 import com.weathersync.common.weather.locationInfo
 import com.weathersync.common.utils.mockLimitManager
@@ -26,10 +25,19 @@ import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.data.CurrentWeatherUnits
 import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
+import com.weathersync.features.home.domain.CurrentWeatherRepository
+import com.weathersync.features.home.domain.HomeAIRepository
+import com.weathersync.features.home.domain.HomeRepository
+import com.weathersync.features.home.domain.WeatherUpdater
 import com.weathersync.features.home.presentation.HomeViewModel
 import com.weathersync.features.settings.data.WeatherUnit
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.ads.AdsDatastoreManager
+import com.weathersync.utils.ai.AIClientProvider
+import com.weathersync.utils.ai.gemini.data.GeminiCandidate
+import com.weathersync.utils.ai.gemini.data.GeminiPart
+import com.weathersync.utils.ai.gemini.data.GeminiParts
+import com.weathersync.utils.ai.gemini.data.GeminiResponse
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
 import com.weathersync.utils.weather.FirestoreWeatherUnit
@@ -38,11 +46,15 @@ import com.weathersync.utils.weather.limits.LimitManager
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import com.weathersync.utils.weather.WeatherUnitsManager
 import io.ktor.http.HttpStatusCode
+import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.koin.core.context.stopKoin
@@ -54,8 +66,8 @@ class HomeBaseRule: TestWatcher() {
     val testHelper = TestHelper()
     val testClock = TestClock()
     val testDispatcher = StandardTestDispatcher()
-    val premiumLimitManagerConfig = GenerationType.CurrentWeather.premiumLimitManagerConfig
-    val regularLimitManagerConfig = GenerationType.CurrentWeather.regularLimitManagerConfig
+    val premiumLimitManagerConfig = GenerationType.CurrentWeather(null).premiumLimitManagerConfig
+    val regularLimitManagerConfig = GenerationType.CurrentWeather(null).regularLimitManagerConfig
 
     val crashlyticsExceptionSlot = testHelper.exceptionSlot
     val exception = TestException("exception")
@@ -68,9 +80,9 @@ class HomeBaseRule: TestWatcher() {
     lateinit var limitManager: LimitManager
     lateinit var currentWeatherLocalDB: CurrentWeatherLocalDB
     lateinit var homeRepository: HomeRepository
+    lateinit var aiClientProvider: AIClientProvider
     lateinit var limitManagerFirestore: FirebaseFirestore
-    lateinit var generativeModel: GenerativeModel
-    private lateinit var geminiRepository: GeminiRepository
+    private lateinit var geminiRepository: HomeAIRepository
     lateinit var weatherUnitsManager: WeatherUnitsManager
     lateinit var subscriptionInfoDatastore: SubscriptionInfoDatastore
 
@@ -109,21 +121,23 @@ class HomeBaseRule: TestWatcher() {
         )
     }
     fun setupHomeRepository(
-        isSubscribed: IsSubscribed,
-        generatedSuggestions: String? = null,
-        suggestionsGenerationException: Exception? = null
+        isSubscribed: IsSubscribed? = null,
+        httpStatusCode: HttpStatusCode = HttpStatusCode.OK,
+        generatedSuggestions: Suggestions? = null
     ) {
-        geminiRepository = mockGeminiRepository(
-            generatedContent = generatedSuggestions,
-            suggestionsGenerationException = suggestionsGenerationException
+        geminiRepository = mockAIRepository(
+            generatedSuggestions = generatedSuggestions,
+            httpStatusCode = httpStatusCode
         )
-        homeRepository = spyk(HomeRepository(
+        homeRepository = spyk(
+            HomeRepository(
             limitManager = limitManager,
-            subscriptionManager = mockSubscriptionManager(isSubscribed = isSubscribed),
+            subscriptionManager = if (isSubscribed != null) mockSubscriptionManager(isSubscribed = isSubscribed) else mockk(),
             currentWeatherRepository = currentWeatherRepository,
-            geminiRepository = geminiRepository,
+            homeAIRepository = geminiRepository,
             dispatcher = testDispatcher
-        ))
+        )
+        )
     }
     fun setupWeatherUnitsManager(
         units: List<WeatherUnit> = fetchedWeatherUnits,
@@ -154,16 +168,17 @@ class HomeBaseRule: TestWatcher() {
     }
 
 
-    private fun mockGeminiRepository(
-        generatedContent: String? = null,
-        suggestionsGenerationException: Exception? = null
-    ): GeminiRepository {
-        generativeModel = mockGenerativeModel(
-            generatedContent = generatedContent,
-            generationException = suggestionsGenerationException
+    private fun mockAIRepository(
+        generatedSuggestions: Suggestions? = null,
+        httpStatusCode: HttpStatusCode = HttpStatusCode.OK
+    ): HomeAIRepository {
+        aiClientProvider = mockAIClientProvider(
+            statusCode = httpStatusCode,
+            responseValue = if (generatedSuggestions != null) Json.encodeToString(generatedSuggestions)
+            else ""
         )
-        return GeminiRepository(
-            generativeModel = generativeModel,
+        return HomeAIRepository(
+            aiClientProvider = aiClientProvider,
             currentWeatherDAO = currentWeatherLocalDB.currentWeatherDao()
         )
     }
@@ -187,35 +202,38 @@ class HomeBaseRule: TestWatcher() {
         setupWeatherRepository()
         setupHomeRepository(
             isSubscribed = false,
-            generatedSuggestions = generatedSuggestions)
+            generatedSuggestions = testSuggestions)
         setupViewModel(locale = Locale.US)
     }
 
     override fun finished(description: Description?) {
         currentWeatherLocalDB.close()
     }
-    val testSuggestions = TestSuggestions()
-    val generatedSuggestions = """
-    $recommendedActivitiesTag
-    ${testSuggestions.recommendedActivities[0]}
-    ${testSuggestions.recommendedActivities[1]}
-    $recommendedActivitiesTag
-    $unrecommendedActivitiesTag
-    ${testSuggestions.unrecommendedActivities[0]}
-    ${testSuggestions.unrecommendedActivities[1]}
-    $unrecommendedActivitiesTag
-    $whatToBringTag     
-    ${testSuggestions.whatToBring[0]}
-    ${testSuggestions.whatToBring[1]}   
-    $whatToBringTag
-""".trimIndent()
+    val testSuggestions = Suggestions(
+        recommendedActivities = listOf("Go for a walk in the park", "Ride a bicycle"),
+        unrecommendedActivities = listOf("Avoid swimming outdoors for prolonged periods of time", "Avoid eating ice cream"),
+        whatToBring= listOf("Light shoes", "A hat")
+    )
+    //val generatedSuggestions = testSuggestions.toGeminiResponse()
 }
 
+@Serializable
 data class TestSuggestions(
     val recommendedActivities: List<String> = listOf("Go for a walk in the park", "Ride a bicycle"),
     val unrecommendedActivities: List<String> = listOf("Avoid swimming outdoors for prolonged periods of time", "Avoid eating ice cream"),
     val whatToBring: List<String> = listOf("Light shoes", "A hat")
 )
+fun TestSuggestions.toGeminiResponse() =
+    GeminiResponse(
+        candidates = listOf(GeminiCandidate(
+            content = GeminiParts(
+                parts = listOf(GeminiPart(
+                    text = Json.encodeToString(this)
+                ))
+            )
+        ))
+    )
+
 fun getMockedWeather(
     units: List<WeatherUnit>
 ) = CurrentOpenMeteoWeather(

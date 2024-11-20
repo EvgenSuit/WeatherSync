@@ -37,7 +37,7 @@ object AdBanner {
         }
         val adView = AdView(context.applicationContext).apply {
             adUnitId = unitId
-            setAdSize(AdSize.getInlineAdaptiveBannerAdSize(AdSize.FULL_WIDTH, 130))
+            setAdSize(AdSize.BANNER)
             loadAd(AdRequest.Builder().build())
         }
         when (adType) {

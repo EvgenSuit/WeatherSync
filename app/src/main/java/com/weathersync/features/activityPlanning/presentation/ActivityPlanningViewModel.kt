@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-const val maxActivityInputLength = 200
+const val maxActivityInputLength = 400
 class ActivityPlanningViewModel(
     private val activityPlanningRepository: ActivityPlanningRepository,
     private val analyticsManager: AnalyticsManager,
@@ -62,7 +62,10 @@ class ActivityPlanningViewModel(
 
                 if (!limit.isReached) {
                     val forecast = activityPlanningRepository.getForecast(isSubscribed = isSubscribed)
-                    val suggestions = activityPlanningRepository.generateRecommendations(activity = input, forecast = forecast)
+                    val suggestions = activityPlanningRepository.generateRecommendations(
+                        activity = input,
+                        isSubscribed = isSubscribed,
+                        forecast = forecast)
                     activityPlanningRepository.recordTimestamp()
                     analyticsManager.logEvent(
                         event = FirebaseEvent.PLAN_ACTIVITIES,

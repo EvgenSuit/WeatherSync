@@ -36,11 +36,6 @@ interface BaseLimitTest {
     @Test
     fun recordTimestamp_success()
 
-    suspend fun calculateReachedLimit(
-        isSubscribed: IsSubscribed,
-        timestamps: List<Timestamp>): Limit
-    suspend fun calculateLimit(isSubscribed: IsSubscribed): Limit
-
     /**
      * verifies that **all** timestamps are outdated and deleted
      */

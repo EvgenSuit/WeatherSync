@@ -2,8 +2,9 @@ package com.weathersync.utils
 
 class LocationRequestException(message: String): Exception(message)
 
-class EmptyGeminiResponse(message: String): Exception(message)
-class AtLeastOneGenerationTagMissing(message: String) : Exception(message)
+
+class NullOpenAIResponse(message: String): Exception(message)
+class NullGeminiResponse(message: String): Exception(message)
 
 class AdLoadError(message: String): Exception(message)
 class AdShowError(message: String): Exception(message)

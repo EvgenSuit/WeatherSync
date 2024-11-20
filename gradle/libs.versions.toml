@@ -22,6 +22,7 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 ui-test-junit = { module = "androidx.compose.ui:ui-test-junit4" }
+kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-espresso-intents = { group = "androidx.test.espresso", name = "espresso-intents", version.ref = "espressoIntents" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
@@ -60,6 +61,7 @@ play-services-location = { module = "com.google.android.gms:play-services-locati
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version = "0.36.0" }
 
 generative-ai = { module = "com.google.ai.client.generativeai:generativeai", version = "0.7.0" }
+openai-client = { module = "com.aallam.openai:openai-client", version = "3.8.2" }
 
 koin = { module = "io.insert-koin:koin-androidx-compose", version = "4.0.0" }
 

@@ -1,4 +1,4 @@
-package com.weathersync.features.subscription
+package com.weathersync.features.subscription.domain
 
 import android.app.Activity
 import com.weathersync.utils.subscription.SubscriptionManager

@@ -15,7 +15,7 @@ import com.weathersync.features.settings.SettingsRepository
 import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.features.settings.data.themeDatastore
 import com.weathersync.features.settings.presentation.SettingsViewModel
-import com.weathersync.features.subscription.SubscriptionInfoRepository
+import com.weathersync.features.subscription.domain.SubscriptionInfoRepository
 import com.weathersync.features.subscription.presentation.SubscriptionInfoViewModel
 import com.weathersync.utils.ads.AdsDatastoreManager
 import com.weathersync.utils.ads.adsDataStore
@@ -45,14 +45,16 @@ class BaseNavRule: TestWatcher() {
         auth = inputAuth
         val subscriptionModule = module {
             factory { SubscriptionInfoViewModel(
-                subscriptionInfoRepository = spyk(SubscriptionInfoRepository(
+                subscriptionInfoRepository = spyk(
+                    SubscriptionInfoRepository(
                     subscriptionManager = SubscriptionManager(
                         billingClientBuilder = mockk(relaxed = true),
                         subscriptionInfoDatastore = subscriptionInfoDatastore,
                         analyticsManager = mockk(),
                         adsDatastoreManager = mockk()
                     )
-                )) {
+                )
+                ) {
                     coEvery { isBillingSetupFinished() } returns true
                     coEvery { getSubscriptionDetails() } returns listOf(
                         mockk(relaxed = true)

@@ -160,9 +160,7 @@ fun NavManagerContent(
                 composable(Route.Premium.route) {
                     SubscriptionInfoScreen(
                         activity = activity,
-                        onBackClick = { navController.navigateUp()
-                        println("navigated")
-                        }
+                        onBackClick = { navController.navigateUp() }
                     )
                 }
             }

@@ -1,4 +1,3 @@
-import com.android.build.gradle.internal.dsl.NdkOptions.DebugSymbolLevel
 import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.io.FileInputStream
 import java.util.Properties
@@ -24,7 +23,7 @@ android {
         applicationId = "com.weathersync"
         minSdk = 28
         targetSdk = 34
-        versionCode = 9
+        versionCode = 10
         versionName = "1.0.0-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

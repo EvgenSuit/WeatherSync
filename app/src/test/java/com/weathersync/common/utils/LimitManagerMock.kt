@@ -9,7 +9,7 @@ import com.google.firebase.firestore.Query
 import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.auth.userId
 import com.weathersync.common.mockTask
-import com.weathersync.features.home.WeatherUpdater
+import com.weathersync.features.home.domain.WeatherUpdater
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.utils.weather.limits.FirestoreLimitCollection
 import com.weathersync.utils.weather.limits.LimitManager

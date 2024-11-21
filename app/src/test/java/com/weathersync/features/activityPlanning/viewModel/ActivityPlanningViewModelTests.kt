@@ -5,7 +5,6 @@ import com.weathersync.common.MainDispatcherRule
 import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.features.activityPlanning.ActivityPlanningBaseRule
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningIntent
-import com.weathersync.utils.AtLeastOneGenerationTagMissing
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.subscription.IsSubscribed
@@ -13,14 +12,13 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import io.mockk.coVerify
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
 class ActivityPlanningViewModelTests {
@@ -32,6 +30,12 @@ class ActivityPlanningViewModelTests {
 
     @Test
     fun generateRecommendations_notSubscribed_success() = runTest {
+        activityPlanningBaseRule.apply {
+            setupActivityPlanningRepository(
+                isSubscribed = false,
+                generatedSuggestions = activityPlanningSuggestions)
+            setupViewModel()
+        }
         performActivityPlanning(testScope = this,
             isSubscribed = false,
             success = true)
@@ -41,7 +45,7 @@ class ActivityPlanningViewModelTests {
         activityPlanningBaseRule.apply {
             setupActivityPlanningRepository(
                 isSubscribed = true,
-                generatedSuggestions = generatedSuggestions)
+                generatedSuggestions = activityPlanningSuggestions)
             setupViewModel()
         }
         performActivityPlanning(testScope = this,
@@ -109,7 +113,7 @@ class ActivityPlanningViewModelTests {
         activityPlanningBaseRule.apply {
             setupActivityPlanningRepository(
                 isSubscribed = false,
-                suggestionsGenerationException = activityPlanningBaseRule.testHelper.testException)
+                generationHttpStatusCode = HttpStatusCode.Forbidden)
             setupViewModel()
         }
         performActivityPlanning(this,
@@ -118,20 +122,7 @@ class ActivityPlanningViewModelTests {
         activityPlanningBaseRule.assertUrlAndDatesAreCorrect()
         coVerify(inverse = true) { activityPlanningBaseRule.activityPlanningRepository.recordTimestamp() }
     }
-    @Test
-    fun generateRecommendations_atLeastOneTagMissing() = runTest {
-        activityPlanningBaseRule.apply {
-            setupActivityPlanningRepository(
-                isSubscribed = false,
-                generatedSuggestions = "Content without tags")
-            setupViewModel()
-        }
-        performActivityPlanning(this,
-            isSubscribed = false,
-            success = false)
-        activityPlanningBaseRule.assertUrlAndDatesAreCorrect()
-        assertTrue(activityPlanningBaseRule.testHelper.exceptionSlot.captured is AtLeastOneGenerationTagMissing)
-    }
+
     private fun performActivityPlanning(testScope: TestScope,
                                         isSubscribed: IsSubscribed,
                                         success: Boolean,
@@ -143,19 +134,22 @@ class ActivityPlanningViewModelTests {
         }
         activityPlanningBaseRule.advance(testScope)
         if (success) {
-            assertEquals(CustomResult.Success, activityPlanningBaseRule.viewModel.uiState.value.generationResult)
-            if (!isLimitReached) {
-                assertEquals(activityPlanningBaseRule.activityPlanningSuggestions, activityPlanningBaseRule.viewModel.uiState.value.generatedText)
-                activityPlanningBaseRule.assertUrlAndDatesAreCorrect(isSubscribed = isSubscribed)
-            }
-            else {
-                assertNotEquals(activityPlanningBaseRule.activityPlanningSuggestions, activityPlanningBaseRule.viewModel.uiState.value.generatedText)
-            }
             activityPlanningBaseRule.apply {
+                assertEquals(CustomResult.Success, viewModel.uiState.value.generationResult)
+                if (!isLimitReached) {
+                    assertEquals(activityPlanningSuggestions, viewModel.uiState.value.generatedText)
+                    assertUrlAndDatesAreCorrect(isSubscribed = isSubscribed)
+                }
+                else {
+                    assertNotEquals(activityPlanningSuggestions, viewModel.uiState.value.generatedText)
+                }
                 activityPlanningRepository.apply {
                     coVerify { calculateLimit(isSubscribed) }
                     coVerify(inverse = isLimitReached) { getForecast(isSubscribed) }
-                    coVerify(inverse = isLimitReached) { generateRecommendations(activity = any(), forecast = any()) }
+                    coVerify(inverse = isLimitReached) { generateRecommendations(
+                        activity = any(),
+                        isSubscribed = isSubscribed,
+                        forecast = any()) }
                     coVerify(inverse = isLimitReached) { recordTimestamp() }
                 }
                 // verify that PLAN_ACTIVITIES was logged if the limit was not reached

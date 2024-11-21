@@ -8,6 +8,7 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+@Serializable
 @Entity
 data class CurrentWeather(
     @PrimaryKey val uid: Int = 0,

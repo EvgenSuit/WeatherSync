@@ -21,7 +21,6 @@ import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.features.activityPlanning.ActivityPlanningBaseRule
 import com.weathersync.features.activityPlanning.presentation.ui.ActivityPlanningScreen
-import com.weathersync.utils.AtLeastOneGenerationTagMissing
 import com.weathersync.utils.ads.AdBannerType
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import io.ktor.client.plugins.ClientRequestException
@@ -29,7 +28,6 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -88,7 +86,23 @@ class ActivityPlanningUITests {
         generateRecommendations_limitReached(Locale.UK)
     }
     @Test
-    fun generateRecommendations_errorHttpResponse_error() = runTest {
+    fun generateRecommendations_forecastError() = runTest {
+        val status = HttpStatusCode.Forbidden
+        activityPlanningBaseRule.apply {
+            setupForecastRepository(status = status)
+            setupActivityPlanningRepository(isSubscribed = false)
+            setupViewModel()
+        }
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+            uiContent = {
+                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel)
+            }) {
+            performActivityPlanning(error = status.description)
+            activityPlanningBaseRule.assertUrlAndDatesAreCorrect()
+        }
+    }
+    @Test
+    fun generateRecommendations_generationError() = runTest {
         val status = HttpStatusCode.Forbidden
         activityPlanningBaseRule.apply {
             setupForecastRepository(status = status)
@@ -134,30 +148,13 @@ class ActivityPlanningUITests {
         activityPlanningBaseRule.apply {
             setupActivityPlanningRepository(
                 isSubscribed = false,
-                suggestionsGenerationException = activityPlanningBaseRule.testHelper.testException)
+                generationHttpStatusCode = HttpStatusCode.Forbidden)
             setupViewModel()
         }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
-            performActivityPlanning(error = activityPlanningBaseRule.testHelper.testException.message)
-        }
-    }
-    @Test
-    fun generateRecommendations_atLeastOneTagMissing() = runTest {
-        activityPlanningBaseRule.apply {
-            setupActivityPlanningRepository(
-                isSubscribed = false,
-                generatedSuggestions = "Content without tags")
-            setupViewModel()
-        }
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
-            uiContent = {
-                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
-            performActivityPlanning()
-            activityPlanningBaseRule.assertUrlAndDatesAreCorrect()
-            assertTrue(activityPlanningBaseRule.testHelper.exceptionSlot.captured is AtLeastOneGenerationTagMissing)
-            assertSnackbarTextEquals(R.string.could_not_plan_activities, snackbarScope)
+            performActivityPlanning(error = HttpStatusCode.Forbidden.description)
         }
     }
 

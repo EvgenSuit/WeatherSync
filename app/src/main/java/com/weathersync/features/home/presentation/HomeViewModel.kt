@@ -3,18 +3,18 @@ package com.weathersync.features.home.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.weathersync.R
-import com.weathersync.ui.UIEvent
 import com.weathersync.common.ui.UIText
-import com.weathersync.features.home.HomeRepository
-import com.weathersync.features.home.data.Suggestions
+import com.weathersync.features.home.domain.HomeRepository
 import com.weathersync.features.home.data.CurrentWeather
+import com.weathersync.features.home.data.Suggestions
+import com.weathersync.ui.UIEvent
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
-import com.weathersync.utils.weather.limits.Limit
 import com.weathersync.utils.isInProgress
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
+import com.weathersync.utils.weather.limits.Limit
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class HomeViewModel(
     private val homeRepository: HomeRepository,
@@ -59,7 +61,7 @@ class HomeViewModel(
             try {
                 val isSubscribed = homeRepository.isSubscribed()
 
-                val limit = homeRepository.calculateLimit(isSubscribed = isSubscribed)
+                val limit = homeRepository.calculateLimit(isSubscribed = isSubscribed, refresh = refresh)
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT,
                     isSubscribed = isSubscribed,
                     "next_update_time" to (limit.nextUpdateDateTime?.toString() ?: ""))
@@ -72,11 +74,7 @@ class HomeViewModel(
                 analyticsManager.logEvent(event = FirebaseEvent.FETCH_CURRENT_WEATHER,
                     isSubscribed = isSubscribed,
                     "is_limit_reached" to limit.isReached.toString(),
-                    "locality" to weather?.locality.orEmpty(),
-                    "temp" to weather?.temp.toString(),
-                    "wind_speed" to weather?.windSpeed.toString(),
-                    "weather_code" to weather?.weatherCode.toString(),
-                    "time" to weather?.time.orEmpty())
+                    "weather_json" to Json.encodeToString(weather))
                 _uiState.update { it.copy(currentWeather = weather) }
 
                 updateMethod(CustomResult.Success)
@@ -97,17 +95,21 @@ class HomeViewModel(
         currentWeather: CurrentWeather) {
         updateSuggestionsGenerationResult(CustomResult.InProgress)
         try {
-            val recommendations = homeRepository.generateSuggestions(isLimitReached = isLimitReached, currentWeather = currentWeather)
+            val suggestions = homeRepository.generateSuggestions(
+                isLimitReached = isLimitReached,
+                isSubscribed = isSubscribed,
+                currentWeather = currentWeather)
             // add timestamp only if current weather fetch and suggestions generation are successful
+            // and if the limit is not reached
             if (!isLimitReached) homeRepository.recordTimestamp()
             analyticsManager.logEvent(event = FirebaseEvent.GENERATE_SUGGESTIONS,
                 isSubscribed = isSubscribed,
                 "is_limit_reached" to isLimitReached.toString(),
-                "recommended_activities" to recommendations?.recommendedActivities?.joinToString(", ").orEmpty(),
-                "unrecommended_activities" to recommendations?.unrecommendedActivities?.joinToString(", ").orEmpty(),
-                "what_to_wear_bring" to recommendations?.whatToBring?.joinToString(", ").orEmpty()
-                )
-            _uiState.update { it.copy(suggestions = recommendations ?: Suggestions()) }
+                "suggestions_json" to Json.encodeToString(suggestions))
+            homeRepository.insertWeatherAndSuggestions(
+                currentWeather = currentWeather,
+                suggestions = suggestions)
+            _uiState.update { it.copy(suggestions = suggestions) }
             updateSuggestionsGenerationResult(CustomResult.Success)
         } catch (e: Exception) {
             _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_generate_suggestions)))

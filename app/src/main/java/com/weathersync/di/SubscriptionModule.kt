@@ -1,6 +1,6 @@
 package com.weathersync.di
 
-import com.weathersync.features.subscription.SubscriptionInfoRepository
+import com.weathersync.features.subscription.domain.SubscriptionInfoRepository
 import com.weathersync.features.subscription.presentation.SubscriptionInfoViewModel
 import org.koin.dsl.module
 

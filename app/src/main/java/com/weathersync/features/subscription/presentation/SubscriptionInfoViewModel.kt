@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.weathersync.R
 import com.weathersync.common.ui.UIText
-import com.weathersync.features.subscription.SubscriptionInfoRepository
+import com.weathersync.features.subscription.domain.SubscriptionInfoRepository
 import com.weathersync.features.subscription.presentation.ui.SubscriptionScreenIntent
 import com.weathersync.ui.SubscriptionUIEvent
 import com.weathersync.utils.AnalyticsManager

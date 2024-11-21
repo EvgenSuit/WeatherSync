@@ -1,4 +1,4 @@
-package com.weathersync.features.home
+package com.weathersync.features.home.domain
 
 import java.time.Clock
 import java.time.Duration

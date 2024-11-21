@@ -1,4 +1,3 @@
-import com.android.build.gradle.internal.dsl.NdkOptions.DebugSymbolLevel
 import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.io.FileInputStream
 import java.util.Properties
@@ -24,7 +23,7 @@ android {
         applicationId = "com.weathersync"
         minSdk = 28
         targetSdk = 34
-        versionCode = 7
+        versionCode = 10
         versionName = "1.0.0-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -33,6 +32,7 @@ android {
         }
         buildConfigField("String", "WEB_CLIENT_ID", "\"${localProperties.getProperty("WEB_CLIENT_ID")}\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY")}\"")
+        buildConfigField("String", "OPENAI_API_KEY", "\"${localProperties.getProperty("OPENAI_API_KEY")}\"")
         buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"${localProperties.getProperty("INTERSTITIAL_AD_UNIT_ID")}\"")
         buildConfigField("String", "HOME_PROMO_AD_UNIT_ID", "\"${localProperties.getProperty("HOME_PROMO_AD_UNIT_ID")}\"")
         buildConfigField("String", "ACTIVITY_PLANNING_PROMO_AD_UNIT_ID", "\"${localProperties.getProperty("ACTIVITY_PLANNING_PROMO_AD_UNIT_ID")}\"")
@@ -135,8 +135,9 @@ dependencies {
     // DI
     implementation(libs.koin)
 
-    // Gemini
+    // AI
     implementation(libs.generative.ai)
+    implementation(libs.openai.client)
 
     implementation(libs.splashscreen)
     implementation(libs.play.integrity)
@@ -148,6 +149,7 @@ dependencies {
     // Ads
     implementation(libs.play.services.ads)
 
+    implementation(libs.kotlin.test.junit)
     implementation(libs.androidx.junit.ktx)
     testImplementation(libs.room.testing)
     testImplementation(libs.junit)

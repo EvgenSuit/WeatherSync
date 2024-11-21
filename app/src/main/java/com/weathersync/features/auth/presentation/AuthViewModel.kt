@@ -91,6 +91,7 @@ class AuthViewModel(
             } catch (e: Exception) {
                 if ((e is ApiException && e.statusCode != 16) || e !is ApiException) {
                     _uiEvent.emit(AuthUIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
+                    analyticsManager.recordException(e)
                     updateAuthResult(CustomResult.Error)
                 } else updateAuthResult(CustomResult.None)
             }

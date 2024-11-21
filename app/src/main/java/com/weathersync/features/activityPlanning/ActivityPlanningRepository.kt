@@ -18,7 +18,7 @@ class ActivityPlanningRepository(
     private val limitManager: LimitManager,
     private val subscriptionManager: SubscriptionManager,
     private val forecastRepository: ForecastRepository,
-    private val activityPlanningGeminiRepository: ActivityPlanningGeminiRepository,
+    private val activityPlanningGeminiRepository: ActivityPlanningAIRepository,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     suspend fun isSubscribed() = subscriptionManager.initBillingClient()
@@ -35,9 +35,13 @@ class ActivityPlanningRepository(
             forecastDates = forecastDays)
         openMeteoForecast.toForecast(forecastDays = forecastDays.days)
     }
-    suspend fun generateRecommendations(activity: String, forecast: Forecast) =
+    suspend fun generateRecommendations(
+        activity: String,
+        isSubscribed: IsSubscribed,
+        forecast: Forecast) =
         activityPlanningGeminiRepository.generateRecommendations(
             activity = activity,
+            isSubscribed = isSubscribed,
             forecast = forecast)
 
     private fun calculateForecastDays(isSubscribed: IsSubscribed): ForecastDates {

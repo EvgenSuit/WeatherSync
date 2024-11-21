@@ -1,4 +1,4 @@
-package com.weathersync.features.home
+package com.weathersync.features.home.domain
 
 import com.weathersync.features.home.data.CurrentOpenMeteoWeather
 import com.weathersync.features.home.data.CurrentWeather
@@ -45,9 +45,9 @@ class CurrentWeatherRepository(
             time = responseBody.currentWeather.time,
             weatherCode = responseBody.currentWeather.weatherCode
         )
-        currentWeatherDAO.insertWeather(currentWeather)
         return currentWeather
     }
+    suspend fun insertWeather(currentWeather: CurrentWeather) = currentWeatherDAO.insertWeather(currentWeather)
     private fun convertTemperature(temp: Double, from: String, to: String): Double {
         return when (from to to) {
             WeatherUnit.Temperature.Celsius.unitName to WeatherUnit.Temperature.Fahrenheit.unitName -> (temp * 9 / 5) + 32

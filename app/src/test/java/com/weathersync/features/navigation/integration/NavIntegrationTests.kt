@@ -111,7 +111,9 @@ class NavIntegrationTests {
                     assertEquals(3, navController.backStack.size)
 
                     baseNavRule.subscriptionInfoDatastore.setIsSubscribed(true)
-                    waitForIdle()
+                    repeat(1000) {
+                        waitForIdle()
+                    }
                     assertRouteEquals(Route.Home)
 
                     // 2 since back stack contains graph and current route

@@ -3,28 +3,30 @@ package com.weathersync.common
 import android.os.Bundle
 import com.google.firebase.Timestamp
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.analytics.logEvent
 import com.weathersync.common.auth.userId
 import com.weathersync.common.utils.mockAnalyticsManager
 import com.weathersync.utils.FirebaseEvent
-import com.weathersync.utils.LimitManagerConfig
+import com.weathersync.utils.ads.AdsDatastoreManager
+import com.weathersync.utils.ai.AIClient
+import com.weathersync.utils.ai.openai.OpenAIClient
+import com.weathersync.utils.weather.limits.LimitManagerConfig
+import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
 import org.junit.Assert.assertEquals
-import java.text.DateFormat
-import java.text.SimpleDateFormat
+import org.junit.Assert.assertTrue
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Date
-import java.util.Locale
-import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 
 class TestException(message: String) : Exception(message)
 
+// firebase timestamp is generated from this clock
 class TestClock : Clock() {
     private var currInstant = Instant.ofEpochSecond(12 * 24 * 60 * 60)
 
@@ -43,7 +45,7 @@ class TestClock : Clock() {
     fun setInstant(instant: Instant) {
         currInstant = instant
     }
-    // advance by durationInHours. test clock is used to calculate current server timestamp during mocking
+    // advance by durationInHours to test outdated timestamps deletion. test clock is used to calculate current server timestamp during mocking
     // (add 1 millisecond since whereLessThan query is used, at least for now)
     fun advanceLimitBy(limitManagerConfig: LimitManagerConfig) = advanceBy(Duration.ofHours(limitManagerConfig.durationInHours.toLong()+1).toMillis())
 }
@@ -56,9 +58,13 @@ class TestHelper {
     }
 
     val analytics: FirebaseAnalytics = mockk(relaxed = true)
-    val analyticsManager = mockAnalyticsManager(
-        exceptionSlot = exceptionSlot,
-        analytics = analytics)
+
+    fun getAnalyticsManager(adsDatastoreManager: AdsDatastoreManager) =
+        mockAnalyticsManager(
+            exceptionSlot = exceptionSlot,
+            analytics = analytics,
+            adsDatastoreManager = adsDatastoreManager
+        )
 
     fun verifyAnalyticsEvent(event: FirebaseEvent, inverse: Boolean, vararg params: Pair<String, String>) {
         // the list will always contain a single captured bundle, which is what i need. https://github.com/mockk/mockk/issues/352
@@ -74,21 +80,20 @@ class TestHelper {
         }
     }
 
-    fun calculateNextUpdateDate(receivedNextUpdateDateTime: String?,
-                                limitManagerConfig: LimitManagerConfig,
-                                timestamps: List<Timestamp>,
-                                locale: Locale): NextUpdateDate {
-        val expectedNextUpdateDate = Date(timestamps.first().toDate().time + TimeUnit.HOURS.toMillis(limitManagerConfig.durationInHours.toLong()))
+    fun verifyAIClientCall(aiClient: AIClient, expectedType: KClass<out AIClient>) {
+        assertTrue("Expected ${expectedType.simpleName}, but was ${aiClient::class.simpleName}", expectedType.isInstance(aiClient))
+        coVerify { aiClient.generate(any()) }
+    }
 
-        // adjust time format (24-hour or AM/PM) based on locale
-        val timeFormatter = DateFormat.getTimeInstance(DateFormat.SHORT, locale) as SimpleDateFormat
-        val timePattern = timeFormatter.toPattern()
-        val combinedPattern = "$timePattern, dd MMM"
-
-        val combinedFormatter = SimpleDateFormat(combinedPattern, locale)
-        val receivedNextUpdateDate = combinedFormatter.parse(receivedNextUpdateDateTime)
-
-        return NextUpdateDate(expectedNextUpdateDate = expectedNextUpdateDate, receivedNextUpdateDate = receivedNextUpdateDate!!)
+    fun assertNextUpdateTimeIsCorrect(
+        receivedNextUpdateDateTime: Date?,
+        limitManagerConfig: LimitManagerConfig,
+        timestamps: List<Timestamp>): NextUpdateDate {
+        val expectedNextUpdateDate = Date.from(timestamps.first().toDate().toInstant().plus(
+            Duration.ofHours(limitManagerConfig.durationInHours.toLong())
+        ))
+        assertEquals(expectedNextUpdateDate, receivedNextUpdateDateTime)
+        return NextUpdateDate(expectedNextUpdateDate = expectedNextUpdateDate, receivedNextUpdateDate = receivedNextUpdateDateTime!!)
     }
 
     data class NextUpdateDate(val expectedNextUpdateDate: Date, val receivedNextUpdateDate: Date)

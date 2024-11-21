@@ -1,95 +1,74 @@
 package com.weathersync.features.activityPlanning.repository
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
+import com.weathersync.common.MainDispatcherRule
 import com.weathersync.common.TestException
 import com.weathersync.common.auth.userId
-import com.weathersync.common.utils.BaseLimitTest
+import com.weathersync.common.testInterfaces.BaseLimitTest
 import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.features.activityPlanning.ActivityPlanningBaseRule
-import com.weathersync.utils.FirestoreLimitCollection
-import com.weathersync.utils.GenerationType
-import com.weathersync.utils.Limit
+import com.weathersync.utils.subscription.IsSubscribed
+import com.weathersync.utils.weather.limits.FirestoreLimitCollection
+import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.Limit
+import io.ktor.client.plugins.ResponseException
+import io.ktor.http.HttpStatusCode
 import io.mockk.coVerify
-import io.mockk.coVerifyAll
-import io.mockk.verify
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.util.Locale
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class ActivityPlanningLimitTests: BaseLimitTest {
-    @get: Rule
+    @get: Rule(order = 1)
     val activityPlanningBaseRule = ActivityPlanningBaseRule()
+    @get: Rule(order = 0)
+    val dispatcherRule = MainDispatcherRule(activityPlanningBaseRule.testDispatcher)
 
-    @Test(expected = TestException::class)
-    override fun getServerTimestamp_exception() = runTest {
-        activityPlanningBaseRule.setupLimitManager(
-            locale = Locale.US,
-            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
-            serverTimestampGetException = activityPlanningBaseRule.testHelper.testException)
-        calculateLimit()
+    @Test(expected = ResponseException::class)
+    override fun calculateLimit_timeApiException() = runTest {
+        activityPlanningBaseRule.setupLimitManager(timeApiStatusCode = HttpStatusCode.Forbidden)
+        calculateLimit(isSubscribed = false)
     }
-
     @Test(expected = TestException::class)
-    override fun deleteServerTimestamp_exception() = runTest {
-        activityPlanningBaseRule.setupLimitManager(
-            locale = Locale.US,
-            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
-            serverTimestampDeleteException = activityPlanningBaseRule.testHelper.testException)
-        calculateLimit()
+    override fun calculateLimit_firestoreException() = runTest {
+        activityPlanningBaseRule.setupLimitManager(exception = TestException("exception"))
+        calculateLimit(isSubscribed = false)
     }
 
     @Test
-    override fun limitReached_UKLocale_isLimitCorrect() = runTest {
+    override fun limitReached_notSubscribed_isLimitCorrect() = runTest {
         calculateReachedLimit(
-            locale = Locale.UK,
+            isSubscribed = false,
             timestamps = createDescendingTimestamps(
-            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
-            currTimeMillis = activityPlanningBaseRule.testClock.millis())
-        )
-    }
-
-    @Test
-    override fun limitReached_USLocale_isLimitCorrect() = runTest {
-        calculateReachedLimit(
-            locale = Locale.US,
-            timestamps = createDescendingTimestamps(
-                limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
+                limitManagerConfig = activityPlanningBaseRule.regularLimitManagerConfig,
                 currTimeMillis = activityPlanningBaseRule.testClock.millis())
         )
     }
 
     @Test
-    override fun deleteOutdatedTimestamps_success() = runTest {
-        val locale = Locale.US
-        val timestamps = createDescendingTimestamps(
-            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
-            currTimeMillis = activityPlanningBaseRule.testClock.millis())
-        activityPlanningBaseRule.setupLimitManager(
-            locale = locale,
-            timestamps = timestamps,
-            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig
+    override fun limitReached_isSubscribed_isLimitCorrect() = runTest {
+        calculateReachedLimit(
+            isSubscribed = true,
+            timestamps = createDescendingTimestamps(
+                limitManagerConfig = activityPlanningBaseRule.premiumLimitManagerConfig,
+                currTimeMillis = activityPlanningBaseRule.testClock.millis())
         )
-        calculateLimit()
+    }
 
-        activityPlanningBaseRule.testClock.advanceLimitBy(limitManagerConfig = activityPlanningBaseRule.limitManagerConfig)
-        activityPlanningBaseRule.setupLimitManager(
-            locale = locale,
-            timestamps = timestamps,
-            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig
-        )
-        calculateLimit()
+    @Test
+    override fun deleteOutdatedTimestamps_isSubscribed_success() = runTest {
+        deleteOutdatedTimestampsUtil(isSubscribed = true)
+    }
 
-        verifyOutdatedTimestampsDeletion(
-            collection = FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS,
-            testClock = activityPlanningBaseRule.testClock,
-            timestamps = timestamps,
-            limitManagerFirestore = activityPlanningBaseRule.limitManagerFirestore,
-            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig
-        )
+
+    @Test
+    override fun deleteOutdatedTimestamps_notSubscribed_success() = runTest {
+        deleteOutdatedTimestampsUtil(isSubscribed = false)
     }
 
     @Test
@@ -103,28 +82,48 @@ class ActivityPlanningLimitTests: BaseLimitTest {
         }
     }
 
-    override suspend fun calculateReachedLimit(
-        timestamps: List<Timestamp>, locale: Locale
-    ): Limit {
-        activityPlanningBaseRule.setupLimitManager(
-            locale = locale,
+    private suspend fun deleteOutdatedTimestampsUtil(isSubscribed: IsSubscribed) {
+        val timestamps = createDescendingTimestamps(
+            limitManagerConfig = activityPlanningBaseRule.regularLimitManagerConfig,
+            currTimeMillis = activityPlanningBaseRule.testClock.millis())
+        activityPlanningBaseRule.setupLimitManager(timestamps = timestamps)
+        calculateLimit(isSubscribed = isSubscribed)
+
+        activityPlanningBaseRule.testClock.advanceLimitBy(limitManagerConfig = activityPlanningBaseRule.regularLimitManagerConfig)
+        activityPlanningBaseRule.setupLimitManager(timestamps = timestamps)
+        calculateLimit(isSubscribed = isSubscribed)
+
+        verifyOutdatedTimestampsDeletion(
+            collection = FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS,
+            testClock = activityPlanningBaseRule.testClock,
             timestamps = timestamps,
-            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig
+            limitManagerFirestore = activityPlanningBaseRule.limitManagerFirestore,
+            limitManagerConfig = activityPlanningBaseRule.regularLimitManagerConfig
         )
-        val limit = calculateLimit()
-        val nextUpdateDate = activityPlanningBaseRule.testHelper.calculateNextUpdateDate(
-            receivedNextUpdateDateTime = limit.formattedNextUpdateTime,
-            limitManagerConfig = activityPlanningBaseRule.limitManagerConfig,
-            timestamps = timestamps,
-            locale = locale,)
-        assertEquals(nextUpdateDate.expectedNextUpdateDate.time, nextUpdateDate.receivedNextUpdateDate.time)
+    }
+
+    suspend fun calculateReachedLimit(
+        isSubscribed: IsSubscribed,
+        timestamps: List<Timestamp>
+    ): Limit {
+        activityPlanningBaseRule.setupLimitManager(timestamps = timestamps)
+        val limit = calculateLimit(isSubscribed = isSubscribed)
+        activityPlanningBaseRule.testHelper.assertNextUpdateTimeIsCorrect(
+            receivedNextUpdateDateTime = limit.nextUpdateDateTime,
+            limitManagerConfig = activityPlanningBaseRule.let {
+                if (isSubscribed) it.premiumLimitManagerConfig else it.regularLimitManagerConfig
+            },
+            timestamps = timestamps)
         assertTrue(limit.isReached)
-        coVerify { activityPlanningBaseRule.limitManager.calculateLimit(GenerationType.ActivityRecommendations) }
+        coVerify { activityPlanningBaseRule.limitManager.calculateLimit(
+            isSubscribed = isSubscribed,
+            generationType = GenerationType.ActivityRecommendations) }
         return limit
     }
 
-    override suspend fun calculateLimit(): Limit {
-        activityPlanningBaseRule.setupActivityPlanningRepository()
-        return activityPlanningBaseRule.activityPlanningRepository.calculateLimit()
+    suspend fun calculateLimit(isSubscribed: IsSubscribed): Limit {
+        activityPlanningBaseRule.setupActivityPlanningRepository(isSubscribed = isSubscribed)
+        val limit = activityPlanningBaseRule.activityPlanningRepository.calculateLimit(isSubscribed)
+        return limit
     }
 }

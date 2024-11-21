@@ -9,8 +9,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,7 +38,7 @@ import com.weathersync.ui.theme.WeatherSyncTheme
 @Composable
 fun ThemeSwitcher(
     darkTheme: Dark?,
-    size: Dp = 80.dp,
+    size: Dp = 70.dp,
     iconSize: Dp = size / 3,
     padding: Dp = 10.dp,
     borderWidth: Dp = 1.dp,
@@ -55,7 +53,6 @@ fun ThemeSwitcher(
     )
     Box(modifier = Modifier
         .width(size * 2)
-        .fillMaxHeight()
         .clip(shape = parentShape)
         .clickable(enabled = darkTheme != null) { onClick() }
         .background(MaterialTheme.colorScheme.secondaryContainer)

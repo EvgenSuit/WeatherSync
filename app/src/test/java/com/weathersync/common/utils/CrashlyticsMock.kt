@@ -1,15 +1,20 @@
 package com.weathersync.common.utils
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.weathersync.common.auth.mockAuth
 import com.weathersync.utils.AnalyticsManager
+import com.weathersync.utils.ads.AdsDatastoreManager
+import com.weathersync.utils.ads.adsDataStore
 import io.mockk.CapturingSlot
 import io.mockk.every
 import io.mockk.mockk
 
 fun mockAnalyticsManager(
     exceptionSlot: CapturingSlot<Exception>? = null,
-    analytics: FirebaseAnalytics
+    analytics: FirebaseAnalytics,
+    adsDatastoreManager: AdsDatastoreManager
 ): AnalyticsManager =
     AnalyticsManager(auth = mockAuth(),
         crashlytics = mockk {
@@ -19,5 +24,6 @@ fun mockAnalyticsManager(
             every { setCustomKeys(any()) } returns Unit
             every { setCustomKey(any(), any<String>()) } returns Unit
         },
-        analytics = analytics
+        analytics = analytics,
+        adsDatastoreManager = adsDatastoreManager
     )

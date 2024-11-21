@@ -14,7 +14,7 @@ sealed class WeatherUnit(val unitName: String) {
     sealed class WindSpeed(unitName: String, val weatherApiUnitName: String): WeatherUnit(unitName) {
         data object KMH: WindSpeed("km/h", "kmh")
         data object MS: WindSpeed("m/s", "ms")
-        data object MPH: WindSpeed("mp/h", "mph")
+        data object MPH: WindSpeed("mi/h", "mph")
     }
 }
 data class SelectedWeatherUnits(

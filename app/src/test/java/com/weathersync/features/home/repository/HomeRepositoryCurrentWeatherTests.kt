@@ -1,13 +1,15 @@
 package com.weathersync.features.home.repository
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.weathersync.common.MainDispatcherRule
 import com.weathersync.common.TestException
-import com.weathersync.common.utils.fetchedWeatherUnits
+import com.weathersync.common.weather.fetchedWeatherUnits
 import com.weathersync.features.home.HomeBaseRule
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.features.settings.data.WeatherUnit
+import com.weathersync.utils.subscription.IsSubscribed
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import io.mockk.coVerify
@@ -21,8 +23,10 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class HomeRepositoryCurrentWeatherTests {
-    @get: Rule
+    @get: Rule(order = 1)
     val homeBaseRule = HomeBaseRule()
+    @get: Rule(order = 0)
+    val dispatcherRule = MainDispatcherRule(homeBaseRule.testDispatcher)
 
     @After
     fun after() {
@@ -31,16 +35,14 @@ class HomeRepositoryCurrentWeatherTests {
 
     @Test
     fun getCurrentWeather_limitNotReached_success() = runTest {
-        val weather = getWeather()
+        val weather = getWeather(isSubscribed = false)
         assertTrue(weather != null)
         assertEquals(getMockedWeather(fetchedWeatherUnits).toCurrentWeather(), weather)
-        val dao = homeBaseRule.currentWeatherLocalDB.currentWeatherDao()
-        assertEquals(weather, dao.getWeather())
     }
 
     @Test
     fun getCurrentWeather_limitReached_localWeatherIsNull() = runTest {
-        val fetchedWeather = getWeather(isLimitReached = true)
+        val fetchedWeather = getWeather(isSubscribed = false, isLimitReached = true)
         val localWeather = homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getWeather()
         assertTrue(listOf(fetchedWeather, localWeather).all { it == null })
     }
@@ -49,7 +51,7 @@ class HomeRepositoryCurrentWeatherTests {
         val dao = homeBaseRule.currentWeatherLocalDB.currentWeatherDao()
         dao.insertWeather(getMockedWeather(fetchedWeatherUnits).toCurrentWeather())
 
-        val fetchedWeather = getWeather(isLimitReached = true)
+        val fetchedWeather = getWeather(isSubscribed = false, isLimitReached = true)
         val localWeather = homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getWeather()
         assertTrue(listOf(fetchedWeather, localWeather).all { it != null })
     }
@@ -62,7 +64,7 @@ class HomeRepositoryCurrentWeatherTests {
         val insertedWeather = getMockedWeather(units).toCurrentWeather()
         dao.insertWeather(insertedWeather)
 
-        val fetchedWeather = getWeather(isLimitReached = true)
+        val fetchedWeather = getWeather(isSubscribed = false, isLimitReached = true)
         val localWeather = homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getWeather()
         assertTrue(listOf(fetchedWeather, localWeather).all { it != null })
 
@@ -76,7 +78,7 @@ class HomeRepositoryCurrentWeatherTests {
     @Test(expected = TestException::class)
     fun getCurrentWeather_geocoderError_error() = runTest {
         homeBaseRule.setupWeatherRepository(geocoderException = homeBaseRule.exception)
-        getWeather()
+        getWeather(isSubscribed = false)
         assertEquals(null, homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getWeather())
     }
 
@@ -84,17 +86,19 @@ class HomeRepositoryCurrentWeatherTests {
     fun getCurrentWeather_errorResponseStatus_error() = runTest {
         homeBaseRule.setupWeatherRepository(status = HttpStatusCode.Forbidden)
         assertEquals(null, homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getWeather())
-        getWeather()
+        getWeather(isSubscribed = false)
     }
     @Test(expected = TestException::class)
     fun getCurrentWeather_lastLocationException_error() = runTest {
         homeBaseRule.setupWeatherRepository(lastLocationException = homeBaseRule.exception)
         assertEquals(null, homeBaseRule.currentWeatherLocalDB.currentWeatherDao().getWeather())
-        getWeather()
+        getWeather(isSubscribed = false)
     }
 
-    private suspend fun getWeather(isLimitReached: Boolean = false): CurrentWeather? {
-        homeBaseRule.setupHomeRepository()
+    private suspend fun getWeather(
+        isSubscribed: IsSubscribed,
+        isLimitReached: Boolean = false): CurrentWeather? {
+        homeBaseRule.setupHomeRepository(isSubscribed = isSubscribed)
         return homeBaseRule.homeRepository.getCurrentWeather(isLimitReached)
     }
 }

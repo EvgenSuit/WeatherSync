@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,11 +21,13 @@ import com.weathersync.R
 
 @Composable
 fun ConstrainedComponent(
+    isScrollEnabled: Boolean = true,
+    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val maxAllowedWidth = dimensionResource(id = R.dimen.max_width)
     BoxWithConstraints(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         val maxWidth = maxWidth
         Column(
@@ -35,7 +38,8 @@ fun ConstrainedComponent(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()) // without verticalScroll pull to refresh will not work
+                    .then(if (isScrollEnabled) Modifier.verticalScroll(rememberScrollState())
+                    else Modifier) // without verticalScroll pull to refresh will not work)
             ) {
                 Box(
                     contentAlignment = Alignment.Center,

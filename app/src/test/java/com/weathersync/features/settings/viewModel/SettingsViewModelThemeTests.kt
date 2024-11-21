@@ -2,15 +2,12 @@ package com.weathersync.features.settings.viewModel
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
-import com.weathersync.common.utils.MainDispatcherRule
+import com.weathersync.common.MainDispatcherRule
 import com.weathersync.features.settings.SettingsBaseRule
 import com.weathersync.features.settings.ThemeTest
 import com.weathersync.features.settings.presentation.ui.SettingsIntent
 import io.mockk.coVerify
-import io.mockk.coVerifyAll
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule

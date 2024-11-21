@@ -76,8 +76,7 @@ fun ComposeContentTestRule.assertSnackbarTextEquals(
 ) {
     waitForIdle()
     snackbarScope.advanceUntilIdle()
-    val snackbar = onNodeWithTag("Snackbar", useUnmergedTree = true)
-    snackbar.assertIsDisplayed()
+    onNodeWithTag("Snackbar", useUnmergedTree = true).assertIsDisplayed()
     onNodeWithTag("Snackbar text: ${getString(resId)}", useUnmergedTree = true).assertIsDisplayed()
 }
 fun ComposeContentTestRule.assertSnackbarIsNotDisplayed(
@@ -85,9 +84,5 @@ fun ComposeContentTestRule.assertSnackbarIsNotDisplayed(
 ) {
     waitForIdle()
     snackbarScope.advanceUntilIdle()
-    val snackbar = onNodeWithTag("Snackbar", useUnmergedTree = true)
-    if (snackbar.isDisplayed()) {
-        println(snackbar.fetchSemanticsNode().config[SemanticsProperties.Text])
-    }
-    snackbar.assertIsNotDisplayed()
+    onNodeWithTag("Snackbar", useUnmergedTree = true).assertIsNotDisplayed()
 }

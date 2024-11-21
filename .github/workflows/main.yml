@@ -1,5 +1,8 @@
 name: "Main workflow"
-on: [pull_request, workflow_dispatch]
+on:
+  pull_request:
+      branches:
+      - 'alpha'
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -32,7 +35,14 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run Unit Tests
-        run: ./gradlew test --stacktrace
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+            name: junit-test-report
+            path: ./app/build/test-results/testDebugUnitTest/
 
   deploy:
     needs: test

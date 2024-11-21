@@ -84,12 +84,14 @@ class AuthViewModel(
                     return@launch
                 }
                 googleAuthRepository.signInWithIntent(activityResult.data!!)
-                analyticsManager.logEvent(FirebaseEvent.SIGN_IN_WITH_GOOGLE)
+                analyticsManager.logEvent(event = FirebaseEvent.SIGN_IN_WITH_GOOGLE,
+                    isSubscribed = null)
                 _uiEvent.emit(AuthUIEvent.NavigateToHome)
                 updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {
                 if ((e is ApiException && e.statusCode != 16) || e !is ApiException) {
                     _uiEvent.emit(AuthUIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
+                    analyticsManager.recordException(e)
                     updateAuthResult(CustomResult.Error)
                 } else updateAuthResult(CustomResult.None)
             }
@@ -106,7 +108,8 @@ class AuthViewModel(
                     if (authType == AuthType.SignIn) signIn(email, password) else signUp(email, password)
                 }
                 analyticsManager.logEvent(if (authType == AuthType.SignIn) FirebaseEvent.MANUAL_SIGN_IN
-                else FirebaseEvent.MANUAL_SIGN_UP)
+                else FirebaseEvent.MANUAL_SIGN_UP,
+                    isSubscribed = null)
                 _uiEvent.emit(AuthUIEvent.NavigateToHome)
                 updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {

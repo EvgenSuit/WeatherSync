@@ -27,7 +27,9 @@ import com.weathersync.features.home.presentation.ui.components.CurrentWeatherCo
 import com.weathersync.features.home.presentation.ui.components.RecommendedActivitiesComposable
 import com.weathersync.features.home.presentation.ui.components.WhatToWearComposable
 import com.weathersync.ui.theme.WeatherSyncTheme
-import com.weathersync.utils.Limit
+import com.weathersync.utils.ads.AdBannerType
+import com.weathersync.utils.ads.BannerAdView
+import com.weathersync.utils.weather.limits.Limit
 import com.weathersync.utils.isInProgress
 import com.weathersync.utils.isNone
 import com.weathersync.utils.isSuccess
@@ -41,6 +43,7 @@ fun HomeScreen(
 ) {
     val snackbarController = LocalSnackbarController.current
     val uiState by viewModel.uiState.collectAsState()
+    val showBannerAds by viewModel.showBannerAds.collectAsState()
     LaunchedEffect(viewModel) {
         viewModel.uiEvent.collect { event ->
             when (event) {
@@ -53,6 +56,7 @@ fun HomeScreen(
     })
     HomeScreenContent(
         uiState = uiState,
+        showBannerAds = showBannerAds,
         onIntent = viewModel::handleIntent
         )
 }
@@ -60,9 +64,10 @@ fun HomeScreen(
 @Composable
 fun HomeScreenContent(
     uiState: HomeUIState,
+    showBannerAds: Boolean?,
     onIntent: (HomeIntent) -> Unit
 ) {
-    val nextUpdateTime = uiState.limit.formattedNextUpdateTime
+    val formattedNextUpdateTime = uiState.formattedNextUpdateTime
     val suggestions = uiState.suggestions
     PullToRefreshBox(
         isRefreshing = uiState.currentWeatherRefreshResult.isInProgress(),
@@ -74,11 +79,13 @@ fun HomeScreenContent(
             Box(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                nextUpdateTime?.let { Text(text = stringResource(id = R.string.next_update_time, it)) }
+                formattedNextUpdateTime?.let { Text(text =
+                stringResource(id = R.string.next_update_time, it)) }
             }
             CurrentWeatherComposable(
                 weather = uiState.currentWeather,
                 isFetchInProgress = listOf(uiState.currentWeatherFetchResult, uiState.currentWeatherRefreshResult).any { it.isInProgress() })
+            if (showBannerAds == true) BannerAdView(adBannerType = AdBannerType.Home)
             RecommendedActivitiesComposable(
                 recommendedActivities = suggestions?.recommendedActivities,
                 unrecommendedActivities = suggestions?.unrecommendedActivities,
@@ -92,15 +99,16 @@ fun HomeScreenContent(
     }
 }
 
-@Preview(device = "spec:id=reference_tablet,shape=Normal,width=1280,height=800,unit=dp,dpi=240")
+@Preview//(device = "spec:id=reference_tablet,shape=Normal,width=1280,height=800,unit=dp,dpi=240")
 @Composable
 fun HomeScreenPreview() {
     WeatherSyncTheme {
         Surface {
             HomeScreenContent(
                 uiState = HomeUIState(
-                    limit = Limit(isReached = true, formattedNextUpdateTime = Date.from(Instant.now().plusSeconds(24*60*60)).toString())
+                    limit = Limit(isReached = true, nextUpdateDateTime = Date.from(Instant.now().plusSeconds(24*60*60)))
                 ),
+                showBannerAds = true,
                 onIntent = {}
             )
         }

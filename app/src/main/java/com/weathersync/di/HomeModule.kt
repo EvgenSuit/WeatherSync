@@ -6,13 +6,13 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.generationConfig
 import com.google.android.gms.location.LocationServices
 import com.weathersync.BuildConfig
-import com.weathersync.features.home.GeminiRepository
-import com.weathersync.features.home.HomeRepository
-import com.weathersync.features.home.LocationClient
-import com.weathersync.features.home.WeatherUpdater
+import com.weathersync.features.home.domain.HomeAIRepository
+import com.weathersync.features.home.domain.HomeRepository
+import com.weathersync.utils.weather.LocationClient
+import com.weathersync.features.home.domain.WeatherUpdater
 import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
 import com.weathersync.features.home.presentation.HomeViewModel
-import com.weathersync.features.home.CurrentWeatherRepository
+import com.weathersync.features.home.domain.CurrentWeatherRepository
 import io.ktor.client.engine.cio.CIO
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -22,12 +22,15 @@ import java.util.Locale
 val homeModule = module {
     factory { HomeViewModel(
         homeRepository = get(),
-        analyticsManager = get()
+        analyticsManager = get(),
+        nextUpdateTimeFormatter = get(),
+        subscriptionInfoDatastore = get()
     ) }
     factory { HomeRepository(
         limitManager = get(),
+        subscriptionManager = get(),
         currentWeatherRepository = get(),
-        geminiRepository = get()
+        homeAIRepository = get()
     ) }
     factory { CurrentWeatherRepository(
         engine = CIO.create(),
@@ -39,8 +42,8 @@ val homeModule = module {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(androidContext()),
         geocoder = Geocoder(androidContext(), Locale.getDefault())
     ) }
-    factory { GeminiRepository(
-        generativeModel = getGenerativeModel(),
+    factory { HomeAIRepository(
+        aiClientProvider = get(),
         currentWeatherDAO = get()
     ) }
     single { Room.databaseBuilder(

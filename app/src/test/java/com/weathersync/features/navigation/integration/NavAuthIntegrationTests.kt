@@ -14,50 +14,42 @@ import com.weathersync.common.auth.validPassword
 import com.weathersync.common.ui.assertSnackbarIsNotDisplayed
 import com.weathersync.common.ui.getString
 import com.weathersync.common.ui.setContentWithSnackbar
-import com.weathersync.common.utils.MainDispatcherRule
 import com.weathersync.features.navigation.BaseNavRule
 import com.weathersync.features.navigation.presentation.ui.NavManager
 import com.weathersync.features.navigation.presentation.ui.Route
-import io.mockk.every
-import io.mockk.spyk
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
+import io.mockk.mockk
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.stopKoin
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class NavAuthIntegrationTests {
     @get: Rule
     val composeRule = createComposeRule()
 
-    @get: Rule(order = 0)
-    val mainDispatcherRule = MainDispatcherRule()
-    @get: Rule(order = 1)
+    @get: Rule
     val baseNavRule = BaseNavRule()
-    @get: Rule(order = 2)
+    @get: Rule
     val baseNavIntegrationRule = BaseNavIntegrationRule()
     private val snackbarScope = TestScope()
 
     @Test
-    fun signOut_isInAuth() = runTest {
+    fun signOut_isInAuth() {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
+                NavManager(activity = mockk(),
+                    navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
             baseNavIntegrationRule.assertRouteEquals(Route.Home)
-            signOut(testScope = this@runTest)
+            signOut()
         }
     }
 
     @Test
-    fun signIn_userIsNull_isInHome() = runTest {
+    fun signIn_userIsNull_isInHome() {
         baseNavRule.apply {
             stopKoin()
             setupKoin(inputAuth = mockAuth(user = null))
@@ -65,33 +57,33 @@ class NavAuthIntegrationTests {
         }
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
+                NavManager(activity = mockk(),
+                    navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
             baseNavIntegrationRule.assertRouteEquals(Route.Auth)
-            signIn(testScope = this@runTest)
+            signIn()
             assertEquals(2, baseNavIntegrationRule.navController.backStack.size)
         }
     }
 
     @Test
-    fun signOutTwice_isInAuth() = runTest {
+    fun signOutTwice_isInAuth() {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
-                NavManager(navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
+                NavManager(activity = mockk(),
+                    navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
             }) {
             baseNavIntegrationRule.assertRouteEquals(Route.Home)
-            signOut(testScope = this@runTest)
-            signIn(testScope = this@runTest)
-            signOut(testScope = this@runTest)
+            signOut()
+            signIn()
+            signOut()
         }
     }
 
 
-    private fun ComposeContentTestRule.signOut(testScope: TestScope) {
+    private fun ComposeContentTestRule.signOut() {
         baseNavIntegrationRule.navigateToRoute(composeRule = composeRule, Route.Settings)
         onNodeWithText(getString(R.string.sign_out)).performClick()
-        // advance event emission in the signOut method of SettingsViewModel
-        testScope.advanceUntilIdle()
         // wait for SignOut event to be emitted in the SettingsScreen LaunchedEffect
         waitForIdle()
         baseNavIntegrationRule.assertRouteEquals(Route.Auth)
@@ -99,11 +91,10 @@ class NavAuthIntegrationTests {
         // graph and the auth destination itself
         assertEquals(2, baseNavIntegrationRule.navController.backStack.size)
     }
-    private fun ComposeContentTestRule.signIn(testScope: TestScope) {
+    private fun ComposeContentTestRule.signIn() {
         onNodeWithTag(getString(R.string.email)).performTextReplacement(validEmail)
         onNodeWithTag(getString(R.string.password)).performTextReplacement(validPassword)
         onNodeWithText(getString(R.string.sign_in)).performClick()
-        testScope.advanceUntilIdle()
 
         waitForIdle()
         assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)

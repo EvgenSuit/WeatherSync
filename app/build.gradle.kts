@@ -24,7 +24,7 @@ android {
         applicationId = "com.weathersync"
         minSdk = 28
         targetSdk = 34
-        versionCode = 6
+        versionCode = 9
         versionName = "1.0.0-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -33,6 +33,10 @@ android {
         }
         buildConfigField("String", "WEB_CLIENT_ID", "\"${localProperties.getProperty("WEB_CLIENT_ID")}\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY")}\"")
+        buildConfigField("String", "OPENAI_API_KEY", "\"${localProperties.getProperty("OPENAI_API_KEY")}\"")
+        buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"${localProperties.getProperty("INTERSTITIAL_AD_UNIT_ID")}\"")
+        buildConfigField("String", "HOME_PROMO_AD_UNIT_ID", "\"${localProperties.getProperty("HOME_PROMO_AD_UNIT_ID")}\"")
+        buildConfigField("String", "ACTIVITY_PLANNING_PROMO_AD_UNIT_ID", "\"${localProperties.getProperty("ACTIVITY_PLANNING_PROMO_AD_UNIT_ID")}\"")
     }
     buildFeatures.buildConfig = true
     testOptions {
@@ -124,22 +128,31 @@ dependencies {
     annotationProcessor(libs.room.compiler)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
-    testImplementation(libs.room.testing)
+    implementation(libs.gson)
 
     // datastore
     implementation(libs.datastore.preferences)
 
     // DI
     implementation(libs.koin)
-    implementation(libs.androidx.junit.ktx)
 
-    // Gemini
+    // AI
     implementation(libs.generative.ai)
+    implementation(libs.openai.client)
 
     implementation(libs.splashscreen)
     implementation(libs.play.integrity)
     implementation(libs.appcheck.debug)
 
+    // Billing
+    implementation(libs.billing.client)
+
+    // Ads
+    implementation(libs.play.services.ads)
+
+    implementation(libs.kotlin.test.junit)
+    implementation(libs.androidx.junit.ktx)
+    testImplementation(libs.room.testing)
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.robolectric)
@@ -152,6 +165,7 @@ dependencies {
     // A small testing library for kotlinx.coroutines Flow
     testImplementation(libs.turbine)
     testImplementation(libs.navigation.testing)
+
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

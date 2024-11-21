@@ -7,7 +7,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.weathersync.common.MainDispatcherRule
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.features.navigation.BaseNavRule
 import com.weathersync.features.navigation.presentation.ui.NavManager
@@ -15,8 +14,8 @@ import com.weathersync.features.navigation.presentation.ui.Route
 import com.weathersync.features.navigation.presentation.ui.topLevelRoutes
 import io.mockk.mockk
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -28,16 +27,14 @@ class NavIntegrationTests {
     @get: Rule
     val composeRule = createComposeRule()
 
-    @get: Rule(order = 1)
+    @get: Rule
     val baseNavRule = BaseNavRule()
-    @get: Rule(order = 0)
-    val mainDispatcherRule = MainDispatcherRule()
     @get: Rule
     val baseNavIntegrationRule = BaseNavIntegrationRule()
     private val snackbarScope = TestScope()
 
     @Test
-    fun loadUser_isUICorrect() = runTest {
+    fun loadUser_isUICorrect() {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(activity = mockk(),
@@ -48,7 +45,7 @@ class NavIntegrationTests {
     }
 
     @Test
-    fun navigateToTopLevelScreens_isBackStackCorrect() = runTest {
+    fun navigateToTopLevelScreens_isBackStackCorrect() {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(
@@ -65,7 +62,7 @@ class NavIntegrationTests {
         }
     }
     @Test
-    fun navigateToSubscription_clickOnBackButton() = runTest {
+    fun navigateToSubscription_clickOnBackButton() = runBlocking {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(
@@ -77,8 +74,7 @@ class NavIntegrationTests {
                 assertRouteEquals(Route.Home)
                 launch {
                     baseNavRule.subscriptionInfoDatastore.setIsSubscribed(false)
-                    advanceUntilIdle()
-
+                    waitForIdle()
                     onNodeWithContentDescription(Route.Premium.icon!!.name,
                         useUnmergedTree = true).assertIsDisplayed().performClick()
                     assertRouteEquals(Route.Premium)
@@ -86,7 +82,6 @@ class NavIntegrationTests {
 
                     onNodeWithContentDescription(Icons.AutoMirrored.Default.ArrowBack.name).performClick()
                     waitForIdle()
-                    advanceUntilIdle()
                     assertRouteEquals(Route.Home)
 
                     // 2 since back stack contains of graph and current route
@@ -96,7 +91,7 @@ class NavIntegrationTests {
         }
     }
     @Test
-    fun navigateToSubscription_isSubscribedNavigatedBack() = runTest {
+    fun navigateToSubscription_isSubscribedNavigatedBack() = runBlocking {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(
@@ -109,22 +104,14 @@ class NavIntegrationTests {
                 launch {
                     baseNavRule.subscriptionInfoDatastore.setIsSubscribed(false)
                     waitForIdle()
-                    advanceUntilIdle()
-                    waitForIdle()
-                    advanceUntilIdle()
 
                     onNodeWithContentDescription(Route.Premium.icon!!.name,
-                        useUnmergedTree = true).assertIsDisplayed().performClick()
-                    waitForIdle()
+                        useUnmergedTree = true).performClick()
                     assertRouteEquals(Route.Premium)
                     assertEquals(3, navController.backStack.size)
 
                     baseNavRule.subscriptionInfoDatastore.setIsSubscribed(true)
-                    // DO NOT CHANGE THE CLOCK ADVANCEMENTS BELOW
                     waitForIdle()
-                    advanceUntilIdle()
-                    waitForIdle()
-                    advanceUntilIdle()
                     assertRouteEquals(Route.Home)
 
                     // 2 since back stack contains graph and current route
@@ -135,7 +122,7 @@ class NavIntegrationTests {
     }
 
     @Test
-    fun navigateToSameScreen_backStackIsSame() = runTest {
+    fun navigateToSameScreen_backStackIsSame() {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
                 NavManager(activity = mockk(),

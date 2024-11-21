@@ -70,7 +70,7 @@ class NextUpdateTimeFormatterTests {
         val formattedDate = nextUpdateTimeFormatter.formatNextUpdateDateTime(date)
 
         // Assuming US uses 12-hour time format; should display only the time with AM/PM
-        assertEquals("3:00 PM".removeWhitespaces(), formattedDate)
+        assertEquals("3:00 PM".removeWhitespaces(), formattedDate.removeWhitespaces())
     }
 
     @Test
@@ -109,5 +109,7 @@ class NextUpdateTimeFormatterTests {
         assertEquals("00:00, 11 Nov", formattedDate)
     }
 
-    private fun String.removeWhitespaces() = this.replace("\\s".toRegex(), "")
+    private fun String.removeWhitespaces() = this
+        .replace("\u202F", " ")
+        .replace("\\s".toRegex(), "")
 }

@@ -109,5 +109,5 @@ class NextUpdateTimeFormatterTests {
         assertEquals("00:00, 11 Nov", formattedDate)
     }
 
-    private fun String.removeWhitespaces() = this.replace(" ", "")
+    private fun String.removeWhitespaces() = this.replace("\\s".toRegex(), "")
 }

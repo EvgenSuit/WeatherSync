@@ -115,6 +115,7 @@ class NavIntegrationTests {
 
                     onNodeWithContentDescription(Route.Premium.icon!!.name,
                         useUnmergedTree = true).assertIsDisplayed().performClick()
+                    waitForIdle()
                     assertRouteEquals(Route.Premium)
                     assertEquals(3, navController.backStack.size)
 

@@ -1,10 +1,8 @@
 package com.weathersync.common.utils
 
 import com.weathersync.common.weather.mockEngine
-import com.weathersync.utils.weather.limits.TimeAPI
-import com.weathersync.utils.weather.limits.TimeAPIResponse
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
+import com.weathersync.utils.TimeAPI
+import com.weathersync.utils.TimeAPIResponse
 import io.ktor.http.HttpStatusCode
 import java.text.SimpleDateFormat
 import java.util.Date

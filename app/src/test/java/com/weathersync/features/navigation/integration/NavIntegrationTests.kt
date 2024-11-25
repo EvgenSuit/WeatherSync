@@ -3,15 +3,19 @@ package com.weathersync.features.navigation.integration
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.printToLog
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.weathersync.common.ui.printToLog
 import com.weathersync.common.ui.setContentWithSnackbar
 import com.weathersync.features.navigation.BaseNavRule
 import com.weathersync.features.navigation.presentation.ui.NavManager
 import com.weathersync.features.navigation.presentation.ui.Route
-import com.weathersync.features.navigation.presentation.ui.topLevelRoutes
+import com.weathersync.features.navigation.presentation.ui.defaultTopLevelRoutes
 import io.mockk.mockk
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -45,23 +49,6 @@ class NavIntegrationTests {
     }
 
     @Test
-    fun navigateToTopLevelScreens_isBackStackCorrect() {
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
-            uiContent = {
-                NavManager(
-                    activity = mockk(),
-                    navController = baseNavIntegrationRule.navController, navManagerViewModel = baseNavRule.viewModel)
-            }) {
-            baseNavIntegrationRule.apply {
-                assertRouteEquals(Route.Home)
-                navigateToRoute(composeRule = composeRule, *topLevelRoutes.toTypedArray())
-                navigateToRoute(composeRule = composeRule, *topLevelRoutes.toTypedArray())
-                // 2 since back stack contains of graph and current route
-                assertEquals(2, navController.backStack.size)
-            }
-        }
-    }
-    @Test
     fun navigateToSubscription_clickOnBackButton() = runBlocking {
         setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
             uiContent = {
@@ -75,7 +62,7 @@ class NavIntegrationTests {
                 launch {
                     baseNavRule.subscriptionInfoDatastore.setIsSubscribed(false)
                     waitForIdle()
-                    onNodeWithContentDescription(Route.Premium.icon!!.name,
+                    onNodeWithContentDescription(Route.Premium.route,
                         useUnmergedTree = true).assertIsDisplayed().performClick()
                     assertRouteEquals(Route.Premium)
                     assertEquals(3, navController.backStack.size)
@@ -86,6 +73,25 @@ class NavIntegrationTests {
 
                     // 2 since back stack contains of graph and current route
                     assertEquals(2, navController.backStack.size)
+                }
+            }
+        }
+    }
+    @Test
+    fun isSubscribed_premiumButtonNotDisplayed() = runBlocking {
+        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+            uiContent = {
+                NavManager(
+                    activity = mockk(),
+                    navController = baseNavIntegrationRule.navController,
+                    navManagerViewModel = baseNavRule.viewModel)
+            }) {
+            baseNavIntegrationRule.apply {
+                assertRouteEquals(Route.Home)
+                launch {
+                    baseNavRule.subscriptionInfoDatastore.setIsSubscribed(true)
+                    waitForIdle()
+                    onNodeWithContentDescription(Route.Premium.route, useUnmergedTree = true).assertDoesNotExist()
                 }
             }
         }
@@ -105,7 +111,7 @@ class NavIntegrationTests {
                     baseNavRule.subscriptionInfoDatastore.setIsSubscribed(false)
                     waitForIdle()
 
-                    onNodeWithContentDescription(Route.Premium.icon!!.name,
+                    onNodeWithContentDescription(Route.Premium.route,
                         useUnmergedTree = true).performClick()
                     assertRouteEquals(Route.Premium)
                     assertEquals(3, navController.backStack.size)

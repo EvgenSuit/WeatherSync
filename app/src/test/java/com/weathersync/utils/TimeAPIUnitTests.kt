@@ -2,7 +2,6 @@ package com.weathersync.utils
 
 import com.weathersync.common.TestClock
 import com.weathersync.common.utils.mockTimeAPI
-import com.weathersync.utils.weather.limits.TimeAPI
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.runTest

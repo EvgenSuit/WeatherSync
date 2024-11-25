@@ -54,7 +54,7 @@ class ActivityPlanningViewModel(
                 val isSubscribed = activityPlanningRepository.isSubscribed()
                 val limit = activityPlanningRepository.calculateLimit(isSubscribed = isSubscribed)
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.ACTIVITY_PLANNING_LIMIT,
-                    isSubscribed = isSubscribed,
+                    showInterstitialAd = null,
                     "next_generation_time" to (limit.nextUpdateDateTime?.toString() ?: ""))
                 val formattedNextGenerationTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.formatNextUpdateDateTime(it) }
                 _uiState.update { it.copy(limit = limit,
@@ -69,7 +69,7 @@ class ActivityPlanningViewModel(
                     activityPlanningRepository.recordTimestamp()
                     analyticsManager.logEvent(
                         event = FirebaseEvent.PLAN_ACTIVITIES,
-                        isSubscribed = isSubscribed,
+                        showInterstitialAd = !isSubscribed,
                         "suggestions" to suggestions)
                     _uiState.update { it.copy(
                         generatedText = suggestions,

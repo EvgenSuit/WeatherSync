@@ -24,7 +24,7 @@ import java.time.ZoneId
 import java.util.Date
 import kotlin.reflect.KClass
 
-class TestException(message: String) : Exception(message)
+class TestException(message: String = "TestException") : Exception(message)
 
 // firebase timestamp is generated from this clock
 class TestClock : Clock() {

@@ -14,3 +14,5 @@ class BillingServiceInitException(debugMessage: String): Exception(debugMessage)
 class SubscriptionCheckException(debugMessage: String): Exception(debugMessage)
 class PurchasesUpdatedException(message: String): Exception(message)
 class PurchaseException(message: String): Exception(message)
+
+class UnknownReviewException: Exception()

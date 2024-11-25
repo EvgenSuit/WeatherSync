@@ -62,8 +62,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(weatherUnits = settingsRepository.getUnits()) }
-                analyticsManager.logEvent(event = FirebaseEvent.FETCH_WEATHER_UNITS,
-                    isSubscribed = false)
+                analyticsManager.logEvent(event = FirebaseEvent.FETCH_WEATHER_UNITS)
                 update(CustomResult.Success)
             } catch (e: Exception) {
                 _uiEvents.emit(SettingsUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_load_units)))
@@ -88,7 +87,7 @@ class SettingsViewModel(
                     is WeatherUnit.Visibility -> currentUnits.copy(visibility = unit)
                 }
                 analyticsManager.logEvent(FirebaseEvent.CHANGE_WEATHER_UNITS,
-                    isSubscribed = null,
+                    showInterstitialAd = null,
                     "temp" to updatedUnits.temp.unitName,
                     "windSpeed" to updatedUnits.windSpeed.unitName,
                     "visibility" to updatedUnits.visibility.unitName)
@@ -104,8 +103,7 @@ class SettingsViewModel(
     private fun signOut() {
         viewModelScope.launch {
             settingsRepository.signOut()
-            analyticsManager.logEvent(event = FirebaseEvent.SIGN_OUT,
-                isSubscribed = false)
+            analyticsManager.logEvent(event = FirebaseEvent.SIGN_OUT)
             _uiEvents.emit(SettingsUIEvent.SignOut)
         }
     }

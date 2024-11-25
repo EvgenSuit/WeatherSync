@@ -11,6 +11,7 @@ import org.koin.dsl.module
 val navModule = module {
     single { NavManagerViewModel(
         auth = Firebase.auth,
-        subscriptionInfoDatastore = get()
+        subscriptionInfoDatastore = get(),
+        themeManager = get()
     ) }
 }

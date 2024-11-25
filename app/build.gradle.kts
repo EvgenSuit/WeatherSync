@@ -23,8 +23,8 @@ android {
         applicationId = "com.weathersync"
         minSdk = 28
         targetSdk = 34
-        versionCode = 10
-        versionName = "1.0.0-alpha"
+        versionCode = 11
+        versionName = "1.0.1-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -148,6 +148,10 @@ dependencies {
 
     // Ads
     implementation(libs.play.services.ads)
+
+    // In-app review
+    implementation(libs.play.review)
+    implementation(libs.play.review.ktx)
 
     implementation(libs.kotlin.test.junit)
     implementation(libs.androidx.junit.ktx)

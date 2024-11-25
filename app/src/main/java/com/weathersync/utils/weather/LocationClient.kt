@@ -51,7 +51,7 @@ class LocationClient(
                 if (newLocation != null) {
                     processLocation(newLocation, continuation)
                 } else {
-                    continuation.resumeWithException(LocationRequestException("Unable to fetch up-to-date location: location is null"))
+                    continuation.resumeWithException(LocationRequestException("Unable to fetch up-to-date location: location is null. Location result: $locationResult"))
                 }
             }
         }, Looper.getMainLooper())
@@ -70,7 +70,10 @@ class LocationClient(
     }
     private fun getLocality(location: Location): String {
         val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-        val address = addresses?.get(0)!!
-        return "${address.locality}, ${address.countryName}"
+        if (addresses.isNullOrEmpty()) return "null"
+        val address = addresses[0]!!
+        // locality - city name, subLocality - district/neighborhood, adminArea - state/province
+        val additionalInfo = address.locality ?: address.subLocality ?: address.adminArea
+        return "${if (additionalInfo != null) "${additionalInfo}, " else ""}${address.countryName}"
     }
 }

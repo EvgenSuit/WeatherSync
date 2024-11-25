@@ -63,7 +63,7 @@ class HomeViewModel(
 
                 val limit = homeRepository.calculateLimit(isSubscribed = isSubscribed, refresh = refresh)
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT,
-                    isSubscribed = isSubscribed,
+                    showInterstitialAd = null,
                     "next_update_time" to (limit.nextUpdateDateTime?.toString() ?: ""))
                 val formattedNextUpdateTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.formatNextUpdateDateTime(it) }
                 _uiState.update { it.copy(
@@ -72,7 +72,7 @@ class HomeViewModel(
 
                 val weather = homeRepository.getCurrentWeather(isLimitReached = limit.isReached)
                 analyticsManager.logEvent(event = FirebaseEvent.FETCH_CURRENT_WEATHER,
-                    isSubscribed = isSubscribed,
+                    showInterstitialAd = !isSubscribed,
                     "is_limit_reached" to limit.isReached.toString(),
                     "weather_json" to Json.encodeToString(weather))
                 _uiState.update { it.copy(currentWeather = weather) }
@@ -103,7 +103,7 @@ class HomeViewModel(
             // and if the limit is not reached
             if (!isLimitReached) homeRepository.recordTimestamp()
             analyticsManager.logEvent(event = FirebaseEvent.GENERATE_SUGGESTIONS,
-                isSubscribed = isSubscribed,
+                showInterstitialAd = null,
                 "is_limit_reached" to isLimitReached.toString(),
                 "suggestions_json" to Json.encodeToString(suggestions))
             homeRepository.insertWeatherAndSuggestions(

@@ -85,7 +85,7 @@ jobs:
         env:
           KEYSTORE_FILE: app/release-keystore.jks
           KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_ALIAS: ${{ secrets.ALIAS }}
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
 
       - uses: r0adkll/sign-android-release@v1.0.4

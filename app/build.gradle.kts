@@ -23,7 +23,7 @@ android {
         applicationId = "com.weathersync"
         minSdk = 28
         targetSdk = 34
-        versionCode = 17
+        versionCode = 18
         versionName = "1.0.2-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

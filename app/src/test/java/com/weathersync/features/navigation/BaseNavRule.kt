@@ -8,7 +8,7 @@ import com.weathersync.common.TestHelper
 import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.data.createInMemoryDataStore
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
-import com.weathersync.features.auth.RegularAuthRepository
+import com.weathersync.features.auth.domain.RegularAuthRepository
 import com.weathersync.features.auth.presentation.AuthViewModel
 import com.weathersync.features.home.presentation.HomeViewModel
 import com.weathersync.features.navigation.presentation.ui.NavManagerViewModel

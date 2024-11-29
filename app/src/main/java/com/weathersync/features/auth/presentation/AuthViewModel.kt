@@ -8,10 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.common.api.ApiException
 import com.weathersync.R
 import com.weathersync.common.ui.UIText
-import com.weathersync.features.auth.EmailValidator
-import com.weathersync.features.auth.GoogleAuthRepository
-import com.weathersync.features.auth.PasswordValidator
-import com.weathersync.features.auth.RegularAuthRepository
+import com.weathersync.features.auth.domain.EmailValidator
+import com.weathersync.features.auth.domain.GoogleAuthRepository
+import com.weathersync.features.auth.domain.PasswordValidator
+import com.weathersync.features.auth.domain.RegularAuthRepository
 import com.weathersync.features.auth.presentation.ui.AuthFieldType
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldState
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldsState

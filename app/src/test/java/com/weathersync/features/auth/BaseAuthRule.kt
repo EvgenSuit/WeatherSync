@@ -3,6 +3,8 @@ package com.weathersync.features.auth
 import com.google.firebase.auth.FirebaseAuth
 import com.weathersync.common.TestHelper
 import com.weathersync.common.auth.mockAuth
+import com.weathersync.features.auth.domain.GoogleAuthRepository
+import com.weathersync.features.auth.domain.RegularAuthRepository
 import com.weathersync.features.auth.presentation.AuthViewModel
 import io.mockk.mockk
 import io.mockk.unmockkAll

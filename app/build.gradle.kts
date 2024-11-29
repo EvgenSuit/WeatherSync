@@ -23,8 +23,8 @@ android {
         applicationId = "com.weathersync"
         minSdk = 28
         targetSdk = 34
-        versionCode = 17
-        versionName = "1.0.2-alpha"
+        versionCode = 18
+        versionName = "1.0.3-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

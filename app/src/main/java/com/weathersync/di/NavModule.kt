@@ -9,7 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import org.koin.dsl.module
 
 val navModule = module {
-    single { NavManagerViewModel(
+    factory { NavManagerViewModel(
         auth = Firebase.auth,
         subscriptionInfoDatastore = get(),
         themeManager = get()

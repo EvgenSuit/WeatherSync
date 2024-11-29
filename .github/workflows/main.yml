@@ -1,16 +1,19 @@
 name: "Main workflow"
 on:
   pull_request:
-
+    branches:
+      - 'alpha'
 jobs:
-
-  deploy:
-
+  test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Create Google Services JSON File
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: echo $GOOGLE_SERVICES_JSON | base64 -di > app/google-services.json
 
       - name: Set up JDK env
         uses: actions/setup-java@v4
@@ -31,57 +34,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Setup Gradle Cache
-        uses: gradle/gradle-build-action@v2
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v3
         with:
-          gradle-home-cache-cleanup: true
-
-      - name: Convert line endings
-        run: sed -i 's/\r$//' ./gradlew
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Clean Project
-        run: ./gradlew clean
-
-      - name: Create Google Services JSON File
-        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
-
-      - name: Build release bundle
-        run: ./gradlew assembleRelease
-
-      - uses: filippoLeporati93/android-release-signer@v1
-        name: Sign app
-        # ID used to access action output
-        id: sign_app
-        with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE }}
-          alias: ${{ secrets.ALIAS }}
-          keyStorePassword: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        env:
-          # override default build-tools version (33.0.0) -- optional
-          BUILD_TOOLS_VERSION: "34.0.0"
-
-
-
-      - name: Decode and save keystore
-        run: |
-          echo "${{ secrets.RELEASE_KEYSTORE }}" > keystore_base64.txt
-          base64 -d keystore_base64.txt > ${{ secrets.KEYSTORE_FILE_PATH }}
-          keytool -list -v -keystore app/release-keystore.jks -storepass "${{ secrets.RELEASE_KEYSTORE_PASSWORD }}" -alias "${{ secrets.ALIAS }}"
-
-      - uses: actions/upload-artifact@v4
-        name: Upload signed APK
-        with:
-          name: app-release-apk
-          path: ${{steps.sign_app.outputs.signedReleaseFile}}
-
-      - name: Copy signed APK
-        run: |
-          mkdir -p /github/workspace/artifacts
-          cp ${{steps.sign_app.outputs.signedReleaseFile}} /github/workspace/artifacts/
-          keytool -printcert -jarfile ${{steps.sign_app.outputs.signedReleaseFile}} | grep "SHA1"
-          cp ${{ secrets.KEYSTORE_FILE_PATH }} /github/workspace/artifacts/
-          cp app/google-services.json /github/workspace/artifacts/
+          name: junit-test-report
+          path: ./app/build/test-results/testDebugUnitTest/

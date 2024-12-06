@@ -6,7 +6,7 @@ import com.weathersync.utils.ai.AIClient
 import com.weathersync.utils.ai.data.AISuggestionsProperties
 import com.weathersync.utils.ai.data.ComplexResponseProperty
 import com.weathersync.utils.ai.data.SimpleResponseProperty
-import com.weathersync.utils.ai.gemini.data.GenerationOptions
+import com.weathersync.utils.ai.data.GenerationOptions
 import com.weathersync.utils.ai.openai.data.JsonSchema
 import com.weathersync.utils.ai.openai.data.OpenAIMessage
 import com.weathersync.utils.ai.openai.data.OpenAIRequest
@@ -73,7 +73,7 @@ class OpenAIClient(
                    ),
                    temperature = generationOptions.temperature,
                    topP = generationOptions.topP,
-                   maxCompletionTokens = 3000,
+                   maxCompletionTokens = generationOptions.maxOutputTokens,
                    responseFormat = responseFormat
                )
            )

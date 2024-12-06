@@ -29,6 +29,8 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.weathersync.common.ui.LocalSnackbarController
@@ -47,6 +49,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.X509TrustManager
 
 class MainActivity : ComponentActivity() {
     private val themeManager: ThemeManager by inject()
@@ -79,6 +84,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    class CharlesTrustManager : X509TrustManager {
+        override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+            // Allow all client certificates
+        }
+
+        override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+            // Allow all server certificates
+        }
+
+        override fun getAcceptedIssuers(): Array<X509Certificate> {
+            return arrayOf()
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         // https://developer.android.com/google/play/billing/integrate#fetch
@@ -92,6 +111,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val trustManager = CharlesTrustManager()
+        val sslContext = SSLContext.getInstance("TLS")
+        sslContext.init(null, arrayOf(trustManager), null)
+
+// Configure your network client to use this SSL context
 
         loadInterstitialAd()
         AdBanner.preloadAdPromoViews(applicationContext)
@@ -126,8 +151,15 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
-
-            LaunchedEffect(showAd, mInterstitialAd.value) {
+            showInterstitial(
+                interstitialAd = mInterstitialAd.value,
+                onDismissed = {
+                    runBlocking { adsDatastoreManager.setShowInterstitialAd(false) }
+                })
+            MobileAds.openAdInspector(applicationContext) { error ->
+                println(error)
+            }
+            /*LaunchedEffect(showAd, mInterstitialAd.value) {
                 if (showAd && mInterstitialAd.value != null) {
                     this@MainActivity.showInterstitial(
                         interstitialAd = mInterstitialAd.value,
@@ -135,18 +167,19 @@ class MainActivity : ComponentActivity() {
                             runBlocking { adsDatastoreManager.setShowInterstitialAd(false) }
                         })
                 }
-            }
+            }*/
         }
     }
     private fun loadInterstitialAd() {
         // uncomment this line to test ads integration
-        if (BuildConfig.DEBUG) return
+        //if (BuildConfig.DEBUG) return
         val adRequest = AdRequest.Builder().build()
-        val adUnitId = if (BuildConfig.DEBUG) "ca-app-pub-3940256099942544/1033173712"
-        else BuildConfig.INTERSTITIAL_AD_UNIT_ID
+        val adUnitId = //if (BuildConfig.DEBUG) "ca-app-pub-3940256099942544/1033173712"
+        /*else*/ BuildConfig.INTERSTITIAL_AD_UNIT_ID
         InterstitialAd.load(this, adUnitId, adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdFailedToLoad(error: LoadAdError) {
                 mInterstitialAd.value = null
+                println(error)
                 analyticsManager.recordException(AdLoadError(error.message))
             }
 
@@ -160,6 +193,7 @@ class MainActivity : ComponentActivity() {
         interstitialAd?.fullScreenContentCallback = object: FullScreenContentCallback() {
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
                 mInterstitialAd.value = null
+                println(error)
                 analyticsManager.recordException(AdShowError(error.message))
             }
 

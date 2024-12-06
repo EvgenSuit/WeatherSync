@@ -1,6 +1,6 @@
 package com.weathersync.utils.ai
 
-import com.weathersync.utils.ai.gemini.data.GenerationOptions
+import com.weathersync.utils.ai.data.GenerationOptions
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation

@@ -4,7 +4,7 @@ import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.utils.ai.AIClientProvider
-import com.weathersync.utils.ai.gemini.data.GenerationOptions
+import com.weathersync.utils.ai.data.GenerationOptions
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.weather.weatherCodeToDescription
 import kotlinx.serialization.json.Json

@@ -83,6 +83,7 @@ class HomeViewModel(
                     isSubscribed = isSubscribed,
                     currentWeather = weather)
             } catch (e: Exception) {
+                println(e)
                 _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_fetch_current_weather)))
                 analyticsManager.recordException(e, "Is refreshing: $refresh")
                 updateMethod(CustomResult.Error)

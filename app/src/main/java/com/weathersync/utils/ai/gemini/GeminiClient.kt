@@ -12,7 +12,7 @@ import com.weathersync.utils.ai.gemini.data.GeminiPart
 import com.weathersync.utils.ai.gemini.data.GeminiRequest
 import com.weathersync.utils.ai.gemini.data.GeminiResponse
 import com.weathersync.utils.ai.gemini.data.GeminiResponseSchema
-import com.weathersync.utils.ai.gemini.data.GenerationOptions
+import com.weathersync.utils.ai.data.GenerationOptions
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.request.post

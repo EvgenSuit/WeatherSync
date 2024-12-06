@@ -1,4 +1,4 @@
-package com.weathersync.utils.ai.gemini.data
+package com.weathersync.utils.ai.data
 
 /**
  * @param useStructuredOutput set this to true when generating suggestions for the home page

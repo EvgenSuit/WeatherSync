@@ -84,19 +84,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    class CharlesTrustManager : X509TrustManager {
-        override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
-            // Allow all client certificates
-        }
-
-        override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
-            // Allow all server certificates
-        }
-
-        override fun getAcceptedIssuers(): Array<X509Certificate> {
-            return arrayOf()
-        }
-    }
 
     override fun onResume() {
         super.onResume()
@@ -112,13 +99,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val trustManager = CharlesTrustManager()
-        val sslContext = SSLContext.getInstance("TLS")
-        sslContext.init(null, arrayOf(trustManager), null)
-
-// Configure your network client to use this SSL context
-
-        loadInterstitialAd()
+        //loadInterstitialAd()
         AdBanner.preloadAdPromoViews(applicationContext)
 
         requestReviewFlow()
@@ -134,7 +115,7 @@ class MainActivity : ComponentActivity() {
             val isThemeDark by themeManager.themeFlow(true).collectAsState(initial = initTheme)
             window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
-            val showAd by adsDatastoreManager.showInterstitialAdFlow().collectAsStateWithLifecycle(initialValue = false)
+            //val showAd by adsDatastoreManager.showInterstitialAdFlow().collectAsStateWithLifecycle(initialValue = false)
             val navController = rememberNavController()
             val snackbarHostState = remember { SnackbarHostState() }
             val snackbarController by remember {
@@ -151,14 +132,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
-            showInterstitial(
-                interstitialAd = mInterstitialAd.value,
-                onDismissed = {
-                    runBlocking { adsDatastoreManager.setShowInterstitialAd(false) }
-                })
-            MobileAds.openAdInspector(applicationContext) { error ->
-                println(error)
-            }
             /*LaunchedEffect(showAd, mInterstitialAd.value) {
                 if (showAd && mInterstitialAd.value != null) {
                     this@MainActivity.showInterstitial(
@@ -172,10 +145,10 @@ class MainActivity : ComponentActivity() {
     }
     private fun loadInterstitialAd() {
         // uncomment this line to test ads integration
-        //if (BuildConfig.DEBUG) return
+        if (BuildConfig.DEBUG) return
         val adRequest = AdRequest.Builder().build()
-        val adUnitId = //if (BuildConfig.DEBUG) "ca-app-pub-3940256099942544/1033173712"
-        /*else*/ BuildConfig.INTERSTITIAL_AD_UNIT_ID
+        val adUnitId = if (BuildConfig.DEBUG) "ca-app-pub-3940256099942544/1033173712"
+        else BuildConfig.INTERSTITIAL_AD_UNIT_ID
         InterstitialAd.load(this, adUnitId, adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdFailedToLoad(error: LoadAdError) {
                 mInterstitialAd.value = null

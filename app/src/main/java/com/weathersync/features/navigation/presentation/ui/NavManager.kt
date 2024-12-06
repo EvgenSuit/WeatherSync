@@ -2,27 +2,28 @@ package com.weathersync.features.navigation.presentation.ui
 
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WorkspacePremium
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -56,10 +57,11 @@ sealed class Route(val route: String, val icon: ImageVector? = null) {
     data object Premium: Route("Premium", Icons.Filled.WorkspacePremium)
 }
 
-val topLevelRoutes = listOf(
+val defaultTopLevelRoutes = listOf(
     Route.Home,
     Route.ActivityPlanning,
-    Route.Settings
+    Route.Settings,
+    Route.Premium
 )
 
 @Composable
@@ -70,11 +72,13 @@ fun NavManager(
 ) {
     val snackbarController = LocalSnackbarController.current
     val isSubscribed by navManagerViewModel.isUserSubscribedFlow.collectAsState()
+    val isThemeDark by navManagerViewModel.isThemeDark.collectAsState()
     NavManagerContent(
         activity = activity,
         navController = navController,
         isUserNullInit = navManagerViewModel.isUserNullInit,
         isSubscribed = isSubscribed,
+        isThemeDark = isThemeDark,
         snackbarController = snackbarController
     )
 }
@@ -85,13 +89,19 @@ fun NavManagerContent(
     navController: NavHostController,
     isUserNullInit: Boolean,
     isSubscribed: IsSubscribed?,
+    isThemeDark: Boolean,
     snackbarController: SnackbarController
 ) {
     val enterAnimation = slideInVertically { it/4 }
     val exitAnimation = fadeOut()
     val currRoute by navController.currentBackStackEntryAsState()
-    val showPremiumActionButton = isSubscribed != null && !isSubscribed
-            && !listOf(Route.Auth.route, Route.Premium.route).contains(currRoute?.destination?.route)
+    val showPremiumActionButton by remember(isSubscribed, currRoute) {
+        mutableStateOf(isSubscribed != null && !isSubscribed
+                && !listOf(Route.Auth.route, Route.Premium.route).contains(currRoute?.destination?.route))
+    }
+    val filteredTopLevelRoutes by remember(showPremiumActionButton) {
+        mutableStateOf(defaultTopLevelRoutes.filterNot { it == Route.Premium && !showPremiumActionButton })
+    }
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarController.hostState) {
@@ -99,29 +109,25 @@ fun NavManagerContent(
                     onDismiss = { snackbarController.hostState.currentSnackbarData?.dismiss() })
             }
         },
-        floatingActionButton = {
-            if (showPremiumActionButton) {
-                FloatingActionButton(
-                    contentColor = MaterialTheme.colorScheme.tertiary,
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    onClick = { navController.navigate(Route.Premium.route) }) {
-                    val icon = Route.Premium.icon!!
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = icon.name)
-                }
-            }
-        },
         bottomBar = {
-            if(currRoute?.destination?.route in topLevelRoutes.map { it.route }) {
-                BottomBar(currRoute = currRoute?.destination?.route ?: Route.Auth.route,
-                    onNavigateToRoute = { navController.navigate(it.route) {
-                        popUpTo(navController.graph.id) {
-                            saveState = true
+            if(currRoute?.destination?.route in filteredTopLevelRoutes.map { it.route }) {
+                BottomBar(
+                    routes = filteredTopLevelRoutes,
+                    isThemeDark = isThemeDark,
+                    currRoute = currRoute?.destination?.route ?: Route.Auth.route,
+                    onNavigateToRoute = {
+                        if (it == Route.Premium) {
+                            navController.navigate(it.route)
+                        } else {
+                            navController.navigate(it.route) {
+                                popUpTo(navController.graph.id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
-                        launchSingleTop = true
-                        restoreState = true
-                    } })
+                    })
             }
         }
     ){ innerPadding ->
@@ -135,6 +141,7 @@ fun NavManagerContent(
                     .fillMaxSize()
                     .consumeWindowInsets(innerPadding)
                     .clearFocusOnNonButtonClick(LocalFocusManager.current)
+                    .imePadding()
             ) {
                 composable(Route.Auth.route) {
                     AuthScreen(onNavigateToHome = {
@@ -170,15 +177,21 @@ fun NavManagerContent(
 
 @Composable
 fun BottomBar(
+    routes: List<Route>,
+    isThemeDark: Boolean,
     currRoute: String,
     onNavigateToRoute: (Route) -> Unit
 ) {
     NavigationBar(
         modifier = Modifier.padding(0.dp)
     ) {
-        topLevelRoutes.forEach { route ->
+        routes.forEach { route ->
+            val colors = if (route == Route.Premium) NavigationBarItemDefaults.colors(
+                unselectedIconColor = if (isThemeDark) Color(0xFFFFA000) else Color(0xFFFFC107)
+            ) else NavigationBarItemDefaults.colors()
             NavigationBarItem(
                 selected = currRoute == route.route,
+                colors = colors,
                 onClick = { onNavigateToRoute(route) },
                 icon = { route.icon?.let { icon ->
                     Icon(imageVector = icon, contentDescription = route.route)
@@ -191,11 +204,13 @@ fun BottomBar(
 @Preview
 @Composable
 fun BottomBarPreview() {
-    WeatherSyncTheme {
+    WeatherSyncTheme(darkTheme = false) {
         Surface {
-            BottomBar(currRoute = Route.Home.route) {
-                
-            }
+            BottomBar(
+                routes = defaultTopLevelRoutes,
+                isThemeDark = true,
+                currRoute = Route.Home.route,
+                onNavigateToRoute = {})
         }
     }
 }

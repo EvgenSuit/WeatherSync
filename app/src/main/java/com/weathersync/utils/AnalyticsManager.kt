@@ -49,9 +49,9 @@ class AnalyticsManager(
     }
 
     suspend fun logEvent(event: FirebaseEvent,
-                         isSubscribed: IsSubscribed?,
+                         showInterstitialAd: Boolean? = null,
                          vararg params: Pair<String, String>) {
-        adsDatastoreManager.setShowInterstitialAd(event = event, isSubscribed = isSubscribed)
+        if (showInterstitialAd != null) adsDatastoreManager.setShowInterstitialAd(showAd = showInterstitialAd)
         analytics.logEvent(event.name.lowercase()) {
             param("user_id", auth.currentUser?.uid.toString())
             params.forEach { param(it.first, it.second) }

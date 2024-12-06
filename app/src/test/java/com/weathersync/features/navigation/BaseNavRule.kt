@@ -1,5 +1,6 @@
 package com.weathersync.features.navigation
 
+import android.Manifest
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -7,7 +8,7 @@ import com.weathersync.common.TestHelper
 import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.data.createInMemoryDataStore
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
-import com.weathersync.features.auth.RegularAuthRepository
+import com.weathersync.features.auth.domain.RegularAuthRepository
 import com.weathersync.features.auth.presentation.AuthViewModel
 import com.weathersync.features.home.presentation.HomeViewModel
 import com.weathersync.features.navigation.presentation.ui.NavManagerViewModel
@@ -32,12 +33,15 @@ import org.junit.runner.Description
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows
 
 class BaseNavRule: TestWatcher() {
     val testHelper = TestHelper()
     lateinit var auth: FirebaseAuth
     lateinit var viewModel: NavManagerViewModel
     lateinit var subscriptionInfoDatastore: SubscriptionInfoDatastore
+    private val themeManager = ThemeManager(dataStore = ApplicationProvider.getApplicationContext<Context>().themeDatastore)
 
     fun setupKoin(
         inputAuth: FirebaseAuth = mockAuth()
@@ -98,7 +102,7 @@ class BaseNavRule: TestWatcher() {
                 settingsRepository = SettingsRepository(auth = auth, themeManager = get(), weatherUnitsManager = mockk(relaxed = true)),
                 analyticsManager = mockk(relaxed = true)
             ) }
-            single { ThemeManager(dataStore = ApplicationProvider.getApplicationContext<Context>().themeDatastore) }
+            single { themeManager }
         }
         val navModule = module {
             factory { viewModel }
@@ -115,16 +119,24 @@ class BaseNavRule: TestWatcher() {
         }
     }
 
+    fun manageLocationPermission(grant: Boolean) {
+        val permission = Manifest.permission.ACCESS_COARSE_LOCATION
+        val shadowApp = Shadows.shadowOf(RuntimeEnvironment.getApplication())
+        shadowApp.apply { if (grant) grantPermissions(permission) else denyPermissions(permission) }
+    }
+
     fun setupViewModel() {
         viewModel = NavManagerViewModel(
             auth = auth,
-            subscriptionInfoDatastore = subscriptionInfoDatastore
+            subscriptionInfoDatastore = subscriptionInfoDatastore,
+            themeManager = themeManager
         )
     }
 
     override fun starting(description: Description?) {
         stopKoin()
         unmockkAll()
+        manageLocationPermission(true)
         subscriptionInfoDatastore = SubscriptionInfoDatastore(
             dataStore = createInMemoryDataStore()
         )

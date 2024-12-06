@@ -3,6 +3,7 @@ package com.weathersync
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -28,34 +29,40 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.common.ui.SnackbarController
 import com.weathersync.features.navigation.presentation.ui.NavManager
-import com.weathersync.features.navigation.presentation.ui.Route
 import com.weathersync.features.settings.data.ThemeManager
 import com.weathersync.ui.theme.WeatherSyncTheme
 import com.weathersync.utils.AdLoadError
 import com.weathersync.utils.AdShowError
 import com.weathersync.utils.AnalyticsManager
-import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.ads.AdBanner
 import com.weathersync.utils.ads.AdsDatastoreManager
+import com.weathersync.utils.appReview.AppReviewManager
 import com.weathersync.utils.subscription.SubscriptionManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.X509TrustManager
 
 class MainActivity : ComponentActivity() {
     private val themeManager: ThemeManager by inject()
     private val subscriptionManager: SubscriptionManager by inject()
     private val analyticsManager: AnalyticsManager by inject()
+    private val appReviewManager: AppReviewManager by inject()
+
     private val didCallBillingInitMethod = mutableStateOf(false)
 
     private val adsDatastoreManager: AdsDatastoreManager by inject()
-    private var mInterstitialAd: InterstitialAd? = null
+    private var mInterstitialAd = mutableStateOf<InterstitialAd?>(null)
 
     private fun initBillingClient() = lifecycleScope.launch {
         try {
@@ -66,6 +73,17 @@ class MainActivity : ComponentActivity() {
             didCallBillingInitMethod.value = true
         }
     }
+
+    private fun requestReviewFlow() {
+        lifecycleScope.launch {
+            try {
+                appReviewManager.requestReviewFlow(this@MainActivity)
+            } catch (e: Exception) {
+                analyticsManager.recordException(e)
+            }
+        }
+    }
+
 
     override fun onResume() {
         super.onResume()
@@ -80,20 +98,24 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        //loadInterstitialAd()
+        AdBanner.preloadAdPromoViews(applicationContext)
+
+        requestReviewFlow()
+
         installSplashScreen().setKeepOnScreenCondition {
             !didCallBillingInitMethod.value
         }
-        AdBanner.preloadAdPromoViews(applicationContext)
-        loadInterstitialAd()
-        // because of enableEdgeToEdge interstitial ads don't take full screen height
-        //enableEdgeToEdge()
+        // keep in mind that because of enableEdgeToEdge interstitial ads might not take full screen height
+        enableEdgeToEdge()
 
         val initTheme = runBlocking { themeManager.themeFlow(true).first() }
         setContent {
             val isThemeDark by themeManager.themeFlow(true).collectAsState(initial = initTheme)
             window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
-            val showAd by adsDatastoreManager.showInterstitialAdFlow().collectAsStateWithLifecycle(initialValue = false)
+            //val showAd by adsDatastoreManager.showInterstitialAdFlow().collectAsStateWithLifecycle(initialValue = false)
             val navController = rememberNavController()
             val snackbarHostState = remember { SnackbarHostState() }
             val snackbarController by remember {
@@ -110,35 +132,32 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
-
-            LaunchedEffect(showAd) {
-                if (showAd) {
+            /*LaunchedEffect(showAd, mInterstitialAd.value) {
+                if (showAd && mInterstitialAd.value != null) {
                     this@MainActivity.showInterstitial(
-                        interstitialAd = mInterstitialAd,
+                        interstitialAd = mInterstitialAd.value,
                         onDismissed = {
-                            // navigate to premium after interstitial ad dismissal
-                            //navController.navigate(Route.Premium.route)
+                            runBlocking { adsDatastoreManager.setShowInterstitialAd(false) }
                         })
-                    adsDatastoreManager.setShowInterstitialAd(FirebaseEvent.NONE)
                 }
-            }
+            }*/
         }
     }
     private fun loadInterstitialAd() {
+        // uncomment this line to test ads integration
         if (BuildConfig.DEBUG) return
         val adRequest = AdRequest.Builder().build()
         val adUnitId = if (BuildConfig.DEBUG) "ca-app-pub-3940256099942544/1033173712"
         else BuildConfig.INTERSTITIAL_AD_UNIT_ID
         InterstitialAd.load(this, adUnitId, adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdFailedToLoad(error: LoadAdError) {
-                lifecycleScope.launch {
-                    mInterstitialAd = null
-                    analyticsManager.recordException(AdLoadError(error.message))
-                }
+                mInterstitialAd.value = null
+                println(error)
+                analyticsManager.recordException(AdLoadError(error.message))
             }
 
             override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                mInterstitialAd = interstitialAd
+                mInterstitialAd.value = interstitialAd
             }
         })
     }
@@ -146,14 +165,13 @@ class MainActivity : ComponentActivity() {
                                           onDismissed: () -> Unit) {
         interstitialAd?.fullScreenContentCallback = object: FullScreenContentCallback() {
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                mInterstitialAd = null
+                mInterstitialAd.value = null
+                println(error)
                 analyticsManager.recordException(AdShowError(error.message))
             }
 
             override fun onAdDismissedFullScreenContent() {
-                mInterstitialAd = null
-                // reload
-                loadInterstitialAd()
+                mInterstitialAd.value = null
                 onDismissed()
             }
         }

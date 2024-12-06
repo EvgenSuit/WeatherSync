@@ -1,7 +1,7 @@
 name: "Main workflow"
 on:
   pull_request:
-      branches:
+    branches:
       - 'alpha'
 jobs:
   test:
@@ -41,69 +41,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-            name: junit-test-report
-            path: ./app/build/test-results/testDebugUnitTest/
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK env
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-          cache: gradle
-
-      - name: Set up Android SDK
-        if: ${{ env.ACT }} # Only run on local act setups, as GitHub Actions provides the Android SDK on Ubuntu
-        uses: android-actions/setup-android@v3
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Convert line endings
-        run: sed -i 's/\r$//' ./gradlew
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Create Google Services JSON File
-        env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-        run: echo $GOOGLE_SERVICES_JSON | base64 -di > app/google-services.json
-
-      - name: Decode and save keystore
-        run: |
-          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > app/release-keystore.jks
-
-      - name: Build release bundle
-        run: ./gradlew bundleRelease
-        env:
-          KEYSTORE_FILE: app/release-keystore.jks
-          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-
-      - uses: r0adkll/sign-android-release@v1.0.4
-        name: Sign app
-        # ID used to access action output
-        id: sign_app
-        with:
-          releaseDirectory: app/build/outputs/bundle/release
-          signingKeyBase64: ${{ secrets.RELEASE_KEYSTORE }}
-          alias: ${{ secrets.ALIAS }}
-          keyStorePassword: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.RELEASE_KEY_PASSWORD }}
-
-      - name: Upload to Google Play
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-          packageName: ${{ secrets.PACKAGE_NAME }}
-          releaseFiles: ${{ steps.sign_app.outputs.signedReleaseFile }}
-          track: alpha
-          debugSymbols: app/build/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib
+          name: junit-test-report
+          path: ./app/build/test-results/testDebugUnitTest/

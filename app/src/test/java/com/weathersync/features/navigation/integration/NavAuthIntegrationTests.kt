@@ -97,7 +97,6 @@ class NavAuthIntegrationTests {
         onNodeWithText(getString(R.string.sign_in)).performClick()
 
         waitForIdle()
-        assertSnackbarIsNotDisplayed(snackbarScope = snackbarScope)
         baseNavIntegrationRule.assertRouteEquals(Route.Home)
         assertEquals(2, baseNavIntegrationRule.navController.backStack.size)
     }

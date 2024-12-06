@@ -14,7 +14,7 @@ import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.utils.weather.limits.FirestoreLimitCollection
 import com.weathersync.utils.weather.limits.LimitManager
 import com.weathersync.utils.weather.limits.LimitManagerConfig
-import com.weathersync.utils.weather.limits.TimeAPI
+import com.weathersync.utils.TimeAPI
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot

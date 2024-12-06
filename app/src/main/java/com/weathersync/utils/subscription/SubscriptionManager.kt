@@ -87,9 +87,8 @@ class SubscriptionManager(
     // call this function before generation and weather fetch
     suspend fun initBillingClient(): IsSubscribed = billingClientInitMutex.withLock {
         if (!billingClient.isReady) {
-            // set to null to avoid showing ads if the billing client is not initialized yet
             subscriptionInfoDatastore.setIsSubscribed(null)
-            adsDatastoreManager.setShowInterstitialAd()
+            adsDatastoreManager.setShowInterstitialAd(false)
             startConnection()
         }
         return setIsSubscribed()
@@ -99,9 +98,6 @@ class SubscriptionManager(
         isSubscribedMutex.withLock {
             val isSubscribed = fetchUpToDateSubscriptionState(inputPurchase = inputPurchase)
             subscriptionInfoDatastore.setIsSubscribed(isSubscribed)
-            adsDatastoreManager.setShowInterstitialAd(
-                event = FirebaseEvent.NONE,
-                isSubscribed = isSubscribed)
             return isSubscribed
         }
     }

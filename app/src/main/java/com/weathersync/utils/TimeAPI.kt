@@ -1,4 +1,4 @@
-package com.weathersync.utils.weather.limits
+package com.weathersync.utils
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body

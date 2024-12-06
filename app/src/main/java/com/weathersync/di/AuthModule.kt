@@ -7,8 +7,8 @@ import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.weathersync.BuildConfig
-import com.weathersync.features.auth.GoogleAuthRepository
-import com.weathersync.features.auth.RegularAuthRepository
+import com.weathersync.features.auth.domain.GoogleAuthRepository
+import com.weathersync.features.auth.domain.RegularAuthRepository
 import com.weathersync.features.auth.presentation.AuthViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module

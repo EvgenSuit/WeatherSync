@@ -1,10 +1,8 @@
 package com.weathersync.features.activityPlanning
 
-import android.util.Log
 import com.weathersync.features.activityPlanning.data.Forecast
-import com.weathersync.utils.ai.AIClient
 import com.weathersync.utils.ai.AIClientProvider
-import com.weathersync.utils.ai.gemini.data.GenerationOptions
+import com.weathersync.utils.ai.data.GenerationOptions
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.weather.weatherCodeToDescription
 import java.time.ZoneId

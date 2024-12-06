@@ -1,4 +1,4 @@
-package com.weathersync.features.auth
+package com.weathersync.features.auth.domain
 
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await

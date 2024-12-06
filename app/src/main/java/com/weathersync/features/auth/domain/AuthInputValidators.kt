@@ -1,4 +1,4 @@
-package com.weathersync.features.auth
+package com.weathersync.features.auth.domain
 
 import android.util.Patterns
 import com.weathersync.R

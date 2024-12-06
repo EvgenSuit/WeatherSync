@@ -23,8 +23,8 @@ android {
         applicationId = "com.weathersync"
         minSdk = 28
         targetSdk = 34
-        versionCode = 10
-        versionName = "1.0.0-alpha"
+        versionCode = 19
+        versionName = "1.0.4-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -89,6 +89,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
 
+    implementation("com.google.ads.mediation:applovin:13.0.1.0")
+    implementation("com.google.ads.mediation:vungle:7.4.2.0")
+
     // Navigation
     implementation(libs.navigation.compose)
 
@@ -148,6 +151,10 @@ dependencies {
 
     // Ads
     implementation(libs.play.services.ads)
+
+    // In-app review
+    implementation(libs.play.review)
+    implementation(libs.play.review.ktx)
 
     implementation(libs.kotlin.test.junit)
     implementation(libs.androidx.junit.ktx)

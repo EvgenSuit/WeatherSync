@@ -25,7 +25,8 @@ class BaseNavIntegrationRule: TestWatcher() {
     ) {
         composeRule.apply {
             route.forEach {
-                onNodeWithContentDescription(it.route).performClick()
+                onNodeWithContentDescription(it.route,
+                    useUnmergedTree = true).performClick()
                 assertRouteEquals(it)
             }
         }

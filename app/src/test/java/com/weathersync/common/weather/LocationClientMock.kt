@@ -41,6 +41,7 @@ fun mockLocationClient(
         every { lastLocation } returns task
     }
     val addresses = mockk<List<Address>> {
+        every { isNullOrEmpty() } returns false
         every { get(0) } returns mockk {
             every { locality } returns locationInfo.city
             every { countryName } returns locationInfo.country

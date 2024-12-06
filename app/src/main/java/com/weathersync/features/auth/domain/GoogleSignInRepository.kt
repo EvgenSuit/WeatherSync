@@ -1,4 +1,4 @@
-package com.weathersync.features.auth
+package com.weathersync.features.auth.domain
 
 import android.content.Intent
 import android.content.IntentSender

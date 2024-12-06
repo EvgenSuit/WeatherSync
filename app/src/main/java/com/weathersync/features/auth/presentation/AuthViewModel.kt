@@ -8,10 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.common.api.ApiException
 import com.weathersync.R
 import com.weathersync.common.ui.UIText
-import com.weathersync.features.auth.EmailValidator
-import com.weathersync.features.auth.GoogleAuthRepository
-import com.weathersync.features.auth.PasswordValidator
-import com.weathersync.features.auth.RegularAuthRepository
+import com.weathersync.features.auth.domain.EmailValidator
+import com.weathersync.features.auth.domain.GoogleAuthRepository
+import com.weathersync.features.auth.domain.PasswordValidator
+import com.weathersync.features.auth.domain.RegularAuthRepository
 import com.weathersync.features.auth.presentation.ui.AuthFieldType
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldState
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldsState
@@ -84,8 +84,7 @@ class AuthViewModel(
                     return@launch
                 }
                 googleAuthRepository.signInWithIntent(activityResult.data!!)
-                analyticsManager.logEvent(event = FirebaseEvent.SIGN_IN_WITH_GOOGLE,
-                    isSubscribed = null)
+                analyticsManager.logEvent(event = FirebaseEvent.SIGN_IN_WITH_GOOGLE)
                 _uiEvent.emit(AuthUIEvent.NavigateToHome)
                 updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {
@@ -108,8 +107,7 @@ class AuthViewModel(
                     if (authType == AuthType.SignIn) signIn(email, password) else signUp(email, password)
                 }
                 analyticsManager.logEvent(if (authType == AuthType.SignIn) FirebaseEvent.MANUAL_SIGN_IN
-                else FirebaseEvent.MANUAL_SIGN_UP,
-                    isSubscribed = null)
+                else FirebaseEvent.MANUAL_SIGN_UP)
                 _uiEvent.emit(AuthUIEvent.NavigateToHome)
                 updateAuthResult(CustomResult.Success)
             } catch (e: Exception) {

@@ -5,8 +5,11 @@ import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.time.Clock
 import java.time.Instant
+import java.time.ZoneId
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -16,7 +19,8 @@ class NextUpdateTimeFormatterTests {
     private val testClock = TestClock()
     private lateinit var nextUpdateTimeFormatter: NextUpdateTimeFormatter
 
-    private fun setup(clock: Clock, locale: Locale) {
+    private fun setup(clock: Clock = testClock,
+                      locale: Locale = Locale.US) {
         nextUpdateTimeFormatter = NextUpdateTimeFormatter(clock, locale)
     }
 
@@ -26,90 +30,81 @@ class NextUpdateTimeFormatterTests {
     }
 
     @Test
-    fun sameDay_UKLocale_isTimeCorrect() {
-        testClock.setInstant(Instant.parse("2024-11-10T08:00:00Z"))
-        setup(clock = testClock, locale = Locale.UK)
-
-        val date = Date.from(Instant.parse("2024-11-10T15:00:00Z"))
-        val formattedDate = nextUpdateTimeFormatter.formatNextUpdateDateTime(date)
-
-        // Assuming UK uses 24-hour time format; it should display only the time
-        assertEquals("15:00", formattedDate)
+    fun usLocale_sameDay() {
+        testSameDay(locale = Locale.US)
     }
 
     @Test
-    fun differentDay_UKLocale_isDateTimeCorrect() {
-        testClock.setInstant(Instant.parse("2024-11-10T08:00:00Z"))
-        setup(clock = testClock, locale = Locale.UK)
-
-        val date = Date.from(Instant.parse("2024-11-11T08:00:00Z"))
-        val formattedDate = nextUpdateTimeFormatter.formatNextUpdateDateTime(date)
-
-        // Should display time and date because it's a different day
-        assertEquals("08:00, 11 Nov", formattedDate)
+    fun grLocale_sameDay() {
+        testSameDay(locale = Locale.GERMANY)
     }
 
     @Test
-    fun differentYear_UKLocale_isFullDateTimeCorrect() {
-        testClock.setInstant(Instant.parse("2024-12-31T23:59:59Z"))
-        setup(clock = testClock, locale = Locale.UK)
-
-        val date = Date.from(Instant.parse("2025-01-01T08:00:00Z"))
-        val formattedDate = nextUpdateTimeFormatter.formatNextUpdateDateTime(date)
-
-        // Should display time, day, month, and year because it's a different year
-        assertEquals("08:00, 01 Jan, 2025", formattedDate)
+    fun usLocale_differentDay() {
+        testDifferentDay(locale = Locale.US)
     }
 
     @Test
-    fun sameDay_USLocale_isTimeCorrect_AMPM() {
-        testClock.setInstant(Instant.parse("2024-11-10T08:00:00Z"))
-        setup(clock = testClock, locale = Locale.US)
-
-        val date = Date.from(Instant.parse("2024-11-10T15:00:00Z"))
-        val formattedDate = nextUpdateTimeFormatter.formatNextUpdateDateTime(date)
-
-        // Assuming US uses 12-hour time format; should display only the time with AM/PM
-        assertEquals("3:00 PM".removeWhitespaces(), formattedDate.removeWhitespaces())
+    fun grLocale_differentDay() {
+        testDifferentDay(locale = Locale.GERMANY)
     }
 
     @Test
-    fun differentDay_USLocale_isTimeCorrect_AMPM() {
-        testClock.setInstant(Instant.parse("2024-11-10T08:00:00Z"))
-        setup(clock = testClock, locale = Locale.US)
-
-        val date = Date.from(Instant.parse("2024-11-11T15:00:00Z"))
-        val formattedDate = nextUpdateTimeFormatter.formatNextUpdateDateTime(date)
-
-        // Assuming US uses 12-hour time format; should display only the time with AM/PM
-        assertEquals("3:00 PM, 11 Nov".removeWhitespaces(), formattedDate.removeWhitespaces())
+    fun usLocale_differentYear() {
+        testDifferentYear(locale = Locale.US)
     }
 
     @Test
-    fun differentYear_USLocale_isTimeCorrect_AMPM() {
-        testClock.setInstant(Instant.parse("2024-11-10T08:00:00Z"))
-        setup(clock = testClock, locale = Locale.US)
-
-        val date = Date.from(Instant.parse("2025-11-11T15:00:00Z"))
-        val formattedDate = nextUpdateTimeFormatter.formatNextUpdateDateTime(date)
-
-        // Assuming US uses 12-hour time format; should display only the time with AM/PM
-        assertEquals("3:00 PM, 11 Nov, 2025".removeWhitespaces(), formattedDate.removeWhitespaces())
+    fun grLocale_differentYear() {
+        testDifferentYear(locale = Locale.GERMANY)
     }
 
     @Test
-    fun edgeCase_EndOfDayTransition() {
-        testClock.setInstant(Instant.parse("2024-11-10T23:59:59Z"))
-        setup(clock = testClock, locale = Locale.UK)
+    fun testDifferentTimeZone() {
+        val clock = Clock.fixed(Instant.ofEpochMilli(30L*24*60*60*1000), ZoneId.of("Asia/Tokyo"))
+        setup(
+            locale = Locale.US,
+            clock = clock)
 
-        val date = Date.from(Instant.parse("2024-11-11T00:00:00Z"))
-        val formattedDate = nextUpdateTimeFormatter.formatNextUpdateDateTime(date)
+        val targetDate = Date(clock.millis())
+        val result = nextUpdateTimeFormatter.format(targetDate)
+        val timeString = DateFormat.getTimeInstance(DateFormat.SHORT, Locale.US).format(targetDate)
 
-        // Should display date and time because it's a different day
-        assertEquals("00:00, 11 Nov", formattedDate)
+        println(result)
+        kotlin.test.assertEquals(timeString, result)
     }
 
-    private fun String.removeWhitespaces() = this
-        .replace("\u202F", " ")
-        .replace("\\s".toRegex(), "")
+
+    private fun testSameDay(locale: Locale) {
+        setup(locale = locale)
+        val targetDate = Date(testClock.millis())
+
+        val timeString = DateFormat.getTimeInstance(DateFormat.SHORT, locale).format(targetDate)
+
+        val result = nextUpdateTimeFormatter.format(targetDate)
+        println(result)
+        kotlin.test.assertEquals(timeString, result)
+    }
+    private fun testDifferentDay(locale: Locale) {
+        setup(locale = locale)
+        val targetDate = Date(testClock.millis()+24L*60*60*1000)
+
+        val timeString = "${DateFormat.getTimeInstance(DateFormat.SHORT, locale).format(targetDate)}, " +
+                SimpleDateFormat("dd MMM", locale).format(targetDate)
+
+        val result = nextUpdateTimeFormatter.format(targetDate)
+        println(result)
+        kotlin.test.assertEquals(timeString, result)
+    }
+    private fun testDifferentYear(locale: Locale) {
+        setup(locale = locale)
+        val targetDate = Date(testClock.millis()+365L*24*60*60*1000)
+
+        val timeString = "${DateFormat.getTimeInstance(DateFormat.SHORT, locale).format(targetDate)}, " +
+                SimpleDateFormat("dd MMM yyyy", locale).format(targetDate)
+
+        val result = nextUpdateTimeFormatter.format(targetDate)
+        println(result)
+        kotlin.test.assertEquals(timeString, result)
+    }
 }

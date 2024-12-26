@@ -2,6 +2,7 @@ package com.weathersync.common.testInterfaces
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.weathersync.common.TestClock
 import com.weathersync.common.TestException
 import com.weathersync.common.auth.userId
@@ -47,9 +48,10 @@ interface BaseLimitTest {
         limitManagerConfig: LimitManagerConfig
     ) {
         val duration = TimeUnit.HOURS.toMillis(limitManagerConfig.durationInHours.toLong())
+        Date(testClock.millis() - duration)
         val ref = limitManagerFirestore.collection(userId).document("limits")
             .collection(collection.collectionName)
-            .whereLessThan("timestamp", Timestamp(Date(testClock.millis() - duration)))
+            .orderBy("timestamp", Query.Direction.DESCENDING)
 
         val batch = limitManagerFirestore.batch()
         verify(exactly = 1) { ref.get() }

@@ -4,11 +4,11 @@ import android.Manifest
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuth.AuthStateListener
 import com.weathersync.common.TestHelper
 import com.weathersync.common.auth.mockAuth
 import com.weathersync.common.data.createInMemoryDataStore
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
-import com.weathersync.features.auth.domain.RegularAuthRepository
 import com.weathersync.features.auth.presentation.AuthViewModel
 import com.weathersync.features.home.presentation.HomeViewModel
 import com.weathersync.features.navigation.presentation.ui.NavManagerViewModel
@@ -22,10 +22,11 @@ import com.weathersync.utils.ads.AdsDatastoreManager
 import com.weathersync.utils.ads.adsDataStore
 import com.weathersync.utils.subscription.SubscriptionManager
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
-import com.weathersync.utils.weather.limits.LimitManager
 import com.weathersync.utils.weather.WeatherUnitsManager
+import com.weathersync.utils.weather.limits.LimitManager
 import io.mockk.coEvery
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.unmockkAll
 import org.junit.rules.TestWatcher
@@ -42,9 +43,10 @@ class BaseNavRule: TestWatcher() {
     lateinit var viewModel: NavManagerViewModel
     lateinit var subscriptionInfoDatastore: SubscriptionInfoDatastore
     private val themeManager = ThemeManager(dataStore = ApplicationProvider.getApplicationContext<Context>().themeDatastore)
+    val authStateListenerSlot = slot<AuthStateListener>()
 
     fun setupKoin(
-        inputAuth: FirebaseAuth = mockAuth()
+        inputAuth: FirebaseAuth = mockAuth(authStateListenerSlot = authStateListenerSlot)
     ) {
         auth = inputAuth
         val subscriptionModule = module {
@@ -72,7 +74,6 @@ class BaseNavRule: TestWatcher() {
         }
         val authModule = module {
             factory { AuthViewModel(
-                regularAuthRepository = RegularAuthRepository(inputAuth),
                 googleAuthRepository = mockk(relaxed = true),
                 analyticsManager = mockk(relaxed = true)
             ) }

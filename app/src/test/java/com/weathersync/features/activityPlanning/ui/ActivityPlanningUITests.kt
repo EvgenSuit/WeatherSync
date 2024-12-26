@@ -22,6 +22,7 @@ import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.features.activityPlanning.ActivityPlanningBaseRule
 import com.weathersync.features.activityPlanning.presentation.ui.ActivityPlanningScreen
 import com.weathersync.utils.ads.AdBannerType
+import com.weathersync.utils.weather.limits.GenerationType
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
@@ -45,36 +46,90 @@ class ActivityPlanningUITests {
 
     @Test
     fun generateRecommendations_notSubscribed_successAdsShown() = runTest {
-        activityPlanningBaseRule.subscriptionInfoDatastore.setIsSubscribed(false)
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
-            uiContent = {
-                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel)
-            }) {
-            performActivityPlanning()
-            activityPlanningBaseRule.assertUrlAndDatesAreCorrect()
+        activityPlanningBaseRule.apply {
+            subscriptionInfoDatastore.setIsSubscribed(false)
+            setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+                uiContent = {
+                    ActivityPlanningScreen(viewModel = viewModel)
+                }) {
+                performActivityPlanning()
+                assertUrlAndDatesAreCorrect()
 
-            // post advancement checks
-            onNodeWithText(activityPlanningBaseRule.activityPlanningSuggestions).assertIsDisplayed()
-            assertSnackbarIsNotDisplayed(snackbarScope)
-            onNodeWithTag("Next generation time").assertIsNotDisplayed()
-            onNodeWithTag(AdBannerType.ActivityPlanning.name).assertExists()
+                // post advancement checks
+                onNodeWithText(activityPlanningSuggestions).assertIsDisplayed()
+                assertSnackbarIsNotDisplayed(snackbarScope)
+                onNodeWithTag("Next generation time").assertIsNotDisplayed()
+                onNodeWithTag(AdBannerType.ActivityPlanning.name).assertExists()
+            }
+        }
+    }
+    @Test
+    fun generateRecommendations_notSubscribed_limitReachedUpgradeToPremiumShow() = runTest {
+        activityPlanningBaseRule.apply {
+            setupLimitManager(timestamps = createDescendingTimestamps(
+                limitManagerConfig = GenerationType.ActivityRecommendations.regularLimitManagerConfig,
+                currTimeMillis = testClock.millis()))
+            setupActivityPlanningRepository(isSubscribed = false)
+            setupViewModel()
+
+            subscriptionInfoDatastore.setIsSubscribed(false)
+            setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+                uiContent = {
+                    ActivityPlanningScreen(viewModel = viewModel)
+                }) {
+                performActivityPlanning()
+
+                // post advancement checks
+                onNodeWithText(activityPlanningSuggestions).assertDoesNotExist()
+                assertSnackbarIsNotDisplayed(snackbarScope)
+                onNodeWithText(getString(R.string.next_generation_available_at, viewModel.uiState.value.formattedNextGenerationTime!!)).assertIsDisplayed()
+                onNodeWithText(getString(R.string.upgrade_to_premium)).assertIsDisplayed()
+                onNodeWithTag(AdBannerType.ActivityPlanning.name).assertExists()
+            }
+        }
+    }
+    @Test
+    fun generateRecommendations_subscribed_limitReachedNextGenerationShown() = runTest {
+        activityPlanningBaseRule.apply {
+            setupLimitManager(timestamps = createDescendingTimestamps(
+                limitManagerConfig = GenerationType.ActivityRecommendations.premiumLimitManagerConfig,
+                currTimeMillis = testClock.millis()))
+            setupActivityPlanningRepository(isSubscribed = true)
+            setupViewModel()
+
+            subscriptionInfoDatastore.setIsSubscribed(true)
+            setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+                uiContent = {
+                    ActivityPlanningScreen(viewModel = viewModel)
+                }) {
+                performActivityPlanning()
+
+                // post advancement checks
+                onNodeWithText(activityPlanningSuggestions).assertDoesNotExist()
+                assertSnackbarIsNotDisplayed(snackbarScope)
+                onNodeWithText(getString(R.string.next_generation_available_at, viewModel.uiState.value.formattedNextGenerationTime!!)).assertIsDisplayed()
+                onNodeWithText(getString(R.string.upgrade_to_premium)).assertDoesNotExist()
+                onNodeWithTag(AdBannerType.ActivityPlanning.name).assertDoesNotExist()
+            }
         }
     }
     @Test
     fun generateRecommendations_subscribed_successAdsNotShown() = runTest {
-        activityPlanningBaseRule.subscriptionInfoDatastore.setIsSubscribed(true)
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
-            uiContent = {
-                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel)
-            }) {
-            performActivityPlanning()
-            activityPlanningBaseRule.assertUrlAndDatesAreCorrect()
+        activityPlanningBaseRule.apply {
+            subscriptionInfoDatastore.setIsSubscribed(true)
+            setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+                uiContent = {
+                    ActivityPlanningScreen(viewModel = viewModel)
+                }) {
+                performActivityPlanning()
+                assertUrlAndDatesAreCorrect()
 
-            // post advancement checks
-            onNodeWithText(activityPlanningBaseRule.activityPlanningSuggestions).assertIsDisplayed()
-            assertSnackbarIsNotDisplayed(snackbarScope)
-            onNodeWithTag("Next generation time").assertIsNotDisplayed()
-            onNodeWithText(AdBannerType.ActivityPlanning.name).assertDoesNotExist()
+                // post advancement checks
+                onNodeWithText(activityPlanningSuggestions).assertIsDisplayed()
+                assertSnackbarIsNotDisplayed(snackbarScope)
+                onNodeWithTag("Next generation time").assertIsNotDisplayed()
+                onNodeWithText(AdBannerType.ActivityPlanning.name).assertDoesNotExist()
+            }
         }
     }
     @Test
@@ -92,13 +147,13 @@ class ActivityPlanningUITests {
             setupForecastRepository(status = status)
             setupActivityPlanningRepository(isSubscribed = false)
             setupViewModel()
-        }
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
-            uiContent = {
-                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel)
-            }) {
-            performActivityPlanning(error = status.description)
-            activityPlanningBaseRule.assertUrlAndDatesAreCorrect()
+            setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+                uiContent = {
+                    ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel)
+                }) {
+                performActivityPlanning(error = status.description)
+                assertUrlAndDatesAreCorrect()
+            }
         }
     }
     @Test
@@ -108,39 +163,41 @@ class ActivityPlanningUITests {
             setupForecastRepository(status = status)
             setupActivityPlanningRepository(isSubscribed = false)
             setupViewModel()
-        }
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
-            uiContent = {
-                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel)
-            }) {
-            performActivityPlanning(error = status.description)
-            activityPlanningBaseRule.assertUrlAndDatesAreCorrect()
+            setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+                uiContent = {
+                    ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel)
+                }) {
+                performActivityPlanning(error = status.description)
+                assertUrlAndDatesAreCorrect()
+            }
         }
     }
     @Test
     fun generateRecommendations_geocoderException_error() = runTest {
         activityPlanningBaseRule.apply {
-            setupForecastRepository(geocoderException = activityPlanningBaseRule.testHelper.testException)
+            setupForecastRepository(geocoderException = testHelper.testException)
             setupActivityPlanningRepository(isSubscribed = false)
             setupViewModel()
-        }
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
-            uiContent = {
-                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
-            performActivityPlanning(error = activityPlanningBaseRule.testHelper.testException.message)
+            setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+                uiContent = {
+                    ActivityPlanningScreen(viewModel = viewModel)
+                }) {
+                performActivityPlanning(error = testHelper.testException.message)
+            }
         }
     }
     @Test
     fun generateRecommendations_lastLocationException_error() = runTest {
         activityPlanningBaseRule.apply {
-            setupForecastRepository(lastLocationException = activityPlanningBaseRule.testHelper.testException)
+            setupForecastRepository(lastLocationException = testHelper.testException)
             setupActivityPlanningRepository(isSubscribed = false)
             setupViewModel()
-        }
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
-            uiContent = {
-                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
-            performActivityPlanning(error = activityPlanningBaseRule.testHelper.testException.message)
+            setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+                uiContent = {
+                    ActivityPlanningScreen(viewModel = viewModel)
+                }) {
+                performActivityPlanning(error = testHelper.testException.message)
+            }
         }
     }
     @Test
@@ -148,13 +205,15 @@ class ActivityPlanningUITests {
         activityPlanningBaseRule.apply {
             setupActivityPlanningRepository(
                 isSubscribed = false,
-                generationHttpStatusCode = HttpStatusCode.Forbidden)
+                generationHttpStatusCode = HttpStatusCode.Forbidden
+            )
             setupViewModel()
-        }
-        setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
-            uiContent = {
-                ActivityPlanningScreen(viewModel = activityPlanningBaseRule.viewModel) }) {
-            performActivityPlanning(error = HttpStatusCode.Forbidden.description)
+            setContentWithSnackbar(composeRule = composeRule, snackbarScope = snackbarScope,
+                uiContent = {
+                    ActivityPlanningScreen(viewModel = viewModel)
+                }) {
+                performActivityPlanning(error = HttpStatusCode.Forbidden.description)
+            }
         }
     }
 
@@ -219,6 +278,6 @@ class ActivityPlanningUITests {
             formattedNextUpdateDate = NextUpdateTimeFormatter(
                 clock = activityPlanningBaseRule.testClock,
                 locale = locale
-            ).formatNextUpdateDateTime(nextUpdateDate.expectedNextUpdateDate))
+            ).format(nextUpdateDate.expectedNextUpdateDate))
     }
 }

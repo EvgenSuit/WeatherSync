@@ -13,6 +13,7 @@ import com.weathersync.utils.ai.gemini.data.GeminiRequest
 import com.weathersync.utils.ai.gemini.data.GeminiResponse
 import com.weathersync.utils.ai.gemini.data.GeminiResponseSchema
 import com.weathersync.utils.ai.data.GenerationOptions
+import com.weathersync.utils.ai.gemini.data.SafetySetting
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.request.post
@@ -50,7 +51,7 @@ class GeminiClient(
                 )
             )
         } else null
-        val response = httpClient.post("models/gemini-1.5-flash:generateContent?key=${BuildConfig.GEMINI_API_KEY}") {
+        val response = httpClient.post("models/gemini-1.5-pro:generateContent?key=${BuildConfig.GEMINI_API_KEY}") {
             contentType(ContentType.Application.Json)
             setBody(
                 GeminiRequest(
@@ -60,13 +61,17 @@ class GeminiClient(
                     contents = GeminiInput(
                         parts = GeminiPart(text = generationOptions.prompt)
                     ),
-                    generationConfig = generationConfig
+                    generationConfig = generationConfig,
+                    safetySettings = listOf(
+                        SafetySetting(category = "HARM_CATEGORY_HARASSMENT", threshold = "BLOCK_ONLY_HIGH"),
+                        SafetySetting(category = "HARM_CATEGORY_HATE_SPEECH", threshold = "BLOCK_ONLY_HIGH")
+                    )
                 )
             )
-        }.body<GeminiResponse>()
-        val responseText = response.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text
-        if (responseText.isNullOrBlank()) throw NullGeminiResponse(
-            "Prompt: ${generationOptions.prompt.take(200)}...\n" +
+        }
+        val responseText = response.body<GeminiResponse>().candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text
+        if (responseText.isNullOrBlank() || responseText == "null") throw NullGeminiResponse(
+            "Last parts of prompt: ${generationOptions.prompt.takeLast(200)}...\n" +
                     "Complete response: $response.")
         return responseText
     }

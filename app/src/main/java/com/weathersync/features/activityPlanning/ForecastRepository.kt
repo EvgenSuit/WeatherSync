@@ -12,8 +12,8 @@ import io.ktor.client.request.get
 
 
 enum class ForecastDays(val days: Int) {
-    PREMIUM(15),
-    REGULAR(5)
+    PREMIUM(7),
+    REGULAR(2)
 }
 
 class ForecastRepository(

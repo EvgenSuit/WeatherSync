@@ -6,7 +6,9 @@ import com.weathersync.R
 import com.weathersync.common.ui.TextFieldState
 import com.weathersync.ui.UIEvent
 import com.weathersync.common.ui.UIText
-import com.weathersync.features.activityPlanning.ActivityPlanningRepository
+import com.weathersync.features.activityPlanning.ForecastDays
+import com.weathersync.features.activityPlanning.domain.ActivityPlanningRepository
+import com.weathersync.ui.ActivityPlanningUIEvent
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
@@ -37,15 +39,46 @@ class ActivityPlanningViewModel(
         .map { it?.not() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
-    private val _uiEvent = MutableSharedFlow<UIEvent>()
+    private val _uiEvent = MutableSharedFlow<ActivityPlanningUIEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
+
+    init {
+        refreshLimits()
+    }
 
     fun handleIntent(intent: ActivityPlanningIntent) {
         when (intent) {
+            is ActivityPlanningIntent.RefreshLimits -> refreshLimits()
             is ActivityPlanningIntent.GenerateRecommendations -> generateRecommendations()
             is ActivityPlanningIntent.Input -> performInput(intent.text)
+            is ActivityPlanningIntent.NavigateToPremium -> viewModelScope.launch {
+                _uiEvent.emit(ActivityPlanningUIEvent.NavigateToPremium)
+            }
         }
     }
+
+    private fun refreshLimits() {
+        viewModelScope.launch {
+            try {
+                updateLimitsRefreshResult(CustomResult.InProgress)
+                val isSubscribed = activityPlanningRepository.isSubscribed()
+                val limit = activityPlanningRepository.calculateLimit(isSubscribed = isSubscribed)
+                if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.ACTIVITY_PLANNING_LIMIT,
+                    showInterstitialAd = null,
+                    "next_generation_time" to (limit.nextUpdateDateTime?.toString() ?: ""))
+                val formattedNextGenerationTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.format(it) }
+                _uiState.update { it.copy(limit = limit,
+                    forecastDays = (if (isSubscribed) ForecastDays.PREMIUM else ForecastDays.REGULAR).days,
+                    formattedNextGenerationTime = formattedNextGenerationTime) }
+                updateLimitsRefreshResult(CustomResult.Success)
+            } catch (e: Exception) {
+                _uiEvent.emit(ActivityPlanningUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_refresh_limits)))
+                analyticsManager.recordException(e)
+                updateLimitsRefreshResult(CustomResult.Error)
+            }
+        }
+    }
+
     private fun generateRecommendations() {
         updateGenerationResult(CustomResult.InProgress)
         viewModelScope.launch {
@@ -56,7 +89,7 @@ class ActivityPlanningViewModel(
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.ACTIVITY_PLANNING_LIMIT,
                     showInterstitialAd = null,
                     "next_generation_time" to (limit.nextUpdateDateTime?.toString() ?: ""))
-                val formattedNextGenerationTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.formatNextUpdateDateTime(it) }
+                val formattedNextGenerationTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.format(it) }
                 _uiState.update { it.copy(limit = limit,
                     formattedNextGenerationTime = formattedNextGenerationTime) }
 
@@ -77,7 +110,7 @@ class ActivityPlanningViewModel(
                 }
                 updateGenerationResult(CustomResult.Success)
             } catch (e: Exception) {
-                _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_plan_activities)))
+                _uiEvent.emit(ActivityPlanningUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_plan_activities)))
                 analyticsManager.recordException(e, "Input: $input")
                 updateGenerationResult(CustomResult.Error)
             }
@@ -90,6 +123,9 @@ class ActivityPlanningViewModel(
                 UIText.StringResource(R.string.input_cannot_be_empty)
             else UIText.Empty
         )) }
+
+    private fun updateLimitsRefreshResult(result: CustomResult) =
+        _uiState.update { it.copy(limitsRefreshResult = result) }
     private fun updateGenerationResult(result: CustomResult) =
         _uiState.update { it.copy(generationResult = result) }
 }
@@ -99,5 +135,6 @@ data class ActivityPlanningUIState(
     val formattedNextGenerationTime: String? = null,
     val generatedText: String? = null,
     val forecastDays: Int? = null,
+    val limitsRefreshResult: CustomResult = CustomResult.None,
     val generationResult: CustomResult = CustomResult.None
 )

@@ -4,6 +4,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -20,12 +21,12 @@ sealed class GenerationType(
     val premiumLimitManagerConfig: LimitManagerConfig
 ) {
     data class CurrentWeather(val refresh: Boolean?): GenerationType(
-        regularLimitManagerConfig = LimitManagerConfig(6, 6),
-        premiumLimitManagerConfig = LimitManagerConfig(9, 6)
+        regularLimitManagerConfig = LimitManagerConfig(2, 2),
+        premiumLimitManagerConfig = LimitManagerConfig(4, 2)
     )
     data object ActivityRecommendations: GenerationType(
-        regularLimitManagerConfig = LimitManagerConfig(5, 6),
-        premiumLimitManagerConfig = LimitManagerConfig(9, 6)
+        regularLimitManagerConfig = LimitManagerConfig(2, 6),
+        premiumLimitManagerConfig = LimitManagerConfig(8, 6)
     )
 }
 data class Limit(
@@ -87,30 +88,30 @@ class LimitManager(
         else generationType.regularLimitManagerConfig
 
         val duration = TimeUnit.HOURS.toMillis(limitManagerConfig.durationInHours.toLong())
-        val sixHoursBefore = Timestamp(Date(currentTime.toDate().time - duration))
-        val docsBefore = this.whereLessThan("timestamp", sixHoursBefore)
-        deleteDocs(docsBefore)
+        val timeBefore = Date(currentTime.toDate().time - duration)
 
-        // counts the number of timestamps over the last "durationInHours" hours
-        val countAfter = this.whereGreaterThanOrEqualTo("timestamp", sixHoursBefore).count().get(AggregateSource.SERVER)
-            .await().count.toInt()
+        val querySnapshot = this.orderBy("timestamp", Query.Direction.DESCENDING)
+            .get().await()
+
+        val timestampsAfter = querySnapshot.documents.filter { it.getTimestamp("timestamp")?.toDate()?.after(timeBefore) ?: false}
+        val timestampsBefore = querySnapshot.documents.filter { it.getTimestamp("timestamp")?.toDate()?.before(timeBefore) ?: false }
+        val countAfter = timestampsAfter.size
+
+        deleteDocs(timestampsBefore)
+
         if (countAfter >= limitManagerConfig.count) {
-            // use firstOrNull since currentWeatherLimits collection might be empty by the time lastTimestamp is returned
-            val lastTimestamp = this.orderBy("timestamp", Query.Direction.DESCENDING).limit(1).get()
-                .await().documents.firstOrNull()?.getTimestamp("timestamp") ?: return Limit(isReached = false)
-            // add "durationInHours" hours to the last timestamp
-            val nextUpdateDateTime = Date(lastTimestamp.toDate().time + duration)
+            val lastTimestamp = timestampsAfter.firstOrNull()?.getTimestamp("timestamp")
+                ?.toDate()?.time ?: return Limit(isReached = false)
+            // add "durationInHours" hours to the last (most recent) timestamp
+            val nextUpdateDateTime = Date(lastTimestamp + duration)
             return Limit(isReached = true, nextUpdateDateTime = nextUpdateDateTime)
         } else return Limit(isReached = false)
     }
 
-    private suspend fun deleteDocs(query: Query) {
-        val docs = query.get().await().documents
+    private suspend fun deleteDocs(docs: List<DocumentSnapshot>) {
         if (docs.isNotEmpty()) {
             val batch = firestore.batch()
-            docs.forEach { doc ->
-                batch.delete(doc.reference)
-            }
+            docs.forEach { doc -> batch.delete(doc.reference) }
             batch.commit().await()
         }
     }

@@ -36,7 +36,7 @@ data class OpenAIChoice(
 data class ResponseFormat(
     val type: String,
     @SerialName("json_schema")
-    val jsonSchema: JsonSchema
+    val jsonSchema: JsonSchema? = null
 )
 
 @Serializable

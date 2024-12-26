@@ -193,7 +193,7 @@ fun NotNullSubscriptionInfoContentPreview() {
                         PricingPhaseDetails(
                             priceCurrencyCode = "PLN",
                             priceAmount = 19.99,
-                            billingPeriod = "P2D",
+                            billingPeriod = "P7D",
                             recurrenceMode = 1, // Example recurrence mode
                             isFreeTrial = true
                         ),

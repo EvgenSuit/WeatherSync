@@ -2,7 +2,6 @@ package com.weathersync.features.activityPlanning
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.google.ai.client.generativeai.GenerativeModel
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.common.TestClock
@@ -20,6 +19,8 @@ import com.weathersync.common.weather.mockWeatherUnitsManager
 import com.weathersync.features.activityPlanning.data.ForecastUnits
 import com.weathersync.features.activityPlanning.data.Hourly
 import com.weathersync.features.activityPlanning.data.OpenMeteoForecast
+import com.weathersync.features.activityPlanning.domain.ActivityPlanningAIRepository
+import com.weathersync.features.activityPlanning.domain.ActivityPlanningRepository
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.features.settings.data.WeatherUnit
@@ -67,7 +68,6 @@ class ActivityPlanningBaseRule: TestWatcher() {
 
     lateinit var viewModel: ActivityPlanningViewModel
     lateinit var limitManager: LimitManager
-    val currentWeatherDAO: CurrentWeatherDAO = mockk()
     lateinit var limitManagerFirestore: FirebaseFirestore
     lateinit var aiClientProvider: AIClientProvider
     lateinit var geminiRepository: ActivityPlanningAIRepository
@@ -103,14 +103,16 @@ class ActivityPlanningBaseRule: TestWatcher() {
             generatedContent = generatedSuggestions,
             httpStatusCode = generationHttpStatusCode
         ))
-        activityPlanningRepository = spyk(ActivityPlanningRepository(
+        activityPlanningRepository = spyk(
+            ActivityPlanningRepository(
             limitManager = limitManager,
             subscriptionManager = if (isSubscribed != null) mockSubscriptionManager(isSubscribed = isSubscribed)
             else mockk(),
             forecastRepository = forecastRepository,
             activityPlanningGeminiRepository = geminiRepository,
             dispatcher = testDispatcher
-        ))
+        )
+        )
     }
     private fun mockAIRepository(
         generatedContent: String? = null,
@@ -161,7 +163,7 @@ class ActivityPlanningBaseRule: TestWatcher() {
         )
         limitManager = spyk(mockLimitManager(
             limitManagerFirestore = limitManagerFirestore,
-            currentWeatherDAO = currentWeatherDAO,
+            currentWeatherDAO = mockk(),
             weatherUpdater = mockk(),
             timeAPI = mockTimeAPI(statusCode = timeApiStatusCode, currTimeMillis = testClock.millis())
         ))

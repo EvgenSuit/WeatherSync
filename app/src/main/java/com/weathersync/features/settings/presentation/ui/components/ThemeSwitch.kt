@@ -38,7 +38,7 @@ import com.weathersync.ui.theme.WeatherSyncTheme
 @Composable
 fun ThemeSwitcher(
     darkTheme: Dark?,
-    size: Dp = 70.dp,
+    size: Dp = 60.dp,
     iconSize: Dp = size / 3,
     padding: Dp = 10.dp,
     borderWidth: Dp = 1.dp,

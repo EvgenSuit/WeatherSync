@@ -1,5 +1,7 @@
 package com.weathersync.utils
 
+class SignInWithGoogleActivityResultException(message: String): Exception(message)
+
 class LocationRequestException(message: String): Exception(message)
 
 

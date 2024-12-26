@@ -15,6 +15,8 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.time.Clock
@@ -53,6 +55,12 @@ class TestClock : Clock() {
 class TestHelper {
     val exceptionSlot = slot<Exception>()
     val testException = TestException("exception")
+    val testClock = TestClock()
+
+    fun advance(testScope: TestScope) = repeat(999999) {
+        testScope.advanceUntilIdle()
+    }
+
     init {
         mockkStatic(FirebaseAnalytics::class)
     }

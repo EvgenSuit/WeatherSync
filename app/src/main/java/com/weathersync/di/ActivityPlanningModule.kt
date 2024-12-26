@@ -5,13 +5,10 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
 import com.weathersync.BuildConfig
-import com.weathersync.features.activityPlanning.ActivityPlanningAIRepository
-import com.weathersync.features.activityPlanning.ActivityPlanningRepository
+import com.weathersync.features.activityPlanning.domain.ActivityPlanningAIRepository
+import com.weathersync.features.activityPlanning.domain.ActivityPlanningRepository
 import com.weathersync.features.activityPlanning.ForecastRepository
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
-import com.weathersync.utils.ai.gemini.GeminiClient
-import com.weathersync.utils.ai.openai.OpenAIClient
-import com.weathersync.utils.subscription.IsSubscribed
 import io.ktor.client.engine.cio.CIO
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module

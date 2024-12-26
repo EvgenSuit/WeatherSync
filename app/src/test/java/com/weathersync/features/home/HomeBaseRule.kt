@@ -203,7 +203,7 @@ class HomeBaseRule: TestWatcher() {
         setupHomeRepository(
             isSubscribed = false,
             generatedSuggestions = testSuggestions)
-        setupViewModel(locale = Locale.US)
+        setupViewModel()
     }
 
     override fun finished(description: Description?) {

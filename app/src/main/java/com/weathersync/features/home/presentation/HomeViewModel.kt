@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.weathersync.R
 import com.weathersync.common.ui.UIText
-import com.weathersync.features.home.domain.HomeRepository
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.data.Suggestions
-import com.weathersync.ui.UIEvent
+import com.weathersync.features.home.domain.HomeRepository
+import com.weathersync.ui.HomeUIEvent
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
@@ -41,13 +41,16 @@ class HomeViewModel(
         .map { it?.not() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
-    private val _uiEvent = MutableSharedFlow<UIEvent>()
+    private val _uiEvent = MutableSharedFlow<HomeUIEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
 
     fun handleIntent(homeIntent: HomeIntent) {
         when (homeIntent) {
             is HomeIntent.GetCurrentWeather -> getCurrentWeather(false)
             is HomeIntent.RefreshCurrentWeather -> getCurrentWeather(true)
+            is HomeIntent.NavigateToPremium -> viewModelScope.launch {
+                _uiEvent.emit(HomeUIEvent.NavigateToPremium)
+            }
         }
     }
     private fun getCurrentWeather(refresh: Boolean) {
@@ -65,7 +68,7 @@ class HomeViewModel(
                 if (limit.isReached) analyticsManager.logEvent(FirebaseEvent.CURRENT_WEATHER_FETCH_LIMIT,
                     showInterstitialAd = null,
                     "next_update_time" to (limit.nextUpdateDateTime?.toString() ?: ""))
-                val formattedNextUpdateTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.formatNextUpdateDateTime(it) }
+                val formattedNextUpdateTime = limit.nextUpdateDateTime?.let { nextUpdateTimeFormatter.format(it) }
                 _uiState.update { it.copy(
                     limit = limit,
                     formattedNextUpdateTime = formattedNextUpdateTime) }
@@ -83,8 +86,7 @@ class HomeViewModel(
                     isSubscribed = isSubscribed,
                     currentWeather = weather)
             } catch (e: Exception) {
-                println(e)
-                _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_fetch_current_weather)))
+                _uiEvent.emit(HomeUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_fetch_current_weather)))
                 analyticsManager.recordException(e, "Is refreshing: $refresh")
                 updateMethod(CustomResult.Error)
             }
@@ -113,7 +115,7 @@ class HomeViewModel(
             _uiState.update { it.copy(suggestions = suggestions) }
             updateSuggestionsGenerationResult(CustomResult.Success)
         } catch (e: Exception) {
-            _uiEvent.emit(UIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_generate_suggestions)))
+            _uiEvent.emit(HomeUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_generate_suggestions)))
             analyticsManager.recordException(e)
             updateSuggestionsGenerationResult(CustomResult.Error)
         }

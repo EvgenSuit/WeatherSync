@@ -2,12 +2,16 @@ package com.weathersync.utils.appReview
 
 import com.google.android.play.core.review.ReviewManager
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuth.AuthStateListener
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.weathersync.MainActivity
 import com.weathersync.utils.TimeAPI
 import com.weathersync.utils.UnknownReviewException
 import com.weathersync.utils.appReview.data.RateDialog
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.tasks.await
 import java.time.Duration
 import java.util.Date
@@ -25,12 +29,24 @@ class AppReviewManager(
     private val firestore: FirebaseFirestore,
     private val manager: ReviewManager
 ) {
+    private suspend fun authListener() = callbackFlow {
+        val listener = AuthStateListener { auth ->
+            trySend(auth.currentUser)
+        }
+        auth.addAuthStateListener(listener)
+        awaitClose {
+            auth.removeAuthStateListener(listener)
+        }
+    }
     suspend fun requestReviewFlow(activity: MainActivity) {
-        val currUser = auth.currentUser ?: return
-        val ref = firestore.collection(currUser.uid).document(AppReviewFirestoreRef.SHOW_RATE_DIALOG.refName)
-        val currTime = timeAPI.getRealDateTime()
-        if (ref.isEligible(currTime)) {
-            launchFlow(activity = activity, ref = ref)
+        authListener().collectLatest { currUser ->
+            if (currUser != null) {
+                val ref = firestore.collection(currUser.uid).document(AppReviewFirestoreRef.SHOW_RATE_DIALOG.refName)
+                val currTime = timeAPI.getRealDateTime()
+                if (ref.isEligible(currTime)) {
+                    launchFlow(activity = activity, ref = ref)
+                }
+            }
         }
     }
 
@@ -53,7 +69,7 @@ class AppReviewManager(
                 }
             }
             // we don't care about firstEntryDate anymore
-           ref.set(RateDialog(null, didShow = true)).await()
+           ref.set(RateDialog(firstEntryDate = null, didShow = true)).await()
         }
     }
 

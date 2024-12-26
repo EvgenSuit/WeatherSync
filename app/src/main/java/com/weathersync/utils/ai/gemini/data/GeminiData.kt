@@ -32,7 +32,14 @@ data class GeminiRequest(
     @SerialName("system_instruction")
     val systemInstruction: GeminiInput,
     val contents: GeminiInput,
+    val safetySettings: List<SafetySetting>,
     val generationConfig: GeminiGenerationConfig? = null
+)
+
+@Serializable
+data class SafetySetting(
+    val category: String,
+    val threshold: String
 )
 
 @Serializable
@@ -52,3 +59,4 @@ data class GeminiInput(
 data class GeminiParts(
     val parts: List<GeminiPart>
 )
+

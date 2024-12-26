@@ -1,5 +1,7 @@
-package com.weathersync.features.activityPlanning
+package com.weathersync.features.activityPlanning.domain
 
+import com.weathersync.features.activityPlanning.ForecastDays
+import com.weathersync.features.activityPlanning.ForecastRepository
 import com.weathersync.features.activityPlanning.data.Forecast
 import com.weathersync.features.activityPlanning.data.ForecastDates
 import com.weathersync.features.activityPlanning.data.toForecast
@@ -38,11 +40,12 @@ class ActivityPlanningRepository(
     suspend fun generateRecommendations(
         activity: String,
         isSubscribed: IsSubscribed,
-        forecast: Forecast) =
+        forecast: Forecast) = withContext(dispatcher) {
         activityPlanningGeminiRepository.generateRecommendations(
             activity = activity,
             isSubscribed = isSubscribed,
             forecast = forecast)
+    }
 
     private fun calculateForecastDays(isSubscribed: IsSubscribed): ForecastDates {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.getDefault())

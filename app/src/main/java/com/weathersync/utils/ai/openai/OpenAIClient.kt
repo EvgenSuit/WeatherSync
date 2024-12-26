@@ -52,7 +52,7 @@ class OpenAIClient(
                    strict = true
                )
            )
-       } else null
+       } else ResponseFormat(type = "text")
        val response = httpClient.post("chat/completions") {
            contentType(ContentType.Application.Json)
            headers {
@@ -60,7 +60,7 @@ class OpenAIClient(
            }
            setBody(
                OpenAIRequest(
-                   model = "gpt-4o-mini",
+                   model = "ft:gpt-4o-mini-2024-07-18:personal::AilsnaRk:ckpt-step-14",
                    messages = listOf(
                        OpenAIMessage(
                            role = "system",
@@ -78,8 +78,8 @@ class OpenAIClient(
                )
            )
        }.body<OpenAIResponse>()
-       val responseContent = response.choices.firstOrNull()?.message?.content
-       if (responseContent.isNullOrBlank())  throw NullOpenAIResponse("Prompt: ${generationOptions.prompt.take(200)}...\n" +
+       val responseContent = response.choices.firstOrNull()?.message?.content?.replace("*", "")
+       if (responseContent.isNullOrBlank() || responseContent == "null")  throw NullOpenAIResponse("Prompt: ...${generationOptions.prompt.takeLast(500)}\n" +
                "Complete response: $response")
        return responseContent
    }

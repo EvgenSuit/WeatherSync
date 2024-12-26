@@ -1,7 +1,12 @@
 package com.weathersync.features.navigation.presentation.ui
 
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
@@ -10,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -25,8 +29,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,7 +43,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.weathersync.MainActivity
-import com.weathersync.clearFocusOnNonButtonClick
 import com.weathersync.common.ui.CustomSnackbar
 import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.common.ui.SnackbarController
@@ -92,8 +98,8 @@ fun NavManagerContent(
     isThemeDark: Boolean,
     snackbarController: SnackbarController
 ) {
-    val enterAnimation = slideInVertically { it/4 }
-    val exitAnimation = fadeOut()
+    val enterTransition = slideInVertically { it/4 } + fadeIn()
+    val exitTransition = slideOutVertically { it/4 } + fadeOut()
     val currRoute by navController.currentBackStackEntryAsState()
     val showPremiumActionButton by remember(isSubscribed, currRoute) {
         mutableStateOf(isSubscribed != null && !isSubscribed
@@ -134,8 +140,6 @@ fun NavManagerContent(
             NavHost(
                 navController = navController,
                 startDestination = if (isUserNullInit) Route.Auth.route else Route.Home.route,
-                enterTransition = { enterAnimation },
-                exitTransition = { exitAnimation },
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize()
@@ -149,13 +153,23 @@ fun NavManagerContent(
                             popUpTo(navController.graph.id)
                         }
                     }) }
-                composable(Route.Home.route) {
-                    HomeScreen()
+                composable(Route.Home.route,
+                    enterTransition = { enterTransition },
+                    exitTransition = { exitTransition }) {
+                    HomeScreen(
+                        onNavigateToPremium = { navController.navigate(Route.Premium.route) }
+                    )
                 }
-                composable(Route.ActivityPlanning.route) {
-                    ActivityPlanningScreen()
+                composable(Route.ActivityPlanning.route,
+                    enterTransition = { enterTransition },
+                    exitTransition = { exitTransition }) {
+                    ActivityPlanningScreen(
+                        onNavigateToPremium = { navController.navigate(Route.Premium.route) }
+                    )
                 }
-                composable(Route.Settings.route) {
+                composable(Route.Settings.route,
+                    enterTransition = { enterTransition },
+                    exitTransition = { exitTransition }) {
                     SettingsScreen(
                         onSignOut = {
                             navController.navigate(Route.Auth.route) {
@@ -164,7 +178,9 @@ fun NavManagerContent(
                         }
                     )
                 }
-                composable(Route.Premium.route) {
+                composable(Route.Premium.route,
+                    enterTransition = { enterTransition },
+                    exitTransition = { exitTransition }) {
                     SubscriptionInfoScreen(
                         activity = activity,
                         onBackClick = { navController.navigateUp() }
@@ -200,6 +216,17 @@ fun BottomBar(
     }
 }
 
+@Composable
+fun Modifier.clearFocusOnNonButtonClick(focusManager: FocusManager) =
+    this.pointerInput(Unit) {
+        // Clear focus when a click event is triggered (text fields and buttons are not included)
+        // focus will still be cleared when a text field is disabled
+        awaitEachGesture {
+            val downEvent = awaitFirstDown(pass = PointerEventPass.Initial)
+            val upEvent = waitForUpOrCancellation(pass = PointerEventPass.Initial)
+            if (upEvent != null && !downEvent.isConsumed) focusManager.clearFocus(true)
+        }
+    }
 
 @Preview
 @Composable

@@ -8,17 +8,13 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.common.api.ApiException
 import com.weathersync.R
 import com.weathersync.common.ui.UIText
-import com.weathersync.features.auth.domain.EmailValidator
 import com.weathersync.features.auth.domain.GoogleAuthRepository
-import com.weathersync.features.auth.domain.PasswordValidator
-import com.weathersync.features.auth.domain.RegularAuthRepository
-import com.weathersync.features.auth.presentation.ui.AuthFieldType
-import com.weathersync.features.auth.presentation.ui.AuthTextFieldState
 import com.weathersync.features.auth.presentation.ui.AuthTextFieldsState
 import com.weathersync.ui.AuthUIEvent
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
+import com.weathersync.utils.SignInWithGoogleActivityResultException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -27,13 +23,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
-    private val regularAuthRepository: RegularAuthRepository,
     private val googleAuthRepository: GoogleAuthRepository,
     private val analyticsManager: AnalyticsManager,
 ): ViewModel() {
-    private val emailValidator = EmailValidator()
-    private val passwordValidator = PasswordValidator()
-
     private val _uiState = MutableStateFlow(AuthUIState())
     val uiState = _uiState.asStateFlow()
 
@@ -42,30 +34,10 @@ class AuthViewModel(
 
     fun handleIntent(intent: AuthIntent) {
         when (intent) {
-            is AuthIntent.ChangeAuthType -> _uiState.value = _uiState.value.copy(authType = intent.type)
-            is AuthIntent.AuthInput -> performAuthInput(intent.state)
-            is AuthIntent.ManualAuth -> performManualAuth()
             is AuthIntent.GoogleAuth -> signInWithGoogle(intent.result)
         }
     }
-    private fun performAuthInput(state: AuthTextFieldState) {
-        val type = state.type
-        val value = state.state.value
-        val error = when (type) {
-            AuthFieldType.Email -> emailValidator(value)
-            AuthFieldType.Password -> passwordValidator(value)
-        }
-        _uiState.update { it.copy(
-            fieldsState = it.fieldsState.copy(
-                email = if (type == AuthFieldType.Email)
-                    it.fieldsState.email.copy(state = it.fieldsState.email.state.copy(value = value, error = error))
-                else it.fieldsState.email,
-                password = if (type == AuthFieldType.Password)
-                    it.fieldsState.password.copy(state = it.fieldsState.password.state.copy(value = value, error = error))
-                else it.fieldsState.password
-            )
-            ) }
-    }
+
     suspend fun onTapSignIn(): IntentSender? =
         try {
             updateAuthResult(CustomResult.InProgress)
@@ -80,6 +52,7 @@ class AuthViewModel(
         viewModelScope.launch {
             try {
                 if (activityResult.resultCode != Activity.RESULT_OK && activityResult.data == null){
+                    analyticsManager.recordException(SignInWithGoogleActivityResultException("Result code: ${activityResult.resultCode}. Data: ${activityResult.data}"))
                     updateAuthResult(CustomResult.Error)
                     return@launch
                 }
@@ -96,27 +69,6 @@ class AuthViewModel(
             }
         }
     }
-    private fun performManualAuth() {
-        updateAuthResult(CustomResult.InProgress)
-        viewModelScope.launch {
-            try {
-                val email = _uiState.value.fieldsState.email.state.value
-                val password = _uiState.value.fieldsState.password.state.value
-                val authType = _uiState.value.authType
-                regularAuthRepository.apply {
-                    if (authType == AuthType.SignIn) signIn(email, password) else signUp(email, password)
-                }
-                analyticsManager.logEvent(if (authType == AuthType.SignIn) FirebaseEvent.MANUAL_SIGN_IN
-                else FirebaseEvent.MANUAL_SIGN_UP)
-                _uiEvent.emit(AuthUIEvent.NavigateToHome)
-                updateAuthResult(CustomResult.Success)
-            } catch (e: Exception) {
-                _uiEvent.emit(AuthUIEvent.ShowSnackbar(UIText.StringResource(R.string.auth_error)))
-                analyticsManager.recordException(e, "Auth type: ${_uiState.value.authType}")
-                updateAuthResult(CustomResult.Error)
-            }
-        }
-    }
     private fun updateAuthResult(customResult: CustomResult) =
         _uiState.update { it.copy(authResult = customResult) }
 
@@ -124,10 +76,5 @@ class AuthViewModel(
 
 data class AuthUIState(
     val fieldsState: AuthTextFieldsState = AuthTextFieldsState(),
-    val authType: AuthType = AuthType.SignIn,
     val authResult: CustomResult = CustomResult.None
 )
-sealed class AuthType {
-    data object SignIn: AuthType()
-    data object SignUp: AuthType()
-}

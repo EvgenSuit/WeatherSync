@@ -92,7 +92,7 @@ splashscreen = { module = "androidx.core:core-splashscreen", version = "1.0.1" }
 
 billing-client = { module = "com.android.billingclient:billing-ktx", version = "7.1.1" }
 
-play-services-ads = { module = "com.google.android.gms:play-services-ads", version = "23.5.0" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version = "23.6.0" }
 
 play-review = { module = "com.google.android.play:review", version.ref = "playReview" }
 play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "playReview" }

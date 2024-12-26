@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +27,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +36,7 @@ import com.weathersync.common.ui.CustomButton
 import com.weathersync.common.ui.CustomCircularProgressIndicator
 import com.weathersync.common.ui.TextFieldState
 import com.weathersync.common.ui.UIText
+import com.weathersync.common.ui.openLinkInBrowser
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningIntent
 import com.weathersync.features.activityPlanning.presentation.maxActivityInputLength
 import com.weathersync.features.home.presentation.ui.components.CommonHomeComponent
@@ -43,6 +46,7 @@ import com.weathersync.ui.theme.WeatherSyncTheme
 fun PlanYourActivityComposable(
     textFieldState: TextFieldState,
     isInProgress: Boolean,
+    refreshing: Boolean,
     forecastDays: Int?,
     output: String?,
     onIntent: (ActivityPlanningIntent) -> Unit
@@ -90,7 +94,7 @@ fun PlanYourActivityComposable(
                         .testTag("ActivityTextField"),
                 )
             }
-            CustomButton(enabled = inputError is UIText.Empty,
+            CustomButton(enabled = inputError is UIText.Empty && !refreshing,
                 text = stringResource(id = R.string.find_optimal_times),
                 onClick = { onIntent(ActivityPlanningIntent.GenerateRecommendations) })
             if (!output.isNullOrBlank()) {
@@ -105,10 +109,9 @@ fun PlanYourActivityComposable(
                     style = TextStyle(
                         fontSize = 15.sp
                     ))
-                if (forecastDays != null) RecommendationsWarning(forecastDays = forecastDays)
             }
-            Spacer(modifier = Modifier.height(horizontalDividerPadding))
-
+            if (forecastDays != null) RecommendationsWarning(forecastDays = forecastDays)
+            //Spacer(modifier = Modifier.height(horizontalDividerPadding))
         } else {
             Text(text = stringResource(id = R.string.planning_activities))
             Spacer(modifier = Modifier.height(12.dp))
@@ -119,21 +122,39 @@ fun PlanYourActivityComposable(
 
 @Composable
 fun RecommendationsWarning(forecastDays: Int) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    Column(
         modifier = Modifier.fillMaxWidth()
-            .padding(top = 10.dp)
     ) {
-        val infoIcon = Icons.Filled.Info
-        Icon(imageVector = infoIcon,
-            tint = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.size(15.dp),
-            contentDescription = infoIcon.name)
-        Text(text = stringResource(id = R.string.based_on_forecast, forecastDays),
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp)
+        ) {
+            val infoIcon = Icons.Filled.Info
+            Icon(imageVector = infoIcon,
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.size(15.dp),
+                contentDescription = infoIcon.name)
+            Text(text = stringResource(id = R.string.based_on_forecast, forecastDays),
+                style = TextStyle(
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(0.5f)
+                ))
+        }
+        WeatherSource()
+    }
+}
+
+@Composable
+fun WeatherSource() {
+    val context = LocalContext.current
+    val url = stringResource(id = R.string.open_meteo_link)
+    TextButton(onClick = { openLinkInBrowser(context = context, url = url) }) {
+        Text(text = stringResource(id = R.string.source),
             style = TextStyle(
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(0.5f)
-            ))
+                color = MaterialTheme.colorScheme.onBackground.copy(0.5f),
+                textDecoration = TextDecoration.Underline))
     }
 }
 
@@ -144,9 +165,12 @@ fun PlanYourActivityComposablePreview() {
         Surface {
             PlanYourActivityComposable(
                 textFieldState = TextFieldState(
+                    value = "Some",
+                    error = UIText.Empty
                     //error = UIText.DynamicString("Text cannot be empty. ".repeat(4))
                 ),
                 isInProgress = false,
+                refreshing = true,
                 output = "Recommended times".repeat(30),
                 forecastDays = 12,
                 onIntent = {}

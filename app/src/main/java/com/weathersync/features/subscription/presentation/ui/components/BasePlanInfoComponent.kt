@@ -131,13 +131,13 @@ fun formatBillingPeriod(context: Context, billingPeriod: String, includeNumber: 
     val period = Period.parse(billingPeriod)
     val resources = context.resources
     val months = period.months.let { if (it != 0) {
-        if (includeNumber) resources.getQuantityString(R.plurals.month, it, it) else {
-            if (it == 1) resources.getString(R.string.month) else resources.getString(R.string.months)
+        if (includeNumber) "$it-${resources.getString(R.string.month)}" else {
+             resources.getString(R.string.month)
         }
     } else null }
     val days = period.days.let { if (it != 0) {
-        if (includeNumber) resources.getQuantityString(R.plurals.day, it, it) else {
-            if (it == 1) resources.getString(R.string.day) else resources.getString(R.string.days)
+        if (includeNumber) "$it-${resources.getString(R.string.day)}" else {
+            resources.getString(R.string.day)
         }
     } else null }
 

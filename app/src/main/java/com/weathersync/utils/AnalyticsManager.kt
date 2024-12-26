@@ -26,6 +26,8 @@ enum class FirebaseEvent {
 
     SIGN_OUT,
 
+    SUBSCRIBE,
+
     NONE
 }
 

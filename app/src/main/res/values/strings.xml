@@ -1,28 +1,8 @@
 <resources>
     <string name="app_name">WeatherSync</string>
+    <string name="app_subtitle">Plan your days smarter. Get personalized forecasts for clothing, activities, &amp; events. Never let weather ruin your plans again.</string>
 
-    <string name="email">Email</string>
-    <string name="password">Password</string>
-    <string name="sign_in">Sign In</string>
-    <string name="sign_up">Sign Up</string>
-    <string name="sign_in_with_google">Sign In With Google</string>
-    <string name="sign_up_with_google">Sign Up With Google</string>
-    <string name="do_not_have_an_account">Don\'t have an account?</string>
-    <string name="go_to_sign_up">Go to Sign Up</string>
-    <string name="have_an_account">Have an account?</string>
-    <string name="go_to_sign_in">Go to Sign In</string>
-
-    <string name="email_empty">Email cannot be empty</string>
-    <string name="email_invalid">Email is of invalid format</string>
-
-    <string name="password_empty">Password cannot be empty</string>
-    <string name="password_no_digits">Password must contain at least one digit</string>
-    <string name="password_no_mixed_case">Password must contain mixed case letters</string>
-    <string name="password_whitespace">Password must not contain whitespaces</string>
-    <string name="password_no_special">Password must contain at least one special character</string>
-    <string name="password_short">Password must contain at least 8 symbols</string>
-    <string name="password_long">Password cannot be more than 30 symbols long</string>
-
+    <string name="continue_with_google">Continue with Google</string>
     <string name="auth_error">Authentication error</string>
     <string name="google_sign_in_error">Sign in error, make sure you are signed in to Google on this device</string>
 
@@ -30,6 +10,7 @@
     <string name="request_permission">Request permission</string>
     <string name="go_to_settings">Go to settings</string>
 
+    <string name="upgrade_to_premium">Upgrade to Premium</string>
     <string name="next_update_time">Next update available at %1$s</string>
     <string name="next_generation_available_at">Next generation available at %1$s</string>
     <string name="current_weather">Current weather</string>
@@ -47,7 +28,10 @@
     <string name="find_optimal_times">Find optimal times</string>
     <string name="planning_activities">Planning your activities…</string>
     <string name="based_on_forecast">Recommendations are based on a %1$s-day hourly forecast for your location</string>
+    <string name="source">Source</string>
+    <string name="open_meteo_link">https://open-meteo.com/</string>
     <string name="could_not_plan_activities">Could not plan provided activities</string>
+    <string name="could_not_refresh_limits">Could not refresh limits</string>
 
     <string name="theme">Theme</string>
     <string name="could_not_switch_theme">Could not switch theme</string>
@@ -56,32 +40,36 @@
     <string name="temp_unit">Temperature unit</string>
     <string name="visibility_unit">Visibility unit</string>
     <string name="wind_speed_unit">Wind speed unit</string>
-    <string name="manage_subcriptions_link">https://play.google.com/store/account/subscriptions</string>
+    <string name="manage_subscriptions_link">https://play.google.com/store/account/subscriptions</string>
     <string name="manage_subscriptions">Manage subscriptions</string>
     <string name="sign_out">Sign out</string>
 
     <string name="privacy_policy">Privacy Policy</string>
-    <string name="privacy_policy_link">https://sites.google.com/view/weathersync-privacy-policy/home</string>
+    <string name="privacy_policy_link">https://sites.google.com/view/weathersync-privacy-policy?usp=sharing</string>
     <string name="terms_of_service">Terms of Service</string>
-    <string name="terms_of_service_link">https://sites.google.com/view/weathersync-terms-of-service/home</string>
+    <string name="terms_of_service_link">https://sites.google.com/view/weathersync-terms-of-service?usp=sharing</string>
     <string name="app_version">App version:</string>
+
 
     <string name="go_premium">Go Premium</string>
     <string name="cancel_anytime">Cancel anytime</string>
-    <string name="improved_recommendations">Improved recommendations and planning</string>
-    <string name="increased_activity_planning_days">15-day based activities planning</string>
+
     <string name="available_plans">Available plans</string>
-    <string name="increased_limits">Increased limits</string>
-    <string name="ad_free_experience">Ad-free experience</string>
-    <string name="free_trial">%1$s free trial</string>
+
+    <string name="improved_recommendations">Enhanced AI-Powered Recommendations &amp; Planning</string>
+    <string name="increased_activity_planning_days">Plan Activities Up to 7 Days Ahead</string>
+    <string name="increased_limits">Access 8x Higher Usage Limits</string>
+    <string name="ad_free_experience">Enjoy Ad-Free Experience</string>
+
+    <string name="free_trial">%1$s trial</string>
     <string name="after_free_trial">then %1$s</string>
     <string name="start_plan">Start Plan</string>
     <plurals name="month">
-        <item quantity="one">%1$s month</item>
+        <item quantity="one">%1$ month</item>
         <item quantity="other">%1$s months</item>
     </plurals>
     <plurals name="day">
-        <item quantity="one">%1$s day</item>
+        <item quantity="one">%1$ day</item>
         <item quantity="other">%1$s days</item>
     </plurals>
     <string name="day">day</string>

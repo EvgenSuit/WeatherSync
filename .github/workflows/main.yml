@@ -2,7 +2,7 @@ name: "Main workflow"
 on:
   pull_request:
     branches:
-      - 'alpha'
+      - 'prod'
 jobs:
   test:
     runs-on: ubuntu-latest

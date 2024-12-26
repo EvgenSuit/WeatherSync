@@ -133,7 +133,7 @@ class SubscriptionManager(
                 .build()
             billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
                 if (billingResult.responseCode == BillingResponseCode.OK) {
-                    continuation.resume(purchases.any { it.purchaseState == PurchaseState.PURCHASED })
+                    continuation.resume(purchases.any { it.purchaseState == PurchaseState.PURCHASED && it.isAcknowledged })
                 } else continuation.resumeWithException(SubscriptionCheckException(billingResult.debugMessage))
             }
         }

@@ -34,6 +34,8 @@ interface WeatherRepository {
             }
         }
 
+    // converts to time format currently set on the phone (12 or 24-hour format).
+    // e.g a user could set a US locale, but use 24 hour format
     fun convertToCorrectDateFormat(time: String): String {
         val formatterInput = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
         val formatterOutput = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(Locale.getDefault())

@@ -21,7 +21,8 @@ data class TimeAPIResponse(
 )
 
 class TimeAPI(
-    engine: HttpClientEngine
+    engine: HttpClientEngine,
+    private val locale: Locale = Locale.getDefault()
 ) {
     private val httpClient = HttpClient(engine) {
         expectSuccess = true
@@ -41,7 +42,7 @@ class TimeAPI(
      * returns global UTC time
      */
     suspend fun getRealDateTime(): Date {
-        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", Locale.getDefault())
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", locale)
         // set to UTC since timeZone returns the value of device's timezone by default
         sdf.timeZone = TimeZone.getTimeZone("UTC")
         val stringDateTime = httpClient.get("zone?timeZone=Etc%2FUTC").body<TimeAPIResponse>().dateTime

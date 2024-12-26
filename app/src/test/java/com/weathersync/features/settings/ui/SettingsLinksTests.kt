@@ -58,7 +58,7 @@ class SettingsLinksTests {
         val link = getString(when (linkType) {
             is LinkType.PrivacyPolicy -> R.string.privacy_policy_link
             is LinkType.TermsOfService -> R.string.terms_of_service_link
-            is LinkType.ManageSubscriptions -> R.string.manage_subcriptions_link
+            is LinkType.ManageSubscriptions -> R.string.manage_subscriptions_link
         })
         Intents.init()
         onNodeWithText(text, useUnmergedTree = true).performScrollTo().assertIsDisplayed().performClick()

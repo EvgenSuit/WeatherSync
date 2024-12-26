@@ -1,34 +1,23 @@
 package com.weathersync.features.auth.presentation.ui
 
 import android.content.IntentSender
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.weathersync.R
 import com.weathersync.common.ui.ConstrainedComponent
-import com.weathersync.common.ui.CustomButton
 import com.weathersync.common.ui.LocalSnackbarController
 import com.weathersync.common.ui.PrivacyTermsLinks
-import com.weathersync.common.ui.UIText
 import com.weathersync.features.auth.presentation.AuthIntent
-import com.weathersync.features.auth.presentation.AuthType
 import com.weathersync.features.auth.presentation.AuthUIState
 import com.weathersync.features.auth.presentation.AuthViewModel
 import com.weathersync.ui.AuthUIEvent
@@ -66,65 +55,30 @@ fun AuthScreenContent(
     onIntent: (AuthIntent) -> Unit,
     onGetIntentSender: suspend () -> IntentSender?
 ) {
-    ConstrainedComponent {
+    ConstrainedComponent(
+        spacedBy = 25.dp,
+        modifier = Modifier
+            .background(brush = Brush.verticalGradient(
+                colors = listOf(
+                    MaterialTheme.colorScheme.primaryContainer,
+                    MaterialTheme.colorScheme.background
+                )
+            ))
+    ) {
+        Spacer(modifier = Modifier.height(100.dp))
+        AppIcon()
         AppTitle()
-        MainComponents(
-            // add password reset result later
-            enabled = listOf(uiState.authResult).all { !it.isInProgress() },
-            authType = uiState.authType,
-            fieldsState = uiState.fieldsState,
-            onAuthIntent = onIntent,
+        AppSubtitle()
+        Spacer(modifier = Modifier.height(30.dp))
+        SignInWithGoogle(
+            enabled = !uiState.authResult.isInProgress(),
+            onAuth = onIntent,
             onGetIntentSender = onGetIntentSender
         )
         PrivacyTermsLinks()
     }
 }
 
-@Composable
-fun MainComponents(
-    enabled: Boolean,
-    authType: AuthType,
-    fieldsState: AuthTextFieldsState,
-    onAuthIntent: (AuthIntent) -> Unit,
-    onGetIntentSender: suspend () -> IntentSender?
-) {
-    val isInputValid =
-        fieldsState.email.state.error == UIText.Empty && fieldsState.password.state.error == UIText.Empty
-    Column(
-        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize()
-            .padding(8.dp)
-        ) {
-        AuthFields(
-            enabled = enabled,
-            fieldsState = fieldsState,
-            onInput = onAuthIntent
-        )
-        CustomButton(
-            enabled = isInputValid && enabled,
-            text = stringResource(
-                id = when (authType) {
-                    AuthType.SignIn -> R.string.sign_in
-                    AuthType.SignUp -> R.string.sign_up
-                }
-            ),
-            onClick = { onAuthIntent(AuthIntent.ManualAuth) })
-        SignInWithGoogle(
-            enabled = enabled,
-            authType = authType,
-            onAuth = onAuthIntent,
-            onGetIntentSender = onGetIntentSender
-        )
-        HorizontalDivider()
-        ChangeAuthType(
-            enabled = enabled,
-            currType = authType,
-            onTypeChange = {
-                onAuthIntent(AuthIntent.ChangeAuthType(it))
-            })
-    }
-}
 
 @Preview//(device = "spec:id=reference_tablet,shape=Normal,width=1280,height=800,unit=dp,dpi=240")
 @Composable
@@ -134,8 +88,7 @@ fun AuthScreenPreview() {
             AuthScreenContent(
                 uiState = AuthUIState(
                     fieldsState = AuthTextFieldsState(),
-                    authType = AuthType.SignUp,
-                    authResult = CustomResult.InProgress
+                    authResult = CustomResult.None
                 ),
                 onIntent = {},
                 onGetIntentSender = { null }

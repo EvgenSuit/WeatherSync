@@ -84,12 +84,16 @@ class ActivityPlanningLimitTests: BaseLimitTest {
 
     private suspend fun deleteOutdatedTimestampsUtil(isSubscribed: IsSubscribed) {
         val timestamps = createDescendingTimestamps(
-            limitManagerConfig = activityPlanningBaseRule.regularLimitManagerConfig,
+            limitManagerConfig = activityPlanningBaseRule.let {
+                if (isSubscribed) it.premiumLimitManagerConfig else it.regularLimitManagerConfig
+            },
             currTimeMillis = activityPlanningBaseRule.testClock.millis())
         activityPlanningBaseRule.setupLimitManager(timestamps = timestamps)
         calculateLimit(isSubscribed = isSubscribed)
 
-        activityPlanningBaseRule.testClock.advanceLimitBy(limitManagerConfig = activityPlanningBaseRule.regularLimitManagerConfig)
+        activityPlanningBaseRule.testClock.advanceLimitBy(limitManagerConfig = activityPlanningBaseRule.let {
+            if (isSubscribed) it.premiumLimitManagerConfig else it.regularLimitManagerConfig
+        })
         activityPlanningBaseRule.setupLimitManager(timestamps = timestamps)
         calculateLimit(isSubscribed = isSubscribed)
 

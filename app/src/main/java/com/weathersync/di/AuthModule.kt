@@ -8,7 +8,6 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.weathersync.BuildConfig
 import com.weathersync.features.auth.domain.GoogleAuthRepository
-import com.weathersync.features.auth.domain.RegularAuthRepository
 import com.weathersync.features.auth.presentation.AuthViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -26,10 +25,8 @@ private fun getSignInRequest() = BeginSignInRequest.Builder()
     .setAutoSelectEnabled(true).build()
 val authModule = module {
     factory { AuthViewModel(
-        regularAuthRepository = get(),
         googleAuthRepository = get(),
         analyticsManager = get()) }
-    factory { RegularAuthRepository(Firebase.auth) }
     factory { GoogleAuthRepository(
         auth = Firebase.auth,
         oneTapClient = getOneTapClient(androidContext()),

@@ -10,6 +10,7 @@ import com.weathersync.features.subscription.presentation.ui.SubscriptionScreenI
 import com.weathersync.ui.SubscriptionUIEvent
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
+import com.weathersync.utils.FirebaseEvent
 import com.weathersync.utils.subscription.data.SubscriptionDetails
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,6 +68,7 @@ class SubscriptionInfoViewModel(
         viewModelScope.launch {
             try {
                 subscriptionInfoRepository.purchase(activity)
+                analyticsManager.logEvent(event = FirebaseEvent.SUBSCRIBE)
                 updatePurchaseResult(CustomResult.Success)
             } catch (e: Exception) {
                 _uiEvents.emit(SubscriptionUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_complete_purchase)))

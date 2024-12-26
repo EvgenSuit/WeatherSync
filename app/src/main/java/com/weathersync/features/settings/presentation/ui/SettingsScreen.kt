@@ -75,7 +75,7 @@ fun SettingsScreenContent(
     onIntent: (SettingsIntent) -> Unit
 ) {
     val context = LocalContext.current
-    val subscriptionUrl = stringResource(id = R.string.manage_subcriptions_link)
+    val subscriptionUrl = stringResource(id = R.string.manage_subscriptions_link)
     PullToRefreshBox(
         isRefreshing = uiState.weatherUnitsRefreshResult.isInProgress(),
         onRefresh = { onIntent(SettingsIntent.FetchWeatherUnits(refresh = true)) }) {

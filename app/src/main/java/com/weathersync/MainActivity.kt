@@ -4,23 +4,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -41,7 +34,6 @@ import com.weathersync.ui.theme.WeatherSyncTheme
 import com.weathersync.utils.AdLoadError
 import com.weathersync.utils.AdShowError
 import com.weathersync.utils.AnalyticsManager
-import com.weathersync.utils.ads.AdBanner
 import com.weathersync.utils.ads.AdsDatastoreManager
 import com.weathersync.utils.appReview.AppReviewManager
 import com.weathersync.utils.subscription.SubscriptionManager
@@ -49,9 +41,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLContext
-import javax.net.ssl.X509TrustManager
 
 class MainActivity : ComponentActivity() {
     private val themeManager: ThemeManager by inject()
@@ -91,17 +80,10 @@ class MainActivity : ComponentActivity() {
         initBillingClient()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        AdBanner.destroyAdViews()
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         //loadInterstitialAd()
-        AdBanner.preloadAdPromoViews(applicationContext)
-
         requestReviewFlow()
 
         installSplashScreen().setKeepOnScreenCondition {
@@ -110,12 +92,10 @@ class MainActivity : ComponentActivity() {
         // keep in mind that because of enableEdgeToEdge interstitial ads might not take full screen height
         enableEdgeToEdge()
 
-        val initTheme = runBlocking { themeManager.themeFlow(true).first() }
         setContent {
-            val isThemeDark by themeManager.themeFlow(true).collectAsState(initial = initTheme)
             window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
-            //val showAd by adsDatastoreManager.showInterstitialAdFlow().collectAsStateWithLifecycle(initialValue = false)
+            val showAd by adsDatastoreManager.showInterstitialAdFlow().collectAsStateWithLifecycle(initialValue = false)
             val navController = rememberNavController()
             val snackbarHostState = remember { SnackbarHostState() }
             val snackbarController by remember {
@@ -124,6 +104,9 @@ class MainActivity : ComponentActivity() {
                     snackbarHostState = snackbarHostState,
                     coroutineScope = lifecycleScope))
             }
+            val isSystemInDarkTheme = isSystemInDarkTheme()
+            val initTheme = runBlocking { themeManager.themeFlow(isDarkByDefault = isSystemInDarkTheme).first() }
+            val isThemeDark by themeManager.themeFlow(isDarkByDefault = isSystemInDarkTheme).collectAsState(initial = initTheme)
             WeatherSyncTheme(isThemeDark) {
                 CompositionLocalProvider(LocalSnackbarController provides snackbarController) {
                     NavManager(
@@ -132,23 +115,22 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
-            /*LaunchedEffect(showAd, mInterstitialAd.value) {
-                if (showAd && mInterstitialAd.value != null) {
-                    this@MainActivity.showInterstitial(
+            LaunchedEffect(showAd, mInterstitialAd.value) {
+                //if (showAd && mInterstitialAd.value != null) {
+                    /*this@MainActivity.showInterstitial(
                         interstitialAd = mInterstitialAd.value,
                         onDismissed = {
                             runBlocking { adsDatastoreManager.setShowInterstitialAd(false) }
-                        })
-                }
-            }*/
+                        })*/
+                //}
+            }
         }
     }
     private fun loadInterstitialAd() {
-        // uncomment this line to test ads integration
-        if (BuildConfig.DEBUG) return
-        val adRequest = AdRequest.Builder().build()
-        val adUnitId = if (BuildConfig.DEBUG) "ca-app-pub-3940256099942544/1033173712"
-        else BuildConfig.INTERSTITIAL_AD_UNIT_ID
+        MobileAds.setRequestConfiguration(RequestConfiguration.Builder().setTestDeviceIds(listOf("F6081B2A5942B9D8C33E724EDB0DC022")).build())
+        val adRequest = AdRequest.Builder()
+            .build()
+        val adUnitId = "ca-app-pub-5748792985583679/8435787622"
         InterstitialAd.load(this, adUnitId, adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdFailedToLoad(error: LoadAdError) {
                 mInterstitialAd.value = null
@@ -178,16 +160,3 @@ class MainActivity : ComponentActivity() {
         interstitialAd?.show(this)
     }
 }
-
-
-@Composable
-fun Modifier.clearFocusOnNonButtonClick(focusManager: FocusManager) =
-    this.pointerInput(Unit) {
-        // Clear focus when a click event is triggered (text fields and buttons are not included)
-        // focus will still be cleared when a text field is disabled
-        awaitEachGesture {
-            val downEvent = awaitFirstDown(pass = PointerEventPass.Initial)
-            val upEvent = waitForUpOrCancellation(pass = PointerEventPass.Initial)
-            if (upEvent != null && !downEvent.isConsumed) focusManager.clearFocus(true)
-        }
-    }

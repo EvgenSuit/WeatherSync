@@ -23,8 +23,8 @@ android {
         applicationId = "com.weathersync"
         minSdk = 28
         targetSdk = 34
-        versionCode = 20
-        versionName = "1.0.0-release"
+        versionCode = 21
+        versionName = "1.0.1-release"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -38,6 +38,17 @@ android {
         buildConfigField("String", "ACTIVITY_PLANNING_PROMO_AD_UNIT_ID", "\"${localProperties.getProperty("ACTIVITY_PLANNING_PROMO_AD_UNIT_ID")}\"")
     }
     buildFeatures.buildConfig = true
+    bundle {
+        language {
+            enableSplit = false
+        }
+        density {
+            enableSplit = true
+        }
+        abi {
+            enableSplit = true
+        }
+    }
     testOptions {
         unitTests {
             isIncludeAndroidResources = true

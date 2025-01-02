@@ -42,7 +42,7 @@ class HomeAIRepository(
         """.trimMargin()
 
     private val systemInstructions =
-        """Generate short not repeating suggestions based on weather data.
+        """Generate at least 5 (in total) short not repeating suggestions based on weather data.
              Make sure to give a reason behind every suggestion.
             Give suggestions that don't contradict themselves (contradiction can happen when an activity is marked as recommended and unrecommended at the same time).  
             Don't make very obvious recommendations.

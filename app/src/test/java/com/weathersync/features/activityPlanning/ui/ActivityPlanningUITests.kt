@@ -22,7 +22,7 @@ import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.features.activityPlanning.ActivityPlanningBaseRule
 import com.weathersync.features.activityPlanning.presentation.ui.ActivityPlanningScreen
 import com.weathersync.utils.ads.AdBannerType
-import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.QueryType
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
@@ -67,7 +67,7 @@ class ActivityPlanningUITests {
     fun generateRecommendations_notSubscribed_limitReachedUpgradeToPremiumShow() = runTest {
         activityPlanningBaseRule.apply {
             setupLimitManager(timestamps = createDescendingTimestamps(
-                limitManagerConfig = GenerationType.ActivityRecommendations.regularLimitManagerConfig,
+                limitManagerConfig = QueryType.ActivityRecommendations.regularLimitManagerConfig,
                 currTimeMillis = testClock.millis()))
             setupActivityPlanningRepository(isSubscribed = false)
             setupViewModel()
@@ -92,7 +92,7 @@ class ActivityPlanningUITests {
     fun generateRecommendations_subscribed_limitReachedNextGenerationShown() = runTest {
         activityPlanningBaseRule.apply {
             setupLimitManager(timestamps = createDescendingTimestamps(
-                limitManagerConfig = GenerationType.ActivityRecommendations.premiumLimitManagerConfig,
+                limitManagerConfig = QueryType.ActivityRecommendations.premiumLimitManagerConfig,
                 currTimeMillis = testClock.millis()))
             setupActivityPlanningRepository(isSubscribed = true)
             setupViewModel()

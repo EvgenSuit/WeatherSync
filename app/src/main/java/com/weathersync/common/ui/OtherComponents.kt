@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weathersync.R
@@ -51,6 +52,7 @@ fun CustomButton(
         contentColor = MaterialTheme.colorScheme.onPrimary,
         disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer
     ),
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     ElevatedButton(
@@ -58,8 +60,9 @@ fun CustomButton(
         onClick = onClick,
         colors = colors,
         shape = RoundedCornerShape(dimensionResource(id = R.dimen.button_angle)),
-        modifier = Modifier.fillMaxWidth()) {
+        modifier = modifier.fillMaxWidth()) {
         Text(text = text,
+            textAlign = TextAlign.Center,
             style = TextStyle(fontFamily = arapeyRegular, fontSize = 20.sp))
     }
 }

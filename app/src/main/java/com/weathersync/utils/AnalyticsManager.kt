@@ -10,8 +10,6 @@ import com.weathersync.utils.subscription.IsSubscribed
 import kotlin.coroutines.cancellation.CancellationException
 
 enum class FirebaseEvent {
-    MANUAL_SIGN_UP,
-    MANUAL_SIGN_IN,
     SIGN_IN_WITH_GOOGLE,
 
     CURRENT_WEATHER_FETCH_LIMIT,
@@ -23,12 +21,14 @@ enum class FirebaseEvent {
 
     FETCH_WEATHER_UNITS,
     CHANGE_WEATHER_UNITS,
+    SET_CURR_LOCATION_AS_DEFAULT,
+    SET_CUSTOM_LOCATION,
+    SET_CUSTOM_LOCATION_LIMIT,
 
     SIGN_OUT,
 
     SUBSCRIBE,
 
-    NONE
 }
 
 class AnalyticsManager(

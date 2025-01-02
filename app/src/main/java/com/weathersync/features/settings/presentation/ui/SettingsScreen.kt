@@ -1,5 +1,6 @@
 package com.weathersync.features.settings.presentation.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,10 +15,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -36,6 +41,7 @@ import com.weathersync.features.settings.presentation.SettingsUiState
 import com.weathersync.features.settings.presentation.SettingsViewModel
 import com.weathersync.features.settings.presentation.ui.components.AppVersionComponent
 import com.weathersync.features.settings.presentation.ui.components.CommonSettingsComponent
+import com.weathersync.features.settings.presentation.ui.components.SetLocationSheet
 import com.weathersync.features.settings.presentation.ui.components.ThemeSwitcher
 import com.weathersync.features.settings.presentation.ui.components.WeatherUnitsComponent
 import com.weathersync.ui.SettingsUIEvent
@@ -44,18 +50,24 @@ import com.weathersync.utils.isInProgress
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
     onSignOut: () -> Unit
 ) {
     val snackbar = LocalSnackbarController.current
+    var showSetLocationSheet by rememberSaveable {
+        mutableStateOf(false)
+    }
     val uiState by viewModel.uiState.collectAsState()
+    val isSubscribed by viewModel.isSubscribed.collectAsState()
     val isThemeDark by viewModel.themeState.collectAsState()
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collectLatest { event ->
             when (event) {
                 is SettingsUIEvent.ShowSnackbar -> snackbar.showSnackbar(event.message)
+                is SettingsUIEvent.ManageSetLocationSheet -> showSetLocationSheet = event.show
                 is SettingsUIEvent.SignOut -> onSignOut()
             }
         }
@@ -65,6 +77,16 @@ fun SettingsScreen(
         isThemeDark = isThemeDark,
         onIntent = viewModel::handleIntent
     )
+    if (showSetLocationSheet) {
+        SetLocationSheet(
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            isSubscribed = isSubscribed,
+            nextWorldwideSetTime = uiState.nextWorldwideSetTime,
+            isGeocodingInProgress = uiState.locationSetResult.isInProgress(),
+            onDismiss = { showSetLocationSheet = false },
+            onSet = { viewModel.handleIntent(SettingsIntent.SetLocation(it)) },
+            onSetCurrentLocationAsDefault = { viewModel.handleIntent(SettingsIntent.SetCurrLocationAsDefault) })
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,15 +107,20 @@ fun SettingsScreenContent(
                     uiState.weatherUnitSetResult).any { it.isInProgress() }) {
                 CustomLinearProgressIndicator(modifier = Modifier.testTag("Loading"))
             } else Box(modifier = Modifier.height(dimensionResource(id = R.dimen.linear_progress_height)))
-            CommonSettingsComponent(textId = R.string.theme) {
-                ThemeSwitcher(
-                    darkTheme = isThemeDark,
-                    onClick = { onIntent(SettingsIntent.SwitchTheme) })
+            AnimatedVisibility (isThemeDark != null) {
+                CommonSettingsComponent(textId = R.string.theme) {
+                    ThemeSwitcher(
+                        darkTheme = isThemeDark,
+                        onClick = { onIntent(SettingsIntent.SwitchTheme) })
+                }
             }
             WeatherUnitsComponent(
                 enabled = !uiState.weatherUnitSetResult.isInProgress(),
                 selectedWeatherUnits = uiState.weatherUnits,
                 onWeatherUnitSelected = { onIntent(SettingsIntent.SetWeatherUnit(it)) })
+            CommonSettingsComponent(textId = R.string.set_location,
+                onClick = { onIntent(SettingsIntent.ManageSetLocationSheet(show = true)) }) {
+            }
             CommonSettingsComponent(
                 textId = R.string.manage_subscriptions,
                 onClick = { openLinkInBrowser(context, subscriptionUrl) }) {

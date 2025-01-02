@@ -6,10 +6,11 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
-import com.weathersync.utils.weather.LocationClient
+import com.weathersync.utils.weather.location.AndroidLocationClient
 import com.weathersync.features.home.getMockedWeather
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
 
 data class LocationInfo(
     val city: String = "Wroclaw",
@@ -17,11 +18,13 @@ data class LocationInfo(
     val latitude: Double = 52.52,
     val longitude: Double = 13.405
 )
+fun LocationInfo.fullLocation() = "${this.city}, ${this.country}"
 val locationInfo = LocationInfo()
-fun mockLocationClient(
+fun mockAndroidLocationClient(
+    locationInfo: LocationInfo = LocationInfo(),
     geocoderException: Exception? = null,
     lastLocationException: Exception? = null
-): LocationClient {
+): AndroidLocationClient {
     val location = mockk<Location> {
         every { latitude } returns locationInfo.latitude
         every { longitude } returns locationInfo.longitude
@@ -47,7 +50,7 @@ fun mockLocationClient(
             every { countryName } returns locationInfo.country
         }
     }
-    return LocationClient(
+    return spyk(AndroidLocationClient(
         fusedLocationProviderClient = fusedLocationProviderClient,
         geocoder = mockk {
             every { getFromLocation(getMockedWeather(fetchedWeatherUnits).latitude, getMockedWeather(
@@ -57,5 +60,5 @@ fun mockLocationClient(
                 addresses
             }
         }
-    )
+    ))
 }

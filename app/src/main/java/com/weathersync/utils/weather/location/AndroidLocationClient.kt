@@ -1,4 +1,4 @@
-package com.weathersync.utils.weather
+package com.weathersync.utils.weather.location
 
 import android.annotation.SuppressLint
 import android.location.Geocoder
@@ -17,7 +17,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resumeWithException
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class LocationClient(
+class AndroidLocationClient(
     private val fusedLocationProviderClient: FusedLocationProviderClient,
     private val geocoder: Geocoder
 ) {

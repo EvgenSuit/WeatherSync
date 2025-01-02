@@ -8,13 +8,14 @@ import com.weathersync.common.TestClock
 import com.weathersync.common.TestHelper
 import com.weathersync.common.data.createInMemoryDataStore
 import com.weathersync.common.utils.ai.mockAIClientProvider
+import com.weathersync.common.utils.location.mockLocationManager
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
 import com.weathersync.common.utils.mockSubscriptionManager
 import com.weathersync.common.utils.mockTimeAPI
 import com.weathersync.common.weather.fetchedWeatherUnits
 import com.weathersync.common.weather.locationInfo
-import com.weathersync.common.weather.mockLocationClient
+import com.weathersync.common.weather.mockAndroidLocationClient
 import com.weathersync.common.weather.mockWeatherUnitsManager
 import com.weathersync.features.activityPlanning.data.ForecastUnits
 import com.weathersync.features.activityPlanning.data.Hourly
@@ -22,7 +23,6 @@ import com.weathersync.features.activityPlanning.data.OpenMeteoForecast
 import com.weathersync.features.activityPlanning.domain.ActivityPlanningAIRepository
 import com.weathersync.features.activityPlanning.domain.ActivityPlanningRepository
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningViewModel
-import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.features.settings.data.WeatherUnit
 import com.weathersync.utils.ads.AdsDatastoreManager
 import com.weathersync.utils.ads.adsDataStore
@@ -30,10 +30,10 @@ import com.weathersync.utils.ai.AIClientProvider
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
 import com.weathersync.utils.weather.FirestoreWeatherUnit
-import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.WeatherUnitsManager
 import com.weathersync.utils.weather.limits.LimitManager
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
-import com.weathersync.utils.weather.WeatherUnitsManager
+import com.weathersync.utils.weather.limits.QueryType
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -63,8 +63,8 @@ class ActivityPlanningBaseRule: TestWatcher() {
     val testHelper = TestHelper()
     val testClock = TestClock()
     val testDispatcher = StandardTestDispatcher()
-    val premiumLimitManagerConfig = GenerationType.ActivityRecommendations.premiumLimitManagerConfig
-    val regularLimitManagerConfig = GenerationType.ActivityRecommendations.regularLimitManagerConfig
+    val premiumLimitManagerConfig = QueryType.ActivityRecommendations.premiumLimitManagerConfig
+    val regularLimitManagerConfig = QueryType.ActivityRecommendations.regularLimitManagerConfig
 
     lateinit var viewModel: ActivityPlanningViewModel
     lateinit var limitManager: LimitManager
@@ -135,9 +135,12 @@ class ActivityPlanningBaseRule: TestWatcher() {
     ) {
         forecastRepository = spyk(ForecastRepository(
             engine = mockForecastEngine(status, units = units),
-            locationClient = mockLocationClient(
-                geocoderException = geocoderException,
-                lastLocationException = lastLocationException
+            locationManager = mockLocationManager(
+                androidLocationClient = mockAndroidLocationClient(
+                    geocoderException = geocoderException,
+                    lastLocationException = lastLocationException
+                ),
+                dispatcher = testDispatcher
             ),
             weatherUnitsManager = weatherUnitsManager
         ))

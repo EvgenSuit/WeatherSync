@@ -2,7 +2,6 @@ package com.weathersync.utils.weather.limits
 
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
@@ -16,17 +15,21 @@ import kotlinx.coroutines.tasks.await
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
-sealed class GenerationType(
+sealed class QueryType(
     val regularLimitManagerConfig: LimitManagerConfig,
     val premiumLimitManagerConfig: LimitManagerConfig
 ) {
-    data class CurrentWeather(val refresh: Boolean?): GenerationType(
+    data class CurrentWeather(val refresh: Boolean?): QueryType(
         regularLimitManagerConfig = LimitManagerConfig(2, 2),
         premiumLimitManagerConfig = LimitManagerConfig(4, 2)
     )
-    data object ActivityRecommendations: GenerationType(
+    data object ActivityRecommendations: QueryType(
         regularLimitManagerConfig = LimitManagerConfig(2, 6),
         premiumLimitManagerConfig = LimitManagerConfig(8, 6)
+    )
+    data object LocationSet: QueryType(
+        regularLimitManagerConfig = LimitManagerConfig(0, 0),
+        premiumLimitManagerConfig = LimitManagerConfig(4, 12)
     )
 }
 data class Limit(
@@ -45,7 +48,8 @@ data class LimitManagerConfig(
 
 enum class FirestoreLimitCollection(val collectionName: String) {
     CURRENT_WEATHER_LIMITS("currentWeatherLimits"),
-    ACTIVITY_RECOMMENDATIONS_LIMITS("activityRecommendationsLimits")
+    ACTIVITY_RECOMMENDATIONS_LIMITS("activityRecommendationsLimits"),
+    LOCATION_SET_LIMITS("locationSetLimits")
 }
 
 class LimitManager(
@@ -58,11 +62,11 @@ class LimitManager(
     private val limitsDoc = firestore.collection(auth.currentUser!!.uid).document("limits")
 
     suspend fun calculateLimit(isSubscribed: IsSubscribed,
-                               generationType: GenerationType
+                               queryType: QueryType
     ): Limit {
         // ignore local weather limits and fetch remote ones on refresh
-        if (generationType is GenerationType.CurrentWeather && generationType.refresh != null
-            && !generationType.refresh) {
+        if (queryType is QueryType.CurrentWeather && queryType.refresh != null
+            && !queryType.refresh) {
             val savedWeather = currentWeatherDAO.getWeather()
             val isLocalWeatherFresh = savedWeather?.time?.let { time ->
                 weatherUpdater.isLocalWeatherFresh(time)
@@ -71,21 +75,22 @@ class LimitManager(
         }
         val realDateTime = timeAPI.getRealDateTime()
         val currentTime = Timestamp(realDateTime)
-        val ref = when (generationType) {
-            is GenerationType.CurrentWeather -> limitsDoc.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
-            is GenerationType.ActivityRecommendations -> limitsDoc.collection(FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName)
+        val ref = when (queryType) {
+            is QueryType.CurrentWeather -> limitsDoc.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
+            is QueryType.ActivityRecommendations -> limitsDoc.collection(FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName)
+            is QueryType.LocationSet -> limitsDoc.collection(FirestoreLimitCollection.LOCATION_SET_LIMITS.collectionName)
         }
         return ref.manageLimits(isSubscribed = isSubscribed,
             currentTime = currentTime,
-            generationType = generationType)
+            queryType = queryType)
     }
     private suspend fun CollectionReference.manageLimits(
         isSubscribed: IsSubscribed,
         currentTime: Timestamp,
-        generationType: GenerationType
+        queryType: QueryType
     ): Limit {
-        val limitManagerConfig = if (isSubscribed) generationType.premiumLimitManagerConfig
-        else generationType.regularLimitManagerConfig
+        val limitManagerConfig = if (isSubscribed) queryType.premiumLimitManagerConfig
+        else queryType.regularLimitManagerConfig
 
         val duration = TimeUnit.HOURS.toMillis(limitManagerConfig.durationInHours.toLong())
         val timeBefore = Date(currentTime.toDate().time - duration)
@@ -116,11 +121,12 @@ class LimitManager(
         }
     }
 
-    suspend fun recordTimestamp(generationType: GenerationType) {
-        when (generationType) {
-            is GenerationType.CurrentWeather -> limitsDoc.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName).addTimestamp()
-            is GenerationType.ActivityRecommendations -> limitsDoc.collection(FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName).addTimestamp()
-        }
+    suspend fun recordTimestamp(queryType: QueryType) {
+        when (queryType) {
+            is QueryType.CurrentWeather -> limitsDoc.collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
+            is QueryType.ActivityRecommendations -> limitsDoc.collection(FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName)
+            is QueryType.LocationSet -> limitsDoc.collection(FirestoreLimitCollection.LOCATION_SET_LIMITS.collectionName)
+        }.addTimestamp()
     }
 
     private suspend fun CollectionReference.addTimestamp() {

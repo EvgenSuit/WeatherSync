@@ -29,10 +29,10 @@ class SettingsThemeUITests: ThemeTest {
     @get: Rule
     val composeRule = createComposeRule()
 
-    @get: Rule(order = 0)
-    val dispatcherRule = MainDispatcherRule()
     @get: Rule(order = 1)
     val settingsBaseRule = SettingsBaseRule()
+    @get: Rule(order = 0)
+    val dispatcherRule = MainDispatcherRule(settingsBaseRule.testDispatcher)
     private val snackbarScope = TestScope()
 
     @Test
@@ -41,6 +41,7 @@ class SettingsThemeUITests: ThemeTest {
             uiContent = {
                 SettingsScreen(viewModel = settingsBaseRule.viewModel, onSignOut = {})
             }) {
+            advanceUntilIdle()
             onNodeWithTag("ThemeSwitcher").apply {
                 launch {
                     assertIsNotEnabled()
@@ -62,6 +63,7 @@ class SettingsThemeUITests: ThemeTest {
             uiContent = {
                 SettingsScreen(viewModel = settingsBaseRule.viewModel, onSignOut = {})
             }) {
+            advanceUntilIdle()
             onNodeWithTag("ThemeSwitcher").apply {
                 launch {
                     assertIsNotEnabled()

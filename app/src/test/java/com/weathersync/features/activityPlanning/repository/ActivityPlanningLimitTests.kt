@@ -11,7 +11,7 @@ import com.weathersync.common.utils.createDescendingTimestamps
 import com.weathersync.features.activityPlanning.ActivityPlanningBaseRule
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.weather.limits.FirestoreLimitCollection
-import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.QueryType
 import com.weathersync.utils.weather.limits.Limit
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
@@ -77,7 +77,7 @@ class ActivityPlanningLimitTests: BaseLimitTest {
         val ref = activityPlanningBaseRule.limitManagerFirestore.collection(userId).document("limits")
             .collection(FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName)
         coVerify {
-            activityPlanningBaseRule.limitManager.recordTimestamp(GenerationType.ActivityRecommendations)
+            activityPlanningBaseRule.limitManager.recordTimestamp(QueryType.ActivityRecommendations)
             ref.add(any<Map<String, FieldValue>>())
         }
     }
@@ -121,7 +121,7 @@ class ActivityPlanningLimitTests: BaseLimitTest {
         assertTrue(limit.isReached)
         coVerify { activityPlanningBaseRule.limitManager.calculateLimit(
             isSubscribed = isSubscribed,
-            generationType = GenerationType.ActivityRecommendations) }
+            queryType = QueryType.ActivityRecommendations) }
         return limit
     }
 

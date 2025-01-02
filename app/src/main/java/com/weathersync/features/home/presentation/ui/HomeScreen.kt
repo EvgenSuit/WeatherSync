@@ -60,6 +60,7 @@ fun HomeScreen(
             }
         }
     }
+    // don't call this if saved location is null (maybe later, for now, fuck this)
     LocationRequester(onPermissionGranted = {
         if (uiState.currentWeatherFetchResult.isNone()) viewModel.handleIntent(HomeIntent.GetCurrentWeather)
     })

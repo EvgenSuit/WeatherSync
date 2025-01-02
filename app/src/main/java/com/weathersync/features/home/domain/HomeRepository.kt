@@ -4,7 +4,7 @@ import com.weathersync.features.home.data.Suggestions
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.SubscriptionManager
-import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.QueryType
 import com.weathersync.utils.weather.limits.Limit
 import com.weathersync.utils.weather.limits.LimitManager
 import kotlinx.coroutines.CoroutineDispatcher
@@ -23,9 +23,9 @@ class HomeRepository(
                                refresh: Boolean): Limit = withContext(dispatcher) {
         limitManager.calculateLimit(
             isSubscribed = isSubscribed,
-            generationType = GenerationType.CurrentWeather(refresh))
+            queryType = QueryType.CurrentWeather(refresh))
     }
-    suspend fun recordTimestamp() = limitManager.recordTimestamp(GenerationType.CurrentWeather(null))
+    suspend fun recordTimestamp() = limitManager.recordTimestamp(QueryType.CurrentWeather(null))
 
     suspend fun getCurrentWeather(isLimitReached: Boolean) =
         withContext(dispatcher) {

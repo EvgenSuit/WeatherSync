@@ -1,23 +1,19 @@
 package com.weathersync.di
 
-import android.location.Geocoder
 import androidx.room.Room
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.generationConfig
-import com.google.android.gms.location.LocationServices
 import com.weathersync.BuildConfig
+import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
+import com.weathersync.features.home.domain.CurrentWeatherRepository
 import com.weathersync.features.home.domain.HomeAIRepository
 import com.weathersync.features.home.domain.HomeRepository
-import com.weathersync.utils.weather.LocationClient
 import com.weathersync.features.home.domain.WeatherUpdater
-import com.weathersync.features.home.data.db.CurrentWeatherLocalDB
 import com.weathersync.features.home.presentation.HomeViewModel
-import com.weathersync.features.home.domain.CurrentWeatherRepository
 import io.ktor.client.engine.cio.CIO
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 import java.time.Clock
-import java.util.Locale
 
 val homeModule = module {
     factory { HomeViewModel(
@@ -34,13 +30,9 @@ val homeModule = module {
     ) }
     factory { CurrentWeatherRepository(
         engine = CIO.create(),
-        locationClient = get(),
+        locationManager = get(),
         currentWeatherDAO = get(),
         weatherUnitsManager = get()
-    ) }
-    factory { LocationClient(
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(androidContext()),
-        geocoder = Geocoder(androidContext(), Locale.getDefault())
     ) }
     factory { HomeAIRepository(
         aiClientProvider = get(),

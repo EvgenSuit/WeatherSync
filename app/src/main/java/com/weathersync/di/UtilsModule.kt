@@ -1,13 +1,17 @@
 package com.weathersync.di
 
+import android.location.Geocoder
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.PendingPurchasesParams
+import com.google.android.gms.location.LocationServices
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.maps.GeoApiContext
+import com.weathersync.BuildConfig
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.TimeAPI
 import com.weathersync.utils.ads.AdsDatastoreManager
@@ -22,6 +26,8 @@ import com.weathersync.utils.subscription.data.subscriptionInfoDatastore
 import com.weathersync.utils.weather.WeatherUnitsManager
 import com.weathersync.utils.weather.limits.LimitManager
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
+import com.weathersync.utils.weather.location.AndroidLocationClient
+import com.weathersync.utils.weather.location.LocationManager
 import io.ktor.client.engine.cio.CIO
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -50,6 +56,20 @@ val utilsModule = module {
         clock = Clock.systemDefaultZone(),
         locale = Locale.getDefault()
     ) }
+
+    single {
+        LocationManager(
+            auth = Firebase.auth,
+            firestore = Firebase.firestore,
+            geoApiContext = GeoApiContext.Builder()
+                .apiKey(BuildConfig.GEOCODING_API_KEY).build(),
+            androidLocationClient = AndroidLocationClient(
+                fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(androidContext()),
+                geocoder = Geocoder(androidContext(), Locale.getDefault())
+            )
+        )
+    }
+
     single { SubscriptionManager(
         billingClientBuilder = BillingClient.newBuilder(androidContext())
             .enablePendingPurchases(

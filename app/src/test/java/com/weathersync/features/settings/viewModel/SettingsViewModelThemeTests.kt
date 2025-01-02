@@ -16,11 +16,10 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class SettingsViewModelThemeTests: ThemeTest {
-    @get: Rule(order = 0)
-    val dispatcherRule = MainDispatcherRule()
-
     @get: Rule(order = 1)
     val settingsBaseRule = SettingsBaseRule()
+    @get: Rule(order = 0)
+    val dispatcherRule = MainDispatcherRule(settingsBaseRule.testDispatcher)
 
     @Test
     override fun collectDefaultTheme_isCorrect() = runTest {

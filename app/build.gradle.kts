@@ -23,16 +23,20 @@ android {
         applicationId = "com.weathersync"
         minSdk = 28
         targetSdk = 34
-        versionCode = 21
-        versionName = "1.0.1-release"
+        versionCode = 22
+        versionName = "1.0.2-release"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
         buildConfigField("String", "WEB_CLIENT_ID", "\"${localProperties.getProperty("WEB_CLIENT_ID")}\"")
+
         buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY")}\"")
         buildConfigField("String", "OPENAI_API_KEY", "\"${localProperties.getProperty("OPENAI_API_KEY")}\"")
+
+        buildConfigField("String", "GEOCODING_API_KEY", "\"${localProperties.getProperty("GEOCODING_API_KEY")}\"")
+
         buildConfigField("String", "INTERSTITIAL_AD_UNIT_ID", "\"${localProperties.getProperty("INTERSTITIAL_AD_UNIT_ID")}\"")
         buildConfigField("String", "HOME_PROMO_AD_UNIT_ID", "\"${localProperties.getProperty("HOME_PROMO_AD_UNIT_ID")}\"")
         buildConfigField("String", "ACTIVITY_PLANNING_PROMO_AD_UNIT_ID", "\"${localProperties.getProperty("ACTIVITY_PLANNING_PROMO_AD_UNIT_ID")}\"")
@@ -116,8 +120,9 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
 
-    // location
+    // location and geocoding
     implementation(libs.play.services.location)
+    implementation(libs.google.maps.services)
 
     // permissions
     implementation(libs.accompanist.permissions)

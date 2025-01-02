@@ -79,7 +79,7 @@ class OpenAIClient(
            )
        }.body<OpenAIResponse>()
        val responseContent = response.choices.firstOrNull()?.message?.content?.replace("*", "")
-       if (responseContent.isNullOrBlank() || responseContent == "null")  throw NullOpenAIResponse("Prompt: ...${generationOptions.prompt.takeLast(500)}\n" +
+       if (responseContent.isNullOrBlank() || responseContent == "null") throw NullOpenAIResponse("Prompt: ...${generationOptions.prompt.takeLast(500)}\n" +
                "Complete response: $response")
        return responseContent
    }

@@ -12,6 +12,9 @@ import com.weathersync.ui.SettingsUIEvent
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
+import com.weathersync.utils.NoGoogleMapsGeocodingResult
+import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
+import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,12 +26,17 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
-    private val analyticsManager: AnalyticsManager
+    private val analyticsManager: AnalyticsManager,
+    private val nextUpdateTimeFormatter: NextUpdateTimeFormatter,
+    subscriptionInfoDatastore: SubscriptionInfoDatastore,
 ) : ViewModel() {
     private val _uiEvents = MutableSharedFlow<SettingsUIEvent>()
     val uiEvents = _uiEvents.asSharedFlow()
 
     val themeState = settingsRepository.themeFlow(isDarkByDefault = true)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
+    val isSubscribed = subscriptionInfoDatastore.isSubscribedFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -43,6 +51,11 @@ class SettingsViewModel(
             is SettingsIntent.SwitchTheme -> switchTheme()
             is SettingsIntent.FetchWeatherUnits -> fetchWeatherUnits(refresh = settingsIntent.refresh)
             is SettingsIntent.SetWeatherUnit -> setWeatherUnit(settingsIntent.unit)
+            is SettingsIntent.ManageSetLocationSheet -> viewModelScope.launch {
+                _uiEvents.emit(SettingsUIEvent.ManageSetLocationSheet(settingsIntent.show))
+            }
+            is SettingsIntent.SetLocation -> setLocation(settingsIntent.location)
+            is SettingsIntent.SetCurrLocationAsDefault -> setLocation(null)
             is SettingsIntent.SignOut -> signOut()
         }
     }
@@ -100,6 +113,42 @@ class SettingsViewModel(
             }
         }
     }
+
+    private fun setLocation(inputLocation: String?) {
+        viewModelScope.launch {
+            try {
+                updateLocationSetResult(CustomResult.InProgress)
+
+                // the fact that inputLocation is not null signifies that a premium user is setting a custom worldwide location,
+                // not the current one (which any user can do)
+                val newLocationName = if (inputLocation != null) {
+                    val isSubscribed = settingsRepository.isSubscribed()
+                    val limit = settingsRepository.calculateLocationSetLimits(isSubscribed)
+                    if (limit.isReached) {
+                        _uiState.update { it.copy(nextWorldwideSetTime = nextUpdateTimeFormatter.format(limit.nextUpdateDateTime!!)) }
+                        analyticsManager.logEvent(event = FirebaseEvent.SET_CUSTOM_LOCATION_LIMIT)
+                        updateLocationSetResult(CustomResult.None)
+                        return@launch
+                    }
+                    settingsRepository.setLocation(inputLocation)
+                } else settingsRepository.setCurrLocationAsDefault()
+
+                if (inputLocation != null) settingsRepository.incrementLocationSetLimits()
+                analyticsManager.logEvent(event = if (inputLocation != null) FirebaseEvent.SET_CUSTOM_LOCATION else FirebaseEvent.SET_CURR_LOCATION_AS_DEFAULT)
+                updateLocationSetResult(CustomResult.Success)
+                _uiEvents.emit(SettingsUIEvent.ManageSetLocationSheet(show = false))
+                _uiEvents.emit(SettingsUIEvent.ShowSnackbar(UIText.StringResource(R.string.location_set_successfully, newLocationName)))
+            } catch (e: Exception) {
+                // make sure limits are incremented even when there are no results for given location
+                if (e is NoGoogleMapsGeocodingResult) settingsRepository.incrementLocationSetLimits()
+                _uiEvents.emit(SettingsUIEvent.ManageSetLocationSheet(show = false))
+                _uiEvents.emit(SettingsUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_set_location)))
+                analyticsManager.recordException(e)
+                updateLocationSetResult(CustomResult.Error)
+            }
+        }
+    }
+
     private fun signOut() {
         viewModelScope.launch {
             settingsRepository.signOut()
@@ -114,12 +163,14 @@ class SettingsViewModel(
         _uiState.update { it.copy(weatherUnitsRefreshResult = result) }
     private fun updateUnitSetResult(result: CustomResult) =
         _uiState.update { it.copy(weatherUnitSetResult = result) }
-
+    private fun updateLocationSetResult(result: CustomResult) =
+        _uiState.update { it.copy(locationSetResult = result) }
 }
-
 data class SettingsUiState(
     val weatherUnits: SelectedWeatherUnits? = null,
     val weatherUnitsFetchResult: CustomResult = CustomResult.None,
     val weatherUnitsRefreshResult: CustomResult = CustomResult.None,
-    val weatherUnitSetResult: CustomResult = CustomResult.None
+    val weatherUnitSetResult: CustomResult = CustomResult.None,
+    val nextWorldwideSetTime: String? = null,
+    val locationSetResult: CustomResult = CustomResult.None
 )

@@ -35,10 +35,10 @@ import kotlinx.coroutines.test.TestScope
 class SettingsWeatherUnitsUITests: WeatherUnitTest {
     @get: Rule
     val composeRule = createComposeRule()
-    @get: Rule(order = 0)
-    val mainDispatcherRule = MainDispatcherRule()
     @get: Rule(order = 1)
     val settingsBaseRule = SettingsBaseRule()
+    @get: Rule(order = 0)
+    val mainDispatcherRule = MainDispatcherRule(settingsBaseRule.testDispatcher)
     private val snackbarScope = TestScope()
 
     @Test

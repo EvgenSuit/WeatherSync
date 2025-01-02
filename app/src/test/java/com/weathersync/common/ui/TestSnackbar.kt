@@ -72,12 +72,13 @@ fun setContentWithSnackbar(
 
 fun ComposeContentTestRule.assertSnackbarTextEquals(
     @StringRes resId: Int,
-    snackbarScope: TestScope
+    snackbarScope: TestScope,
+    vararg args: Any,
 ) {
     waitForIdle()
     snackbarScope.advanceUntilIdle()
     onNodeWithTag("Snackbar", useUnmergedTree = true).assertIsDisplayed()
-    onNodeWithTag("Snackbar text: ${getString(resId)}", useUnmergedTree = true).assertIsDisplayed()
+    onNodeWithTag("Snackbar text: ${getString(resId, *args)}", useUnmergedTree = true).assertIsDisplayed()
 }
 fun ComposeContentTestRule.assertSnackbarIsNotDisplayed(
     snackbarScope: TestScope

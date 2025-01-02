@@ -19,6 +19,7 @@ sealed class ActivityPlanningUIEvent {
 }
 sealed class SettingsUIEvent {
     data class ShowSnackbar(val message: UIText): SettingsUIEvent()
+    data class ManageSetLocationSheet(val show: Boolean): SettingsUIEvent()
     data object SignOut: SettingsUIEvent()
 }
 sealed class SubscriptionUIEvent {

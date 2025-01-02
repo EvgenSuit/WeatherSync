@@ -22,6 +22,7 @@ import com.weathersync.utils.ads.AdsDatastoreManager
 import com.weathersync.utils.ads.adsDataStore
 import com.weathersync.utils.subscription.SubscriptionManager
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
+import com.weathersync.utils.subscription.data.subscriptionInfoDatastore
 import com.weathersync.utils.weather.WeatherUnitsManager
 import com.weathersync.utils.weather.limits.LimitManager
 import io.mockk.coEvery
@@ -100,7 +101,14 @@ class BaseNavRule: TestWatcher() {
         }
         val settingsModule = module {
             factory { SettingsViewModel(
-                settingsRepository = SettingsRepository(auth = auth, themeManager = get(), weatherUnitsManager = mockk(relaxed = true)),
+                settingsRepository = SettingsRepository(auth = auth,
+                    themeManager = get(),
+                    subscriptionManager = mockk(),
+                    limitManager = mockk(),
+                    locationManager = mockk(),
+                    weatherUnitsManager = mockk(relaxed = true)),
+                subscriptionInfoDatastore = SubscriptionInfoDatastore(ApplicationProvider.getApplicationContext<Context>().subscriptionInfoDatastore),
+                nextUpdateTimeFormatter = mockk(),
                 analyticsManager = mockk(relaxed = true)
             ) }
             single { themeManager }

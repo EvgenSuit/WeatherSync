@@ -37,6 +37,7 @@ import com.weathersync.common.ui.CustomCircularProgressIndicator
 import com.weathersync.common.ui.TextFieldState
 import com.weathersync.common.ui.UIText
 import com.weathersync.common.ui.openLinkInBrowser
+import com.weathersync.features.activityPlanning.ForecastDays
 import com.weathersync.features.activityPlanning.presentation.ActivityPlanningIntent
 import com.weathersync.features.activityPlanning.presentation.maxActivityInputLength
 import com.weathersync.features.home.presentation.ui.components.CommonHomeComponent
@@ -122,6 +123,7 @@ fun PlanYourActivityComposable(
 
 @Composable
 fun RecommendationsWarning(forecastDays: Int) {
+    val isSubscribed = forecastDays == ForecastDays.PREMIUM.days
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -136,7 +138,9 @@ fun RecommendationsWarning(forecastDays: Int) {
                 tint = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.size(15.dp),
                 contentDescription = infoIcon.name)
-            Text(text = stringResource(id = R.string.based_on_forecast, forecastDays),
+            Text(text = stringResource(id =
+                if (isSubscribed) R.string.based_on_forecast_premium
+                else R.string.based_on_forecast_not_premium, forecastDays),
                 style = TextStyle(
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onBackground.copy(0.5f)
@@ -172,7 +176,7 @@ fun PlanYourActivityComposablePreview() {
                 isInProgress = false,
                 refreshing = true,
                 output = "Recommended times".repeat(30),
-                forecastDays = 12,
+                forecastDays = ForecastDays.REGULAR.days,
                 onIntent = {}
             )
         }

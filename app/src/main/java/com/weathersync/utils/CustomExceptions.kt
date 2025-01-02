@@ -4,6 +4,7 @@ class SignInWithGoogleActivityResultException(message: String): Exception(messag
 
 class LocationRequestException(message: String): Exception(message)
 
+class NoGoogleMapsGeocodingResult(message: String): Exception(message)
 
 class NullOpenAIResponse(message: String): Exception(message)
 class NullGeminiResponse(message: String): Exception(message)
@@ -18,3 +19,5 @@ class PurchasesUpdatedException(message: String): Exception(message)
 class PurchaseException(message: String): Exception(message)
 
 class UnknownReviewException: Exception()
+
+class NullFirebaseUser: Exception()

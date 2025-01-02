@@ -4,16 +4,16 @@ import com.weathersync.features.home.data.CurrentOpenMeteoWeather
 import com.weathersync.features.home.data.CurrentWeather
 import com.weathersync.features.home.data.db.CurrentWeatherDAO
 import com.weathersync.features.settings.data.WeatherUnit
-import com.weathersync.utils.weather.LocationClient
 import com.weathersync.utils.weather.WeatherUnitsManager
 import com.weathersync.utils.weather.WeatherRepository
+import com.weathersync.utils.weather.location.LocationManager
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.request.get
 
 class CurrentWeatherRepository(
     engine: HttpClientEngine,
-    private val locationClient: LocationClient,
+    private val locationManager: LocationManager,
     private val currentWeatherDAO: CurrentWeatherDAO,
     private val weatherUnitsManager: WeatherUnitsManager
     ): WeatherRepository {
@@ -31,13 +31,13 @@ class CurrentWeatherRepository(
                 windSpeed = convertWindSpeed(localWeather.windSpeed, from = localWeather.windSpeedUnit, to = fetchedUnits.windSpeed.unitName).round(1)
             )
         }
-        val coordinates = locationClient.getCoordinates()
+        val location = locationManager.getLocation()
         val requestUrl =
-            "forecast?current_weather=true&latitude=${coordinates.lat}&longitude=${coordinates.lon}&timezone=$timezone" +
+            "forecast?current_weather=true&latitude=${location.lat}&longitude=${location.lon}&timezone=$timezone" +
                     "&temperature_unit=${fetchedUnits.temp.weatherApiUnitName}&wind_speed_unit=${fetchedUnits.windSpeed.weatherApiUnitName}"
         val responseBody = httpClient.get(requestUrl).body<CurrentOpenMeteoWeather>()
         val currentWeather = CurrentWeather(
-            locality = coordinates.locality,
+            locality = location.location,
             tempUnit = responseBody.currentWeatherUnits.temperature,
             windSpeedUnit = responseBody.currentWeatherUnits.windSpeed,
             temp = responseBody.currentWeather.temperature,

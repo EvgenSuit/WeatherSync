@@ -26,10 +26,10 @@ import org.junit.runner.RunWith
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class SettingsViewModelWeatherUnitsTests: WeatherUnitTest {
-    @get: Rule(order = 0)
-    val mainDispatcherRule = MainDispatcherRule()
     @get: Rule(order = 1)
     val settingsBaseRule = SettingsBaseRule()
+    @get: Rule(order = 0)
+    val mainDispatcherRule = MainDispatcherRule(settingsBaseRule.testDispatcher)
     private val testException = TestException("exception")
 
 

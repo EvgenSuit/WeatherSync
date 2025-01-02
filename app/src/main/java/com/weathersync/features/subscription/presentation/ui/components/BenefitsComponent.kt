@@ -26,6 +26,7 @@ fun BenefitsComponent() {
     val benefits = listOf(R.string.improved_recommendations,
         R.string.increased_activity_planning_days,
         R.string.increased_limits,
+        R.string.set_location_benefit,
         R.string.ad_free_experience)
     val shape = RoundedCornerShape(20.dp)
     ElevatedCard(

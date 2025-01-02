@@ -27,7 +27,8 @@
     <string name="input_cannot_be_empty">Input cannot be empty</string>
     <string name="find_optimal_times">Find optimal times</string>
     <string name="planning_activities">Planning your activities…</string>
-    <string name="based_on_forecast">Recommendations are based on a %1$s-day hourly forecast for your location</string>
+    <string name="based_on_forecast_not_premium">Recommendations are based on a %1$s-day hourly forecast for your current location</string>
+    <string name="based_on_forecast_premium">Recommendations are based on a %1$s-day hourly forecast for set location</string>
     <string name="source">Source</string>
     <string name="open_meteo_link">https://open-meteo.com/</string>
     <string name="could_not_plan_activities">Could not plan provided activities</string>
@@ -37,6 +38,14 @@
     <string name="could_not_switch_theme">Could not switch theme</string>
     <string name="could_not_load_units">Could not load units</string>
     <string name="could_not_set_units">Could not set unit</string>
+
+    <string name="set_location">Set desired location</string>
+    <string name="could_not_set_location">Could not set location. Check your input and internet connection</string>
+    <string name="set_location_sheet">Set</string>
+    <string name="set_current_location_as_default">Set current location as the default</string>
+    <string name="location_set_successfully">Successfully set location to %1$s</string>
+    <string name="next_location_set_time">Next location set available at %1$s</string>
+
     <string name="temp_unit">Temperature unit</string>
     <string name="visibility_unit">Visibility unit</string>
     <string name="wind_speed_unit">Wind speed unit</string>
@@ -59,6 +68,7 @@
     <string name="improved_recommendations">Enhanced AI-Powered Recommendations &amp; Planning</string>
     <string name="increased_activity_planning_days">Plan Activities Up to 7 Days Ahead</string>
     <string name="increased_limits">Access 8x Higher Usage Limits</string>
+    <string name="set_location_benefit">Plan, dress, and schedule for any location worldwide</string>
     <string name="ad_free_experience">Enjoy Ad-Free Experience</string>
 
     <string name="free_trial">%1$s trial</string>

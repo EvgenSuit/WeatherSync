@@ -2,7 +2,6 @@ package com.weathersync.features.home.repository
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.FieldValue
 import com.weathersync.common.MainDispatcherRule
 import com.weathersync.common.TestException
@@ -15,12 +14,11 @@ import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.weather.limits.FirestoreLimitCollection
-import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.QueryType
 import com.weathersync.utils.weather.limits.Limit
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
 import io.mockk.coVerify
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -121,7 +119,7 @@ class HomeRepositoryLimitTests: BaseLimitTest {
         homeBaseRule.homeRepository.recordTimestamp()
         val ref = homeBaseRule.limitManagerFirestore.collection(userId).document("limits").collection(FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName)
         coVerify {
-            homeBaseRule.limitManager.recordTimestamp(GenerationType.CurrentWeather(null))
+            homeBaseRule.limitManager.recordTimestamp(QueryType.CurrentWeather(null))
             ref.add(any<Map<String, FieldValue>>())
         }
     }
@@ -191,7 +189,7 @@ class HomeRepositoryLimitTests: BaseLimitTest {
             refresh = refresh)
         coVerify { homeBaseRule.limitManager.calculateLimit(
             isSubscribed = isSubscribed,
-            generationType = GenerationType.CurrentWeather(refresh)) }
+            queryType = QueryType.CurrentWeather(refresh)) }
         return limit
     }
 }

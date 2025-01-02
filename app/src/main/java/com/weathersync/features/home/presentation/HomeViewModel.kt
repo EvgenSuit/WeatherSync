@@ -56,9 +56,7 @@ class HomeViewModel(
     private fun getCurrentWeather(refresh: Boolean) {
         val updateMethod: (CustomResult) -> Unit = if (refresh) { res -> updateCurrentWeatherRefreshResult(res) }
         else { res -> updateCurrentWeatherFetchResult(res) }
-        val currentResult = if (refresh) uiState.value.currentWeatherRefreshResult
-        else uiState.value.currentWeatherFetchResult
-        if (currentResult.isInProgress()) return
+        if (listOf(uiState.value.currentWeatherFetchResult, uiState.value.currentWeatherRefreshResult).any { it.isInProgress() }) return
         updateMethod(CustomResult.InProgress)
         viewModelScope.launch {
             try {

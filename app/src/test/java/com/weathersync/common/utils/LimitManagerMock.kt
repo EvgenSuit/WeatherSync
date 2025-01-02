@@ -46,7 +46,8 @@ fun mockLimitManagerFirestore(
     }
     for (coll in listOf(
         FirestoreLimitCollection.CURRENT_WEATHER_LIMITS.collectionName,
-        FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName)) {
+        FirestoreLimitCollection.ACTIVITY_RECOMMENDATIONS_LIMITS.collectionName,
+        FirestoreLimitCollection.LOCATION_SET_LIMITS.collectionName)) {
         every { collection(userId).document("limits").collection(coll)
             .orderBy("timestamp", Query.Direction.DESCENDING).get() } answers {
             mockTask(

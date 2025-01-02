@@ -7,7 +7,7 @@ import com.weathersync.features.activityPlanning.data.ForecastDates
 import com.weathersync.features.activityPlanning.data.toForecast
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.SubscriptionManager
-import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.QueryType
 import com.weathersync.utils.weather.limits.LimitManager
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -27,9 +27,9 @@ class ActivityPlanningRepository(
     suspend fun calculateLimit(isSubscribed: IsSubscribed) =
         limitManager.calculateLimit(
             isSubscribed = isSubscribed,
-            generationType = GenerationType.ActivityRecommendations)
+            queryType = QueryType.ActivityRecommendations)
 
-    suspend fun recordTimestamp() = limitManager.recordTimestamp(GenerationType.ActivityRecommendations)
+    suspend fun recordTimestamp() = limitManager.recordTimestamp(QueryType.ActivityRecommendations)
 
     suspend fun getForecast(isSubscribed: IsSubscribed): Forecast = withContext(dispatcher) {
         val forecastDays = calculateForecastDays(isSubscribed = isSubscribed)

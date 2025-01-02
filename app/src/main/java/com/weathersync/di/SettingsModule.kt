@@ -1,6 +1,7 @@
 package com.weathersync.di
 
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.weathersync.features.settings.SettingsRepository
 import com.weathersync.features.settings.data.ThemeManager
@@ -14,7 +15,14 @@ val settingsModule = module {
     factory { SettingsRepository(
         auth = Firebase.auth,
         themeManager = get(),
-        weatherUnitsManager = get())
+        weatherUnitsManager = get(),
+        limitManager = get(),
+        subscriptionManager = get(),
+        locationManager = get())
     }
-    factory { SettingsViewModel(settingsRepository = get(), analyticsManager = get()) }
+    factory { SettingsViewModel(
+        settingsRepository = get(),
+        subscriptionInfoDatastore = get(),
+        nextUpdateTimeFormatter = get(),
+        analyticsManager = get()) }
 }

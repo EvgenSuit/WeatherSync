@@ -12,6 +12,8 @@ import com.weathersync.ui.ActivityPlanningUIEvent
 import com.weathersync.utils.AnalyticsManager
 import com.weathersync.utils.CustomResult
 import com.weathersync.utils.FirebaseEvent
+import com.weathersync.utils.NullGeminiResponse
+import com.weathersync.utils.NullOpenAIResponse
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
 import com.weathersync.utils.weather.limits.Limit
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
@@ -110,6 +112,8 @@ class ActivityPlanningViewModel(
                 }
                 updateGenerationResult(CustomResult.Success)
             } catch (e: Exception) {
+                // guarantee that limits get incremented when AI outputs nothing
+                if (e is NullGeminiResponse || e is NullOpenAIResponse) activityPlanningRepository.recordTimestamp()
                 _uiEvent.emit(ActivityPlanningUIEvent.ShowSnackbar(UIText.StringResource(R.string.could_not_plan_activities)))
                 analyticsManager.recordException(e, "Input: $input")
                 updateGenerationResult(CustomResult.Error)

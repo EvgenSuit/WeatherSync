@@ -10,14 +10,15 @@ import com.weathersync.common.TestException
 import com.weathersync.common.TestHelper
 import com.weathersync.common.data.createInMemoryDataStore
 import com.weathersync.common.utils.ai.mockAIClientProvider
-import com.weathersync.common.weather.mockEngine
-import com.weathersync.common.weather.fetchedWeatherUnits
-import com.weathersync.common.weather.locationInfo
+import com.weathersync.common.utils.location.mockLocationManager
 import com.weathersync.common.utils.mockLimitManager
 import com.weathersync.common.utils.mockLimitManagerFirestore
 import com.weathersync.common.utils.mockSubscriptionManager
 import com.weathersync.common.utils.mockTimeAPI
-import com.weathersync.common.weather.mockLocationClient
+import com.weathersync.common.weather.fetchedWeatherUnits
+import com.weathersync.common.weather.locationInfo
+import com.weathersync.common.weather.mockEngine
+import com.weathersync.common.weather.mockAndroidLocationClient
 import com.weathersync.common.weather.mockWeatherUnitsManager
 import com.weathersync.features.home.data.CurrWeather
 import com.weathersync.features.home.data.CurrentOpenMeteoWeather
@@ -41,10 +42,10 @@ import com.weathersync.utils.ai.gemini.data.GeminiResponse
 import com.weathersync.utils.subscription.IsSubscribed
 import com.weathersync.utils.subscription.data.SubscriptionInfoDatastore
 import com.weathersync.utils.weather.FirestoreWeatherUnit
-import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.WeatherUnitsManager
 import com.weathersync.utils.weather.limits.LimitManager
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
-import com.weathersync.utils.weather.WeatherUnitsManager
+import com.weathersync.utils.weather.limits.QueryType
 import io.ktor.http.HttpStatusCode
 import io.mockk.mockk
 import io.mockk.spyk
@@ -66,8 +67,8 @@ class HomeBaseRule: TestWatcher() {
     val testHelper = TestHelper()
     val testClock = TestClock()
     val testDispatcher = StandardTestDispatcher()
-    val premiumLimitManagerConfig = GenerationType.CurrentWeather(null).premiumLimitManagerConfig
-    val regularLimitManagerConfig = GenerationType.CurrentWeather(null).regularLimitManagerConfig
+    val premiumLimitManagerConfig = QueryType.CurrentWeather(null).premiumLimitManagerConfig
+    val regularLimitManagerConfig = QueryType.CurrentWeather(null).regularLimitManagerConfig
 
     val crashlyticsExceptionSlot = testHelper.exceptionSlot
     val exception = TestException("exception")
@@ -112,9 +113,12 @@ class HomeBaseRule: TestWatcher() {
     ) {
         currentWeatherRepository = CurrentWeatherRepository(
             engine = mockEngine(status, responseValue = getMockedWeather(weatherUnits)),
-            locationClient = mockLocationClient(
-                geocoderException = geocoderException,
-                lastLocationException = lastLocationException
+            locationManager = mockLocationManager(
+                androidLocationClient = mockAndroidLocationClient(
+                    geocoderException = geocoderException,
+                    lastLocationException = lastLocationException
+                ),
+                dispatcher = testDispatcher
             ),
             currentWeatherDAO = currentWeatherLocalDB.currentWeatherDao(),
             weatherUnitsManager = weatherUnitsManager
@@ -223,16 +227,6 @@ data class TestSuggestions(
     val unrecommendedActivities: List<String> = listOf("Avoid swimming outdoors for prolonged periods of time", "Avoid eating ice cream"),
     val whatToBring: List<String> = listOf("Light shoes", "A hat")
 )
-fun TestSuggestions.toGeminiResponse() =
-    GeminiResponse(
-        candidates = listOf(GeminiCandidate(
-            content = GeminiParts(
-                parts = listOf(GeminiPart(
-                    text = Json.encodeToString(this)
-                ))
-            )
-        ))
-    )
 
 fun getMockedWeather(
     units: List<WeatherUnit>

@@ -51,7 +51,7 @@ class GeminiClient(
                 )
             )
         } else null
-        val response = httpClient.post("models/gemini-1.5-pro:generateContent?key=${BuildConfig.GEMINI_API_KEY}") {
+        val response = httpClient.post("models/gemini-1.5-flash-latest:generateContent?key=${BuildConfig.GEMINI_API_KEY}") {
             contentType(ContentType.Application.Json)
             setBody(
                 GeminiRequest(

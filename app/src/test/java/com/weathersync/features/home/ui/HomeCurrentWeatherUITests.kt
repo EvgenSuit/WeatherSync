@@ -23,7 +23,7 @@ import com.weathersync.features.home.getMockedWeather
 import com.weathersync.features.home.presentation.ui.HomeScreen
 import com.weathersync.features.home.toCurrentWeather
 import com.weathersync.utils.ads.AdBannerType
-import com.weathersync.utils.weather.limits.GenerationType
+import com.weathersync.utils.weather.limits.QueryType
 import com.weathersync.utils.weather.limits.NextUpdateTimeFormatter
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.launch
@@ -76,7 +76,7 @@ class HomeCurrentWeatherUITests {
         homeBaseRule.apply {
             setupLimitManager(
                 timestamps = createDescendingTimestamps(
-                    limitManagerConfig = GenerationType.CurrentWeather(false).regularLimitManagerConfig,
+                    limitManagerConfig = QueryType.CurrentWeather(false).regularLimitManagerConfig,
                     currTimeMillis = testClock.millis()
                 )
             )
@@ -114,7 +114,7 @@ class HomeCurrentWeatherUITests {
         homeBaseRule.apply {
             setupLimitManager(
                 timestamps = createDescendingTimestamps(
-                    limitManagerConfig = GenerationType.CurrentWeather(false).premiumLimitManagerConfig,
+                    limitManagerConfig = QueryType.CurrentWeather(false).premiumLimitManagerConfig,
                     currTimeMillis = testClock.millis()
                 )
             )
